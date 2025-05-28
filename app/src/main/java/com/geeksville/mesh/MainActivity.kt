@@ -99,6 +99,7 @@ import kotlinx.coroutines.cancel
 import java.text.DateFormat
 import java.util.Date
 import javax.inject.Inject
+import androidx.core.content.edit
 
 /*
 UI design
@@ -232,7 +233,7 @@ class MainActivity : AppCompatActivity(), Logging {
             info("in-app language is ${LanguageUtils.getLocale()}")
             // Set theme
             AppCompatDelegate.setDefaultNightMode(
-                prefs.getInt("theme", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+                prefs.getInt("theme", AppCompatDelegate.MODE_NIGHT_YES)
             )
             // First run: show AppIntroduction
             if (!prefs.getBoolean("app_intro_completed", false)) {
@@ -758,7 +759,7 @@ class MainActivity : AppCompatActivity(), Logging {
         ) { dialog, position ->
             val selectedTheme = styles.values.elementAt(position)
             debug("Set theme pref to $selectedTheme")
-            prefs.edit().putInt("theme", selectedTheme).apply()
+            prefs.edit {putInt("theme", selectedTheme)}
             AppCompatDelegate.setDefaultNightMode(selectedTheme)
             dialog.dismiss()
         }

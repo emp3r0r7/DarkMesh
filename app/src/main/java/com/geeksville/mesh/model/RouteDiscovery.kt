@@ -64,11 +64,11 @@ private fun formatTraceroutePath(nodesList: List<String>, snrList: List<Int>): S
 private fun RouteDiscovery.getTracerouteResponse(
     getUser: (nodeNum: Int) -> String,
 ): String = buildString {
-    if (routeList.isNotEmpty()) {
+    if (routeList.isNotEmpty()) { //todo creazione invio qui payload da inviare
         append("Route traced toward destination:\n\n")
         append(formatTraceroutePath(routeList.map(getUser), snrTowardsList))
     }
-    if (routeBackList.isNotEmpty()) {
+    if (routeBackList.isNotEmpty()) { //todo creazione qui payload ritorno da inviare
         append("\n\n")
         append("Route traced back to us:\n\n")
         append(formatTraceroutePath(routeBackList.map(getUser), snrBackList))

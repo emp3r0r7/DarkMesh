@@ -744,6 +744,10 @@ class MeshService : Service(), Logging {
 
                     Portnums.PortNum.POSITION_APP_VALUE -> {
                         val u = MeshProtos.Position.parseFrom(data.payload)
+
+//                        debug("Position is from ${getUserName(packet.from)}")
+//                        debug("Position : ${u.toPIIString()}")
+
                         // debug("position_app ${packet.from} ${u.toOneLineString()}")
                         if (data.wantResponse && u.latitudeI == 0 && u.longitudeI == 0) {
                             debug("Ignoring nop position update from position request")
@@ -765,6 +769,10 @@ class MeshService : Service(), Logging {
                     Portnums.PortNum.TELEMETRY_APP_VALUE -> {
                         val u = TelemetryProtos.Telemetry.parseFrom(data.payload)
                             .copy { if (time == 0) time = (dataPacket.time / 1000L).toInt() }
+
+//                        debug("Telemetry is from ${getUserName(packet.from)}")
+//                        debug("Telemetry : ${u.toPIIString()}")
+
                         handleReceivedTelemetry(packet.from, u)
                     }
 
