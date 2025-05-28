@@ -10,7 +10,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:xxx:android:1111",
         "android_client_info": {
-          "package_name": "com.geeksville.mesh"
+          "package_name": "com.emp3r0r7.darkmesh"
         }
       },
       "oauth_client": [
@@ -18,14 +18,14 @@
           "client_id": "111-xxx.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.geeksville.mesh"
+            "package_name": "com.emp3r0r7.darkmesh"
           }
         },
         {
           "client_id": "111-xxx.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.geeksville.mesh"
+            "package_name": "com.emp3r0r7.darkmesh"
           }
         },
         {

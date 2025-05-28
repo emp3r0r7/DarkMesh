@@ -177,7 +177,7 @@ class MeshService : Service(), Logging {
         }
 
         fun createIntent() = Intent().setClassName(
-            "com.geeksville.mesh",
+            "com.emp3r0r7.darkmesh",
             "com.geeksville.mesh.service.MeshService"
         )
 
