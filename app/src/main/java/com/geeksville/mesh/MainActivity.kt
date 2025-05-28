@@ -49,6 +49,9 @@ import androidx.fragment.app.FragmentTransaction
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import com.emp3r0r7.darkmesh.BuildConfig
+import com.emp3r0r7.darkmesh.R
+import com.emp3r0r7.darkmesh.databinding.ActivityMainBinding
 import com.geeksville.mesh.android.BindFailedException
 import com.geeksville.mesh.android.GeeksvilleApplication
 import com.geeksville.mesh.android.Logging
@@ -61,7 +64,6 @@ import com.geeksville.mesh.android.permissionMissing
 import com.geeksville.mesh.android.rationaleDialog
 import com.geeksville.mesh.android.shouldShowRequestPermissionRationale
 import com.geeksville.mesh.concurrent.handledLaunch
-import com.geeksville.mesh.databinding.ActivityMainBinding
 import com.geeksville.mesh.model.BluetoothViewModel
 import com.geeksville.mesh.model.DeviceVersion
 import com.geeksville.mesh.model.UIViewModel

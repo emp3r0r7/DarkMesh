@@ -56,12 +56,12 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.geeksville.mesh.R
-import com.geeksville.mesh.ui.components.CommonCharts.LINE_LIMIT
-import com.geeksville.mesh.ui.components.CommonCharts.TEXT_PAINT_ALPHA
+import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.ui.components.CommonCharts.DATE_TIME_FORMAT
 import com.geeksville.mesh.ui.components.CommonCharts.LEFT_LABEL_SPACING
+import com.geeksville.mesh.ui.components.CommonCharts.LINE_LIMIT
 import com.geeksville.mesh.ui.components.CommonCharts.MS_PER_SEC
+import com.geeksville.mesh.ui.components.CommonCharts.TEXT_PAINT_ALPHA
 import java.text.DateFormat
 
 object CommonCharts {

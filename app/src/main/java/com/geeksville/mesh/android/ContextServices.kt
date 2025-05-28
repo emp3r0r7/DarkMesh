@@ -27,7 +27,7 @@ import android.location.LocationManager
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import com.geeksville.mesh.R
+import com.emp3r0r7.darkmesh.R
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /**

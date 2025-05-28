@@ -54,7 +54,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.geeksville.mesh.R
+import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.model.Channel
 import com.geeksville.mesh.ui.theme.AppTheme
 import com.google.protobuf.ByteString

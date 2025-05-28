@@ -43,9 +43,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.ModuleConfigProtos.RemoteHardwarePin
 import com.geeksville.mesh.ModuleConfigProtos.RemoteHardwarePinType
-import com.geeksville.mesh.R
 import com.geeksville.mesh.copy
 import com.geeksville.mesh.remoteHardwarePin
 import com.google.protobuf.ByteString

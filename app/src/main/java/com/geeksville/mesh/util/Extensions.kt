@@ -18,7 +18,7 @@
 package com.geeksville.mesh.util
 
 import android.widget.EditText
-import com.geeksville.mesh.BuildConfig
+import com.emp3r0r7.darkmesh.BuildConfig
 import com.geeksville.mesh.ConfigProtos
 
 /**

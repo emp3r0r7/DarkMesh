@@ -18,9 +18,9 @@
 package com.geeksville.mesh.model
 
 import androidx.annotation.StringRes
+import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.MeshProtos.Routing
 import com.geeksville.mesh.MessageStatus
-import com.geeksville.mesh.R
 import com.geeksville.mesh.database.entity.Reaction
 
 @Suppress("CyclomaticComplexMethod")

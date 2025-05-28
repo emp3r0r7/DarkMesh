@@ -17,10 +17,10 @@
 
 package com.geeksville.mesh.model
 
+import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.ConfigProtos.Config.LoRaConfig
 import com.geeksville.mesh.ConfigProtos.Config.LoRaConfig.ModemPreset
 import com.geeksville.mesh.ConfigProtos.Config.LoRaConfig.RegionCode
-import com.geeksville.mesh.R
 
 /**
  * hash a string into an integer using the djb2 algorithm by Dan Bernstein

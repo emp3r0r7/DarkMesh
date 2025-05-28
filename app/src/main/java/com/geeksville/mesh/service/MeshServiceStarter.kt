@@ -25,7 +25,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import com.geeksville.mesh.BuildConfig
+import com.emp3r0r7.darkmesh.BuildConfig
 import java.util.concurrent.TimeUnit
 
 /**

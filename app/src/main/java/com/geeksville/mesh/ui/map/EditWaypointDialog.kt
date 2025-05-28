@@ -56,8 +56,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.MeshProtos.Waypoint
-import com.geeksville.mesh.R
 import com.geeksville.mesh.copy
 import com.geeksville.mesh.ui.components.EditTextPreference
 import com.geeksville.mesh.ui.components.EmojiPickerDialog

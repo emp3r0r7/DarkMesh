@@ -25,6 +25,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.AdminProtos
 import com.geeksville.mesh.ChannelProtos
 import com.geeksville.mesh.ClientOnlyProtos.DeviceProfile
@@ -34,7 +35,6 @@ import com.geeksville.mesh.MeshProtos
 import com.geeksville.mesh.ModuleConfigProtos
 import com.geeksville.mesh.Portnums
 import com.geeksville.mesh.Position
-import com.geeksville.mesh.R
 import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.config
 import com.geeksville.mesh.database.entity.MyNodeEntity

@@ -17,6 +17,7 @@
 
 package com.geeksville.mesh
 
+import com.emp3r0r7.darkmesh.BuildConfig
 import com.geeksville.mesh.android.GeeksvilleApplication
 import com.geeksville.mesh.android.Logging
 import dagger.hilt.android.HiltAndroidApp

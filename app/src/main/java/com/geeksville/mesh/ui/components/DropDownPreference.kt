@@ -36,7 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import com.geeksville.mesh.R
+import com.emp3r0r7.darkmesh.R
 import com.google.protobuf.ProtocolMessageEnum
 
 @Composable

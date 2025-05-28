@@ -36,7 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import com.geeksville.mesh.R
+import com.emp3r0r7.darkmesh.R
 
 @Composable
 fun BitwisePreference(

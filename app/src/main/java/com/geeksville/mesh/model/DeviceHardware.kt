@@ -18,8 +18,8 @@
 package com.geeksville.mesh.model
 
 import androidx.annotation.DrawableRes
+import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.MeshProtos.HardwareModel
-import com.geeksville.mesh.R
 import kotlinx.serialization.Serializable
 
 data class DeviceHardware(

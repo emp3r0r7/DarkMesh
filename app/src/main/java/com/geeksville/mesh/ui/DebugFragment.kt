@@ -68,7 +68,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.geeksville.mesh.R
+import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.database.entity.MeshLog
 import com.geeksville.mesh.model.DebugViewModel
 import com.geeksville.mesh.ui.theme.AppTheme

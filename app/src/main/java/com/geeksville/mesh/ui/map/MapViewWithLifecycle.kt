@@ -30,10 +30,10 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import com.geeksville.mesh.BuildConfig
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.emp3r0r7.darkmesh.BuildConfig
 import com.geeksville.mesh.android.BuildUtils.errormsg
 import com.geeksville.mesh.util.requiredZoomLevel
 import org.osmdroid.config.Configuration

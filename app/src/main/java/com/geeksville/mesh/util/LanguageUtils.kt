@@ -22,8 +22,8 @@ import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
+import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.android.Logging
-import com.geeksville.mesh.R
 import org.xmlpull.v1.XmlPullParser
 import java.util.Locale
 

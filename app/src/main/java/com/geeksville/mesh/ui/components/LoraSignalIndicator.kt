@@ -42,7 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.geeksville.mesh.R
+import com.emp3r0r7.darkmesh.R
 
 private const val SNR_GOOD_THRESHOLD = -7f
 private const val SNR_FAIR_THRESHOLD = -15f

@@ -33,7 +33,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
-import com.geeksville.mesh.R
+import com.emp3r0r7.darkmesh.R
 
 @Composable
 fun EditPasswordPreference(

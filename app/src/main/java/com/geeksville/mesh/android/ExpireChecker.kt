@@ -21,8 +21,8 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
-import com.geeksville.mesh.R
-import java.util.*
+import com.emp3r0r7.darkmesh.R
+import java.util.Date
 
 /**
  * Created by kevinh on 1/13/16.

@@ -20,6 +20,7 @@ package com.geeksville.mesh
 import android.os.Bundle
 import androidx.core.content.edit
 import androidx.fragment.app.Fragment
+import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.model.UIViewModel
 import com.github.appintro.AppIntro
 import com.github.appintro.AppIntroFragment

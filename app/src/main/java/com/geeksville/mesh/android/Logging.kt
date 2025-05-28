@@ -19,7 +19,7 @@ package com.geeksville.mesh.android
 
 import android.os.Build
 import android.util.Log
-import com.geeksville.mesh.BuildConfig
+import com.emp3r0r7.darkmesh.BuildConfig
 import com.geeksville.mesh.util.Exceptions
 
 /**

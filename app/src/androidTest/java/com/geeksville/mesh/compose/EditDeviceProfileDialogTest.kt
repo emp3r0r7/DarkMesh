@@ -23,8 +23,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.ClientOnlyProtos.DeviceProfile
-import com.geeksville.mesh.R
 import com.geeksville.mesh.deviceProfile
 import com.geeksville.mesh.position
 import com.geeksville.mesh.ui.components.config.EditDeviceProfileDialog

@@ -71,8 +71,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.MeshProtos.DeviceMetadata
-import com.geeksville.mesh.R
 import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.model.MetricsViewModel
 import com.geeksville.mesh.model.RadioConfigViewModel
@@ -82,7 +82,6 @@ import com.geeksville.mesh.ui.components.NodeMapScreen
 import com.geeksville.mesh.ui.components.PositionLogScreen
 import com.geeksville.mesh.ui.components.SignalMetricsScreen
 import com.geeksville.mesh.ui.components.TracerouteLogScreen
-import com.geeksville.mesh.util.UiText
 import com.geeksville.mesh.ui.components.config.AmbientLightingConfigScreen
 import com.geeksville.mesh.ui.components.config.AudioConfigScreen
 import com.geeksville.mesh.ui.components.config.BluetoothConfigScreen
@@ -106,6 +105,7 @@ import com.geeksville.mesh.ui.components.config.SerialConfigScreen
 import com.geeksville.mesh.ui.components.config.StoreForwardConfigScreen
 import com.geeksville.mesh.ui.components.config.TelemetryConfigScreen
 import com.geeksville.mesh.ui.components.config.UserConfigScreen
+import com.geeksville.mesh.util.UiText
 import com.google.accompanist.themeadapter.appcompat.AppCompatTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.serialization.Serializable
