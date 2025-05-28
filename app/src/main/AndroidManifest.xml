@@ -225,7 +225,7 @@
         </receiver>
 
         <activity
-            android:name=".AppIntroduction"/>
+            android:name="com.geeksville.mesh.AppIntroduction"/>
 
         <!-- allow for plugin discovery -->
         <activity

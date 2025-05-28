@@ -26,6 +26,7 @@ import com.geeksville.mesh.util.Exceptions
 import com.google.firebase.crashlytics.crashlytics
 import com.google.firebase.Firebase
 import dagger.hilt.android.HiltAndroidApp
+import com.emp3r0r7.darkmesh.BuildConfig
 
 @HiltAndroidApp
 class MeshUtilApplication : GeeksvilleApplication() {
