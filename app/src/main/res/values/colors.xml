@@ -18,17 +18,28 @@
 
 <resources>
     <color name="colorOnPrimary">#FFFFFF</color>
-    <color name="colorPrimary">#67EA94</color>
-    <color name="colorPrimaryDark">#67EA94</color>
-    <color name="colorMsg">#F2F2F2</color>
-    <color name="colorMyMsg">#EDEAF4</color>
-    <color name="colorAdvancedBackground">#FFFFFF</color>
-    <color name="colorMenuItem">#000000</color>
-    <color name="selectedColor">#67EA94</color>
-    <color name="unselectedColor">#212121</color>
-    <color name="buttonColor">#67EA94</color>
-    <color name="colourGrey">#535353</color>
-    <color name="colorAnnotation">#0288D1</color>
-    <color name="toolbarBackground">#67EA94</color>
+
+    <color name="colorPrimary">#B22222</color>
+    <color name="colorPrimaryDark">#7A0A0A</color>
+
+    <color name="colorMsg">#1A1A1A</color>
+    <color name="colorMyMsg">#2A2A2A</color>
+
+    <color name="colorAdvancedBackground">#121212</color>
+
+    <color name="colorMenuItem">#E0E0E0</color>
+
+    <color name="selectedColor">#FF003C</color>
+
+    <color name="unselectedColor">#666666</color>
+
+    <color name="buttonColor">#313131</color>
+
+    <color name="colourGrey">#424242</color>
+
+    <color name="colorAnnotation">#00BCD4</color>
+
+    <color name="toolbarBackground">#1A1A1A</color>
     <color name="toolbarText">#FFFFFF</color>
+
 </resources>

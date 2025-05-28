@@ -54,6 +54,7 @@ import com.geeksville.mesh.TelemetryProtos.LocalStats
 import com.geeksville.mesh.analytics.DataPair
 import com.geeksville.mesh.android.GeeksvilleApplication
 import com.geeksville.mesh.android.Logging
+import com.geeksville.mesh.android.mainLooperToast
 import com.geeksville.mesh.android.hasLocationPermission
 import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.config
@@ -711,6 +712,10 @@ class MeshService : Service(), Logging {
 
                 debug("Received data from $fromId, portnum=${data.portnum} ${bytes.size} bytes")
 
+//                if (!fromUs){
+//                    mainLooperToast("Received data from ${getUserName(packet.from)}")
+//                }
+
                 dataPacket.status = MessageStatus.RECEIVED
 
                 // if (p.hasUser()) handleReceivedUser(fromNum, p.user)
@@ -771,7 +776,7 @@ class MeshService : Service(), Logging {
                             radioConfigRepository.setErrorMessage(getString(R.string.error_duty_cycle))
                         }
 
-                        handleAckNak(data.requestId, fromId, u.errorReasonValue)
+                        handleAckNak(packet, data.requestId, fromId, u.errorReasonValue)
                         queueResponse.remove(data.requestId)?.complete(true)
                     }
 
@@ -805,6 +810,11 @@ class MeshService : Service(), Logging {
                     }
 
                     Portnums.PortNum.TRACEROUTE_APP_VALUE -> {
+
+                        if(!fromUs && packet.wantAck){
+                            mainLooperToast("Traceroute detected towards us from ${getUserName(packet.from)}")
+                        }
+
                         radioConfigRepository.setTracerouteResponse(
                             packet.getTracerouteResponse(::getUserName)
                         )
@@ -1087,14 +1097,30 @@ class MeshService : Service(), Logging {
     /**
      * Handle an ack/nak packet by updating sent message status
      */
-    private fun handleAckNak(requestId: Int, fromId: String, routingError: Int) {
+    private fun handleAckNak(packet: MeshPacket, requestId: Int, fromId: String, routingError: Int) {
         serviceScope.handledLaunch {
             val isAck = routingError == MeshProtos.Routing.Error.NONE_VALUE
             val p = packetRepository.get().getPacketById(requestId)
             // distinguish real ACKs coming from the intended receiver
             val m = when {
                 isAck && fromId == p?.data?.to -> MessageStatus.RECEIVED
-                isAck -> MessageStatus.DELIVERED
+                isAck -> {
+                    try{
+                        p?.data?.to?.let {
+
+                            if(it.contains("all")){
+                                mainLooperToast("Message to channel retransmitted by mesh...")
+                            } else {
+                                mainLooperToast("Message to ${getUserName(hexIdToNodeNum(it))} retransmitted by mesh...")
+                            }
+
+                        } ?: mainLooperToast("Message has been retransmitted by mesh...")
+                    } catch(e :Exception){
+                        debug("An error occurred while reading packet: ${packet.toPIIString()}")
+                    }
+
+                    MessageStatus.DELIVERED
+                }
                 else -> MessageStatus.ERROR
             }
             if (p != null && p.data.status != MessageStatus.RECEIVED) {
@@ -2129,5 +2155,9 @@ class MeshService : Service(), Logging {
                 nodedbReset = 1
             })
         }
+    }
+
+    private fun hexIdToNodeNum(hexId: String): Int {
+        return hexId.removePrefix("!").toUInt(16).toInt()
     }
 }

@@ -30,6 +30,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.Person
+import androidx.core.content.ContextCompat
 import com.geeksville.mesh.MainActivity
 import com.geeksville.mesh.R
 import com.geeksville.mesh.TelemetryProtos.LocalStats
@@ -225,7 +226,7 @@ class MeshServiceNotifications(
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
                     R.drawable.app_icon_novect
                 } else {
-                    R.drawable.app_icon
+                    R.drawable.icon_notification
                 }
             )
         }

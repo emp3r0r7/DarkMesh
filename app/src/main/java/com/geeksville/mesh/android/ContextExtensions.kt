@@ -19,12 +19,21 @@ package com.geeksville.mesh.android
 
 import android.app.Activity
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+
 
 /// show a toast
 fun Context.toast(message: CharSequence) =
     Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+
+fun Context.mainLooperToast(message: CharSequence) {
+    Handler(Looper.getMainLooper()).post {
+        this.toast(message)
+    }
+}
 
 /// Utility function to hide the soft keyboard per stack overflow
 fun Activity.hideKeyboard() {
