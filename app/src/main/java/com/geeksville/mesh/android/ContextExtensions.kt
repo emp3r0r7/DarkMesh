@@ -26,12 +26,12 @@ import android.widget.Toast
 
 
 /// show a toast
-fun Context.toast(message: CharSequence) =
-    Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+fun Context.toast(message: CharSequence, toastLength: Int) =
+    Toast.makeText(this, message, toastLength).show()
 
-fun Context.mainLooperToast(message: CharSequence) {
+fun Context.mainLooperToast(message: CharSequence, toastLength: Int) {
     Handler(Looper.getMainLooper()).post {
-        this.toast(message)
+        this.toast(message, toastLength)
     }
 }
 

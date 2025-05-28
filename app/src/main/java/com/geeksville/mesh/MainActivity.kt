@@ -60,6 +60,7 @@ import com.geeksville.mesh.android.getBluetoothPermissions
 import com.geeksville.mesh.android.getNotificationPermissions
 import com.geeksville.mesh.android.hasBluetoothPermission
 import com.geeksville.mesh.android.hasNotificationPermission
+import com.geeksville.mesh.android.mainLooperToast
 import com.geeksville.mesh.android.permissionMissing
 import com.geeksville.mesh.android.rationaleDialog
 import com.geeksville.mesh.android.shouldShowRequestPermissionRationale
@@ -741,9 +742,9 @@ class MainActivity : AppCompatActivity(), Logging {
         builder.setTitle(getString(R.string.choose_theme))
 
         val styles = mapOf(
-            getString(R.string.theme_light) to AppCompatDelegate.MODE_NIGHT_NO,
+            //getString(R.string.theme_light) to AppCompatDelegate.MODE_NIGHT_NO,
             getString(R.string.theme_dark) to AppCompatDelegate.MODE_NIGHT_YES,
-            getString(R.string.theme_system) to AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+            //getString(R.string.theme_system) to AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
         )
 
         // Load preferences and its value
@@ -764,6 +765,7 @@ class MainActivity : AppCompatActivity(), Logging {
 
         val dialog = builder.create()
         dialog.show()
+        mainLooperToast("Sorry, no light theme for you!", Toast.LENGTH_LONG)
     }
 
     private fun chooseLangDialog() {

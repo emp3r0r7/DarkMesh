@@ -42,7 +42,7 @@ import androidx.core.net.toUri
 import com.geeksville.mesh.ConfigProtos.Config.DisplayConfig.GpsCoordinateFormat
 import com.geeksville.mesh.android.BuildUtils.debug
 import com.geeksville.mesh.ui.theme.AppTheme
-import com.geeksville.mesh.ui.theme.HyperlinkBlue
+import com.geeksville.mesh.ui.theme.HyperlinkCyan
 import com.geeksville.mesh.util.GPSFormat
 import kotlinx.coroutines.launch
 import java.net.URLEncoder
@@ -60,7 +60,7 @@ fun LinkedCoordinates(
     val clipboard = LocalClipboardManager.current
     val coroutineScope = rememberCoroutineScope()
     val style = SpanStyle(
-        color = HyperlinkBlue,
+        color = HyperlinkCyan,
         fontSize = 14.sp,
         textDecoration = TextDecoration.Underline
     )

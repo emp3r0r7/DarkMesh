@@ -24,6 +24,7 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.IBinder
 import android.os.RemoteException
+import android.widget.Toast
 import androidx.core.app.ServiceCompat
 import androidx.core.location.LocationCompat
 import com.emp3r0r7.darkmesh.BuildConfig
@@ -812,7 +813,7 @@ class MeshService : Service(), Logging {
                     Portnums.PortNum.TRACEROUTE_APP_VALUE -> {
 
                         if(!fromUs && packet.wantAck){
-                            mainLooperToast("Traceroute detected towards us from ${getUserName(packet.from)}")
+                            mainLooperToast("Traceroute detected towards us from ${getUserName(packet.from)}", Toast.LENGTH_SHORT)
                         }
 
                         radioConfigRepository.setTracerouteResponse(
@@ -1109,12 +1110,12 @@ class MeshService : Service(), Logging {
                         p?.data?.to?.let {
 
                             if(it.contains("all")){
-                                mainLooperToast("Message to channel retransmitted by mesh...")
+                                mainLooperToast("Message to channel retransmitted by mesh...", Toast.LENGTH_SHORT)
                             } else {
-                                mainLooperToast("Message to ${getUserName(hexIdToNodeNum(it))} retransmitted by mesh...")
+                                mainLooperToast("Message to ${getUserName(hexIdToNodeNum(it))} retransmitted by mesh...", Toast.LENGTH_SHORT)
                             }
 
-                        } ?: mainLooperToast("Message has been retransmitted by mesh...")
+                        } ?: mainLooperToast("Message has been retransmitted by mesh...", Toast.LENGTH_SHORT)
                     } catch(e :Exception){
                         debug("An error occurred while reading packet: ${packet.toPIIString()}")
                     }

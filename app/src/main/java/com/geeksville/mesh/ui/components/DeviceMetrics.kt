@@ -64,7 +64,7 @@ import com.geeksville.mesh.model.TimeFrame
 import com.geeksville.mesh.ui.BatteryInfo
 import com.geeksville.mesh.ui.components.CommonCharts.DATE_TIME_FORMAT
 import com.geeksville.mesh.ui.components.CommonCharts.MS_PER_SEC
-import com.geeksville.mesh.ui.theme.Orange
+import com.geeksville.mesh.ui.theme.DarkGray
 import com.geeksville.mesh.util.GraphUtil
 import com.geeksville.mesh.util.GraphUtil.createPath
 import com.geeksville.mesh.util.GraphUtil.plotPoint
@@ -179,7 +179,7 @@ private fun DeviceMetricsChart(
              */
             HorizontalLinesOverlay(
                 modifier.width(dp),
-                lineColors = listOf(graphColor, Orange, Color.Red, graphColor, graphColor),
+                lineColors = listOf(graphColor, DarkGray, Color.Red, graphColor, graphColor),
                 minValue = 0f,
                 maxValue = 100f
             )

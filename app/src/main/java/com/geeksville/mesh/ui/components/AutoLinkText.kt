@@ -35,11 +35,11 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.text.util.LinkifyCompat
-import com.geeksville.mesh.ui.theme.HyperlinkBlue
+import com.geeksville.mesh.ui.theme.HyperlinkCyan
 
 private val DefaultTextLinkStyles = TextLinkStyles(
     style = SpanStyle(
-        color = HyperlinkBlue,
+        color = HyperlinkCyan,
         textDecoration = TextDecoration.Underline,
     )
 )
