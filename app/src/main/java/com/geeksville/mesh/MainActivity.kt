@@ -567,15 +567,7 @@ class MainActivity : AppCompatActivity(), Logging {
             updateConnectionStatusImage(state)
         }
 
-        //check if hunter
-        val huntingMode = huntingPrefs.getBoolean(HUNT_MODE, false)
-        val huntItem = model.actionBarMenu?.findItem(R.id.huntStatusImage)
-
-        if(huntingMode){
-            huntItem?.setVisible(true) ?: false
-        } else {
-            huntItem?.setVisible(false) ?: false
-        }
+        checkIfDeviceIsHunting()
 
         bluetoothViewModel.enabled.observe(this) { enabled ->
             if (!enabled && !requestedEnable && model.selectedBluetooth) {
@@ -649,6 +641,7 @@ class MainActivity : AppCompatActivity(), Logging {
         model.actionBarMenu = menu
 
         updateConnectionStatusImage(model.connectionState.value)
+        checkIfDeviceIsHunting()
 
         return true
     }
@@ -823,5 +816,17 @@ class MainActivity : AppCompatActivity(), Logging {
         }
         val dialog = builder.create()
         dialog.show()
+    }
+
+    private fun checkIfDeviceIsHunting(){
+
+        val huntingMode = huntingPrefs.getBoolean(HUNT_MODE, false)
+        val huntItem = model.actionBarMenu?.findItem(R.id.huntStatusImage)
+
+        if(huntingMode){
+            huntItem?.setVisible(true) ?: false
+        } else {
+            huntItem?.setVisible(false) ?: false
+        }
     }
 }
