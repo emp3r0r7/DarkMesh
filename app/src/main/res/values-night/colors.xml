@@ -19,7 +19,7 @@
 <resources>
     <color name="colorOnPrimary">#FFFFFF</color>
 
-    <color name="colorPrimary">#B22222</color>
+    <color name="colorPrimary">#7A0A0A</color>
     <color name="colorPrimaryDark">#7A0A0A</color>
 
     <color name="colorMsg">#1A1A1A</color>
@@ -29,7 +29,7 @@
 
     <color name="colorMenuItem">#E0E0E0</color>
 
-    <color name="selectedColor">#D30034</color>
+    <color name="selectedColor">#7A0A0A</color> <!-- colore splash screen -->
 
     <color name="unselectedColor">#666666</color>
 

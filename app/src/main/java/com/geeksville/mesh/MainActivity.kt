@@ -21,6 +21,7 @@ import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.hardware.usb.UsbManager
@@ -42,6 +43,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.Toolbar
 import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
@@ -78,6 +80,9 @@ import com.geeksville.mesh.ui.DebugFragment
 import com.geeksville.mesh.ui.QuickChatSettingsFragment
 import com.geeksville.mesh.ui.SettingsFragment
 import com.geeksville.mesh.ui.UsersFragment
+import com.geeksville.mesh.ui.activity.HuntActivity
+import com.geeksville.mesh.ui.activity.HuntActivity.HUNT_MODE
+import com.geeksville.mesh.ui.activity.HuntActivity.SHARED_HUNT_PREFS
 import com.geeksville.mesh.ui.components.ScannedQrCodeDialog
 import com.geeksville.mesh.ui.map.MapFragment
 import com.geeksville.mesh.ui.message.navigateToMessages
@@ -99,7 +104,6 @@ import kotlinx.coroutines.cancel
 import java.text.DateFormat
 import java.util.Date
 import javax.inject.Inject
-import androidx.core.content.edit
 
 /*
 UI design
@@ -154,6 +158,7 @@ eventually:
 class MainActivity : AppCompatActivity(), Logging {
 
     private lateinit var binding: ActivityMainBinding
+    private lateinit var huntingPrefs: SharedPreferences
 
     // Used to schedule a coroutine in the GUI thread
     private val mainScope = CoroutineScope(Dispatchers.Main + Job())
@@ -224,6 +229,8 @@ class MainActivity : AppCompatActivity(), Logging {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+
+        huntingPrefs = getSharedPreferences(SHARED_HUNT_PREFS, MODE_PRIVATE)
 
         if (savedInstanceState == null) {
             val prefs = UIViewModel.getPreferences(this)
@@ -560,6 +567,16 @@ class MainActivity : AppCompatActivity(), Logging {
             updateConnectionStatusImage(state)
         }
 
+        //check if hunter
+        val huntingMode = huntingPrefs.getBoolean(HUNT_MODE, false)
+        val huntItem = model.actionBarMenu?.findItem(R.id.huntStatusImage)
+
+        if(huntingMode){
+            huntItem?.setVisible(true) ?: false
+        } else {
+            huntItem?.setVisible(false) ?: false
+        }
+
         bluetoothViewModel.enabled.observe(this) { enabled ->
             if (!enabled && !requestedEnable && model.selectedBluetooth) {
                 requestedEnable = true
@@ -652,6 +669,21 @@ class MainActivity : AppCompatActivity(), Logging {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
+
+            R.id.huntStatusImage -> {
+
+                if(huntingPrefs.getBoolean(HUNT_MODE, false)){
+                    Toast.makeText(applicationContext, "You are currently Hunting!", Toast.LENGTH_SHORT).show()
+                }
+
+                return true
+            }
+
+            R.id.hunt -> {
+                startActivity(Intent(this, HuntActivity::class.java))
+                return true
+            }
+
             R.id.about -> {
                 getVersionInfo()
                 return true

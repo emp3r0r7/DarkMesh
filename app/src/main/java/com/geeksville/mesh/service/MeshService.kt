@@ -21,6 +21,7 @@ import android.annotation.SuppressLint
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.ServiceInfo
 import android.os.IBinder
 import android.os.RemoteException
@@ -78,7 +79,10 @@ import com.geeksville.mesh.repository.network.MQTTRepository
 import com.geeksville.mesh.repository.radio.RadioInterfaceService
 import com.geeksville.mesh.repository.radio.RadioServiceConnectionState
 import com.geeksville.mesh.telemetry
+import com.geeksville.mesh.ui.activity.HuntActivity.SHARED_HUNT_PREFS
 import com.geeksville.mesh.user
+import com.geeksville.mesh.util.ApiUtil
+import com.geeksville.mesh.util.ApiUtil.buildTracerouteJson
 import com.geeksville.mesh.util.anonymize
 import com.geeksville.mesh.util.toOneLineString
 import com.geeksville.mesh.util.toPIIString
@@ -121,6 +125,9 @@ sealed class ServiceAction {
  */
 @AndroidEntryPoint
 class MeshService : Service(), Logging {
+
+    private val huntHttpService: HuntHttpService = HuntHttpService.getInstance()
+
     @Inject
     lateinit var dispatchers: CoroutineDispatchers
 
@@ -141,6 +148,8 @@ class MeshService : Service(), Logging {
 
     @Inject
     lateinit var mqttRepository: MQTTRepository
+
+    private lateinit var huntingPrefs: SharedPreferences;
 
     companion object : Logging {
 
@@ -318,6 +327,7 @@ class MeshService : Service(), Logging {
         super.onCreate()
 
         info("Creating mesh service")
+        huntingPrefs = getSharedPreferences(SHARED_HUNT_PREFS, MODE_PRIVATE)
 
         // Switch to the IO thread
         serviceScope.handledLaunch {
@@ -713,10 +723,6 @@ class MeshService : Service(), Logging {
 
                 debug("Received data from $fromId, portnum=${data.portnum} ${bytes.size} bytes")
 
-//                if (!fromUs){
-//                    mainLooperToast("Received data from ${getUserName(packet.from)}")
-//                }
-
                 dataPacket.status = MessageStatus.RECEIVED
 
                 // if (p.hasUser()) handleReceivedUser(fromNum, p.user)
@@ -745,13 +751,19 @@ class MeshService : Service(), Logging {
                     Portnums.PortNum.POSITION_APP_VALUE -> {
                         val u = MeshProtos.Position.parseFrom(data.payload)
 
-//                        debug("Position is from ${getUserName(packet.from)}")
-//                        debug("Position : ${u.toPIIString()}")
-
-                        // debug("position_app ${packet.from} ${u.toOneLineString()}")
                         if (data.wantResponse && u.latitudeI == 0 && u.longitudeI == 0) {
                             debug("Ignoring nop position update from position request")
+
                         } else {
+
+                            val positionPayload = ApiUtil.mergePacketAndPayload(
+                                myNodeID,
+                                packet,
+                                u,
+                                Portnums.PortNum.POSITION_APP_VALUE)
+                                { nodeId -> getUserName(nodeId) }
+
+                            huntHttpService.sendDataJsonAsync(huntingPrefs, positionPayload);
                             handleReceivedPosition(packet.from, u, dataPacket.time)
                         }
                     }
@@ -770,9 +782,14 @@ class MeshService : Service(), Logging {
                         val u = TelemetryProtos.Telemetry.parseFrom(data.payload)
                             .copy { if (time == 0) time = (dataPacket.time / 1000L).toInt() }
 
-//                        debug("Telemetry is from ${getUserName(packet.from)}")
-//                        debug("Telemetry : ${u.toPIIString()}")
+                        val telemetryPayload = ApiUtil.mergePacketAndPayload(
+                            myNodeID,
+                            packet,
+                            u,
+                            Portnums.PortNum.TELEMETRY_APP_VALUE)
+                            { nodeId -> getUserName(nodeId) }
 
+                        huntHttpService.sendDataJsonAsync(huntingPrefs, telemetryPayload);
                         handleReceivedTelemetry(packet.from, u)
                     }
 
@@ -820,8 +837,15 @@ class MeshService : Service(), Logging {
 
                     Portnums.PortNum.TRACEROUTE_APP_VALUE -> {
 
+                        val fullTracePayload = packet.buildTracerouteJson(myNodeID) {nodeNum -> getUserName(nodeNum)}
+
+                        if(fullTracePayload.isNotEmpty()){
+                            huntHttpService.sendDataJsonAsync(huntingPrefs, fullTracePayload);
+                        }
+
                         if(!fromUs && packet.wantAck){
-                            mainLooperToast("Traceroute detected towards us from ${getUserName(packet.from)}", Toast.LENGTH_SHORT)
+                            mainLooperToast("Traceroute detected towards us from " +
+                                    getUserName(packet.from), Toast.LENGTH_SHORT)
                         }
 
                         radioConfigRepository.setTracerouteResponse(

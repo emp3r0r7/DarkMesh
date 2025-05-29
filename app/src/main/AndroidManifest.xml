@@ -145,6 +145,11 @@
                 android:value="true" />
         </service>
 
+        <activity android:name="com.geeksville.mesh.ui.activity.HuntActivity"
+            android:screenOrientation="portrait"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity">
+        </activity>
+
         <activity
             android:name="com.journeyapps.barcodescanner.CaptureActivity"
             android:screenOrientation="unspecified"
