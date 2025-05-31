@@ -16,30 +16,24 @@ object ApiUtil {
 
     fun mergePacketAndPayload(myNodeID: String,
                               packet: MeshPacket,
-                              payload: GeneratedMessage,
                               messageType: Int,
                               getUserName: (Int) -> String): String {
 
         val type = getPortNameFromValue(messageType)
-
-        val payloadJsonStr = JsonFormat
-            .printer()
-            .includingDefaultValueFields()
-            .print(payload)
 
         val packetJsonStr = JsonFormat
             .printer()
             .includingDefaultValueFields()
             .print(packet)
 
-        val payloadJson = JsonParser.parseString(payloadJsonStr).asJsonObject
+
         val packetJson = JsonParser.parseString(packetJsonStr).asJsonObject
 
         val merged = JsonObject()
-        merged.addProperty("name", getUserName(packet.from))
+        //merged.addProperty("name", getUserName(packet.from))
         merged.add("packet", packetJson)
         merged.addProperty("idHunter", myNodeID)
-        merged.add(type, payloadJson)
+        //merged.add(type, payloadJson)
 
         val gson = GsonBuilder().setPrettyPrinting().create()
         return gson.toJson(merged)
