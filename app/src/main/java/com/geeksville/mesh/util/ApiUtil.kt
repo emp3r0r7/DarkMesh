@@ -9,23 +9,20 @@ import com.geeksville.mesh.model.fullRouteDiscovery
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import com.google.protobuf.GeneratedMessage
 import com.google.protobuf.util.JsonFormat
 
 object ApiUtil {
 
     fun mergePacketAndPayload(myNodeID: String,
-                              packet: MeshPacket,
-                              messageType: Int,
-                              getUserName: (Int) -> String): String {
+                              packet: MeshPacket): String {
 
-        val type = getPortNameFromValue(messageType)
+        //if needed, get the type from this helper func!
+        //val type = getPortNameFromValue(messageType)
 
         val packetJsonStr = JsonFormat
             .printer()
             .includingDefaultValueFields()
             .print(packet)
-
 
         val packetJson = JsonParser.parseString(packetJsonStr).asJsonObject
 
@@ -40,6 +37,7 @@ object ApiUtil {
     }
 
 
+    @Suppress("unused") //to be used in case of necessity for a traceroute parsing
     fun MeshPacket.buildTracerouteJson(
         myNodeID: String,
         getUser: (nodeNum: Int) -> String
@@ -88,6 +86,7 @@ object ApiUtil {
         return gson.toJson(full)
     }
 
+    @Suppress("unused") //to be used in case of necessity if you need the explicit type
     private fun getPortNameFromValue(value: Int): String = when (value) {
         Portnums.PortNum.UNKNOWN_APP_VALUE -> "unknown"
         Portnums.PortNum.TEXT_MESSAGE_APP_VALUE -> "text_message"

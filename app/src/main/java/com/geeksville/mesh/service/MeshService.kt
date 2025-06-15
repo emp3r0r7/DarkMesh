@@ -82,7 +82,6 @@ import com.geeksville.mesh.telemetry
 import com.geeksville.mesh.ui.activity.HuntActivity.SHARED_HUNT_PREFS
 import com.geeksville.mesh.user
 import com.geeksville.mesh.util.ApiUtil
-import com.geeksville.mesh.util.ApiUtil.buildTracerouteJson
 import com.geeksville.mesh.util.anonymize
 import com.geeksville.mesh.util.toOneLineString
 import com.geeksville.mesh.util.toPIIString
@@ -149,7 +148,7 @@ class MeshService : Service(), Logging {
     @Inject
     lateinit var mqttRepository: MQTTRepository
 
-    private lateinit var huntingPrefs: SharedPreferences;
+    private lateinit var huntingPrefs: SharedPreferences
 
     companion object : Logging {
 
@@ -756,13 +755,9 @@ class MeshService : Service(), Logging {
 
                         } else {
 
-                            val positionPayload = ApiUtil.mergePacketAndPayload(
-                                myNodeID,
-                                packet,
-                                Portnums.PortNum.POSITION_APP_VALUE)
-                                { nodeId -> getUserName(nodeId) }
+                            val positionPayload = ApiUtil.mergePacketAndPayload(myNodeID, packet)
 
-                            huntHttpService.sendDataJsonAsync(huntingPrefs, positionPayload);
+                            huntHttpService.sendDataJsonAsync(huntingPrefs, positionPayload)
                             handleReceivedPosition(packet.from, u, dataPacket.time)
                         }
                     }
@@ -773,13 +768,10 @@ class MeshService : Service(), Logging {
                                 if (isLicensed) clearPublicKey()
                                 if (packet.viaMqtt) longName = "$longName (MQTT)"
                             }
-                            val telemetryPayload = ApiUtil.mergePacketAndPayload(
-                                myNodeID,
-                                packet,
-                                Portnums.PortNum.NODEINFO_APP_VALUE)
-                            { nodeId -> getUserName(nodeId) }
 
-                            huntHttpService.sendDataJsonAsync(huntingPrefs, telemetryPayload);
+                            val telemetryPayload = ApiUtil.mergePacketAndPayload(myNodeID, packet)
+
+                            huntHttpService.sendDataJsonAsync(huntingPrefs, telemetryPayload)
 
                             handleReceivedUser(packet.from, u, packet.channel)
                         }
@@ -789,15 +781,12 @@ class MeshService : Service(), Logging {
                         val u = TelemetryProtos.Telemetry.parseFrom(data.payload)
                             .copy { if (time == 0) time = (dataPacket.time / 1000L).toInt() }
 
-                        val telemetryPayload = ApiUtil.mergePacketAndPayload(
-                            myNodeID,
-                            packet,
-                            Portnums.PortNum.TELEMETRY_APP_VALUE)
-                            { nodeId -> getUserName(nodeId) }
+                        val telemetryPayload = ApiUtil.mergePacketAndPayload(myNodeID, packet)
 
                         if (!fromUs) {
-                            huntHttpService.sendDataJsonAsync(huntingPrefs, telemetryPayload);
+                            huntHttpService.sendDataJsonAsync(huntingPrefs, telemetryPayload)
                         }
+
                         handleReceivedTelemetry(packet.from, u)
                     }
 
@@ -846,15 +835,9 @@ class MeshService : Service(), Logging {
                     Portnums.PortNum.TRACEROUTE_APP_VALUE -> {
 
                         //val fullTracePayload = packet.buildTracerouteJson(myNodeID) {nodeNum -> getUserName(nodeNum)}
-                        val fullTracePayload = ApiUtil.mergePacketAndPayload(
-                            myNodeID,
-                            packet,
-                            Portnums.PortNum.TRACEROUTE_APP_VALUE)
-                        { nodeId -> getUserName(nodeId) }
+                        val traceroutePayload = ApiUtil.mergePacketAndPayload(myNodeID, packet)
 
-                        if(fullTracePayload.isNotEmpty()){
-                            huntHttpService.sendDataJsonAsync(huntingPrefs, fullTracePayload);
-                        }
+                        huntHttpService.sendDataJsonAsync(huntingPrefs, traceroutePayload)
 
                         if(!fromUs && packet.wantAck){
                             mainLooperToast("Traceroute detected towards us from " +

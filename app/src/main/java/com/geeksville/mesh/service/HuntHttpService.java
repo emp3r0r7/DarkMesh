@@ -62,9 +62,11 @@ public class HuntHttpService {
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
                 try (response){
-                    if (response.isSuccessful())
+                    if (response.isSuccessful()){
+                        Log.d(TAG, "Health check success : " + response);
                         callback.onSuccess();
-                    else
+
+                    } else
                         callback.onFailure(new Exception("Code: " + response.code()));
                 }
             }

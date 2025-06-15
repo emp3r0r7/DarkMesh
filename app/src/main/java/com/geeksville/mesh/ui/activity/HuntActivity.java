@@ -87,10 +87,15 @@ public class HuntActivity extends Activity {
 
                 @Override
                 public void onFailure(Exception e) {
-                    runOnUiThread(() ->
-                            Toast.makeText(
-                                    HuntActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                            );
+
+                    runOnUiThread(() -> {
+
+                        Toast.makeText(
+                                HuntActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT
+                        ).show();
+
+                        huntingSwitch.setChecked(false);
+                    });
                 }
             });
         });

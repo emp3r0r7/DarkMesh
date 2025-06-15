@@ -54,7 +54,7 @@
 
     <item
         android:id="@+id/hunt"
-        android:title="Hunt"
+        android:title="Hunting Mode"
         app:showAsAction="withText"
         tools:ignore="HardcodedText" />
 
