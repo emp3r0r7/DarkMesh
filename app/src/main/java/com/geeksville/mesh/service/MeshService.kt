@@ -23,6 +23,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ServiceInfo
+import android.os.Binder
 import android.os.IBinder
 import android.os.RemoteException
 import android.widget.Toast
@@ -78,7 +79,9 @@ import com.geeksville.mesh.repository.location.LocationRepository
 import com.geeksville.mesh.repository.network.MQTTRepository
 import com.geeksville.mesh.repository.radio.RadioInterfaceService
 import com.geeksville.mesh.repository.radio.RadioServiceConnectionState
+import com.geeksville.mesh.service.HuntScheduleService.HUNT_SCHEDULE_BIND_LOCAL_ACTION_INTENT
 import com.geeksville.mesh.telemetry
+import com.geeksville.mesh.ui.activity.HuntActivity.BACKGROUND_HUNT
 import com.geeksville.mesh.ui.activity.HuntActivity.SHARED_HUNT_PREFS
 import com.geeksville.mesh.user
 import com.geeksville.mesh.util.ApiUtil
@@ -354,7 +357,11 @@ class MeshService : Service(), Logging {
      * If someone binds to us, this will be called after on create
      */
     override fun onBind(intent: Intent?): IBinder {
-        return binder
+        return if (intent?.action == HUNT_SCHEDULE_BIND_LOCAL_ACTION_INTENT) {
+            localBinder
+        } else {
+            binder // AIDL
+        }
     }
 
     /**
@@ -443,7 +450,7 @@ class MeshService : Service(), Logging {
     private var haveNodeDB = false
 
     // The database of active nodes, index is the node number
-    private val nodeDBbyNodeNum = ConcurrentHashMap<Int, NodeEntity>()
+    val nodeDBbyNodeNum = ConcurrentHashMap<Int, NodeEntity>()
 
     // The database of active nodes, index is the node user ID string
     // NOTE: some NodeInfos might be in only nodeDBbyNodeNum (because we don't yet know an ID).
@@ -844,9 +851,11 @@ class MeshService : Service(), Logging {
                                     getUserName(packet.from), Toast.LENGTH_SHORT)
                         }
 
-                        radioConfigRepository.setTracerouteResponse(
-                            packet.getTracerouteResponse(::getUserName)
-                        )
+                        if(!huntingPrefs.getBoolean(BACKGROUND_HUNT, false)){
+                            radioConfigRepository.setTracerouteResponse(
+                                packet.getTracerouteResponse(::getUserName)
+                            )
+                        }
                     }
 
                     else -> debug("No custom processing needed for ${data.portnumValue}")
@@ -1890,6 +1899,14 @@ class MeshService : Service(), Logging {
         rememberReaction(packet.copy { from = myNodeNum })
     }
 
+    interface MeshServiceAccessor {
+        fun getService(): MeshService
+    }
+
+    private val localBinder = object : Binder(), MeshServiceAccessor {
+        override fun getService(): MeshService = this@MeshService
+    }
+
     private val binder = object : IMeshService.Stub() {
 
         override fun setDeviceAddress(deviceAddr: String?) = toRemoteExceptions {
@@ -2184,6 +2201,10 @@ class MeshService : Service(), Logging {
                 nodedbReset = 1
             })
         }
+    }
+
+    fun getBinder() : IMeshService.Stub {
+        return binder
     }
 
     private fun hexIdToNodeNum(hexId: String): Int {

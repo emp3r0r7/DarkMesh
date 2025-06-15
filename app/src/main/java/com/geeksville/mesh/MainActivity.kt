@@ -70,6 +70,7 @@ import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.model.BluetoothViewModel
 import com.geeksville.mesh.model.DeviceVersion
 import com.geeksville.mesh.model.UIViewModel
+import com.geeksville.mesh.service.HuntScheduleService
 import com.geeksville.mesh.service.MeshService
 import com.geeksville.mesh.service.MeshServiceNotifications
 import com.geeksville.mesh.service.ServiceRepository
@@ -81,6 +82,7 @@ import com.geeksville.mesh.ui.QuickChatSettingsFragment
 import com.geeksville.mesh.ui.SettingsFragment
 import com.geeksville.mesh.ui.UsersFragment
 import com.geeksville.mesh.ui.activity.HuntActivity
+import com.geeksville.mesh.ui.activity.HuntActivity.BACKGROUND_HUNT
 import com.geeksville.mesh.ui.activity.HuntActivity.HUNT_MODE
 import com.geeksville.mesh.ui.activity.HuntActivity.SHARED_HUNT_PREFS
 import com.geeksville.mesh.ui.components.ScannedQrCodeDialog
@@ -269,8 +271,9 @@ class MainActivity : AppCompatActivity(), Logging {
                 val mainTab = tab?.position ?: 0
                 model.setCurrentTab(mainTab)
             }
-            override fun onTabUnselected(tab: TabLayout.Tab?) { }
-            override fun onTabReselected(tab: TabLayout.Tab?) { }
+
+            override fun onTabUnselected(tab: TabLayout.Tab?) {}
+            override fun onTabReselected(tab: TabLayout.Tab?) {}
         })
 
         binding.composeView.setContent {
@@ -665,8 +668,25 @@ class MainActivity : AppCompatActivity(), Logging {
 
             R.id.huntStatusImage -> {
 
-                if(huntingPrefs.getBoolean(HUNT_MODE, false)){
-                    Toast.makeText(applicationContext, "You are currently Hunting!", Toast.LENGTH_SHORT).show()
+                if (huntingPrefs.getBoolean(HUNT_MODE, false)) {
+                    Toast.makeText(
+                        applicationContext,
+                        "You are currently Hunting!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+
+                return true
+            }
+
+            R.id.huntBackgroundStatusImage -> {
+
+                if (huntingPrefs.getBoolean(BACKGROUND_HUNT, false)) {
+                    Toast.makeText(
+                        applicationContext,
+                        "You are currently Auto Hunting!",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
 
                 return true
@@ -681,10 +701,12 @@ class MainActivity : AppCompatActivity(), Logging {
                 getVersionInfo()
                 return true
             }
+
             R.id.connectStatusImage -> {
                 Toast.makeText(applicationContext, item.title, Toast.LENGTH_SHORT).show()
                 return true
             }
+
             R.id.debug -> {
                 val fragmentManager: FragmentManager = supportFragmentManager
                 val fragmentTransaction: FragmentTransaction = fragmentManager.beginTransaction()
@@ -694,6 +716,7 @@ class MainActivity : AppCompatActivity(), Logging {
                 fragmentTransaction.commit()
                 return true
             }
+
             R.id.stress_test -> {
                 fun postPing() {
                     // Send ping message and arrange delayed recursion.
@@ -711,10 +734,12 @@ class MainActivity : AppCompatActivity(), Logging {
                 }
                 return true
             }
+
             R.id.radio_config -> {
                 supportFragmentManager.navigateToNavGraph()
                 return true
             }
+
             R.id.save_messages_csv -> {
                 val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                     addCategory(Intent.CATEGORY_OPENABLE)
@@ -724,18 +749,22 @@ class MainActivity : AppCompatActivity(), Logging {
                 createDocumentLauncher.launch(intent)
                 return true
             }
+
             R.id.theme -> {
                 chooseThemeDialog()
                 return true
             }
+
             R.id.preferences_language -> {
                 chooseLangDialog()
                 return true
             }
+
             R.id.show_intro -> {
                 startActivity(Intent(this, AppIntroduction::class.java))
                 return true
             }
+
             R.id.preferences_quick_chat -> {
                 val fragmentManager: FragmentManager = supportFragmentManager
                 val fragmentTransaction: FragmentTransaction = fragmentManager.beginTransaction()
@@ -745,6 +774,7 @@ class MainActivity : AppCompatActivity(), Logging {
                 fragmentTransaction.commit()
                 return true
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -784,7 +814,7 @@ class MainActivity : AppCompatActivity(), Logging {
         ) { dialog, position ->
             val selectedTheme = styles.values.elementAt(position)
             debug("Set theme pref to $selectedTheme")
-            prefs.edit {putInt("theme", selectedTheme)}
+            prefs.edit { putInt("theme", selectedTheme) }
             AppCompatDelegate.setDefaultNightMode(selectedTheme)
             dialog.dismiss()
         }
@@ -818,15 +848,30 @@ class MainActivity : AppCompatActivity(), Logging {
         dialog.show()
     }
 
-    private fun checkIfDeviceIsHunting(){
+    private fun checkIfDeviceIsHunting() {
 
         val huntingMode = huntingPrefs.getBoolean(HUNT_MODE, false)
-        val huntItem = model.actionBarMenu?.findItem(R.id.huntStatusImage)
+        val huntBackgroundMode = huntingPrefs.getBoolean(BACKGROUND_HUNT, false)
 
-        if(huntingMode){
-            huntItem?.setVisible(true) ?: false
+        var huntModeItem = model.actionBarMenu?.findItem(R.id.huntStatusImage)
+        var huntBackgroundItem = model.actionBarMenu?.findItem(R.id.huntBackgroundStatusImage)
+
+        huntModeItem?.let { it.isVisible = false}
+        huntBackgroundItem?.let { it.isVisible = false }
+
+        if (huntingMode) {
+
+            if (huntBackgroundMode) {
+                val huntService = Intent(this, HuntScheduleService::class.java)
+                startService(huntService)
+                huntBackgroundItem?.isVisible = true
+
+            } else {
+                huntModeItem?.isVisible = true
+            }
+
         } else {
-            huntItem?.setVisible(false) ?: false
+            huntModeItem?.isVisible = false
         }
     }
 }

@@ -41,19 +41,42 @@
         app:layout_constraintTop_toBottomOf="@id/huntingTitle"
         tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
 
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/huntingBackground"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Background Hunt "
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/huntingSwitch"
+        tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
+
+    <Spinner
+        android:id="@+id/huntSpeedSpinner"
+        android:layout_width="127dp"
+        android:layout_height="42dp"
+        android:layout_marginStart="68dp"
+        app:layout_constraintBottom_toBottomOf="@id/huntingBackground"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@id/huntingBackground"
+        app:layout_constraintTop_toTopOf="@id/huntingBackground"
+        app:layout_constraintVertical_bias="1.0" />
+
     <EditText
         android:id="@+id/domainInput"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
+        android:layout_marginTop="24dp"
         android:enabled="false"
         android:hint="Input target domain"
         android:inputType="textUri"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/huntingSwitch"
-        tools:ignore="HardcodedText" />
+        app:layout_constraintTop_toBottomOf="@+id/huntingBackground"
+        tools:ignore="Autofill,HardcodedText" />
 
     <EditText
         android:id="@+id/tokenInput"

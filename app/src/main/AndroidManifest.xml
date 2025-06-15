@@ -145,6 +145,12 @@
                 android:value="true" />
         </service>
 
+        <service
+            android:name="com.geeksville.mesh.service.HuntScheduleService"
+            android:enabled="true"
+            android:exported="false">
+        </service>
+
         <activity android:name="com.geeksville.mesh.ui.activity.HuntActivity"
             android:screenOrientation="portrait"
             tools:ignore="DiscouragedApi,LockedOrientationActivity">

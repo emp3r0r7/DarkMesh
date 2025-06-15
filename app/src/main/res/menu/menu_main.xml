@@ -30,6 +30,14 @@
         tools:ignore="HardcodedText" />
 
     <item
+        android:id="@+id/huntBackgroundStatusImage"
+        android:icon="@drawable/hunt_back_mode_on"
+        app:iconTint="@color/toolbarText"
+        android:title="Hunting Mode"
+        app:showAsAction="ifRoom"
+        tools:ignore="HardcodedText" />
+
+    <item
         android:id="@+id/connectStatusImage"
         android:contentDescription="@string/connection_status"
         android:icon="@drawable/cloud_off"
