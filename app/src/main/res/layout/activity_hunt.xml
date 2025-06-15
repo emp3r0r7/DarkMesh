@@ -90,7 +90,7 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/domainInput"
-        tools:ignore="HardcodedText" />
+        tools:ignore="Autofill,HardcodedText" />
 
     <Button
         android:id="@+id/validateButton"

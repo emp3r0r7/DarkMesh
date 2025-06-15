@@ -33,6 +33,7 @@ public class HuntActivity extends Activity {
     public static final String HUNT_TOKEN = "hunt_token";
     public static final String BACKGROUND_HUNT_MODE = "background_hunt_mode";
 
+    //background mode params
     public static final String BACKGROUND_MODE_FAST = "FAST";
     public static final String BACKGROUND_MODE_MEDIUM = "MEDIUM";
     public static final String BACKGROUND_MODE_SLOW = "SLOW";
@@ -121,7 +122,7 @@ public class HuntActivity extends Activity {
             }
 
             if(backgroundHuntSwitch.isChecked())
-                startService(huntService);
+                startForegroundService(huntService);
             else
                 stopService(huntService);
 

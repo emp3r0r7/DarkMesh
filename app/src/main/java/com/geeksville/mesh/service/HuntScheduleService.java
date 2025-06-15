@@ -8,6 +8,9 @@ import static com.geeksville.mesh.ui.activity.HuntActivity.BACKGROUND_MODE_SLOW;
 import static com.geeksville.mesh.ui.activity.HuntActivity.BACKGROUND_MODE_SUPER_SLOW;
 import static com.geeksville.mesh.ui.activity.HuntActivity.SHARED_HUNT_PREFS;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
@@ -18,7 +21,9 @@ import android.os.IBinder;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
 
+import com.emp3r0r7.darkmesh.R;
 import com.geeksville.mesh.database.entity.MyNodeEntity;
 import com.geeksville.mesh.database.entity.NodeEntity;
 
@@ -35,6 +40,8 @@ public class HuntScheduleService extends Service {
     public static final String HUNT_SCHEDULE_BIND_LOCAL_ACTION_INTENT = "com.emp3r0r7.mesh.MeshService.BIND_LOCAL";
 
     private static final String TAG = "HuntService";
+
+    private static final String CHANNEL_ID = "hunt_service_channel";
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -58,6 +65,37 @@ public class HuntScheduleService extends Service {
         bindService(intent, meshServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
+
+    private void createNotificationChannel() {
+        NotificationChannel serviceChannel = new NotificationChannel(
+                CHANNEL_ID,
+                "Hunt Background Scan",
+                NotificationManager.IMPORTANCE_LOW
+        );
+        NotificationManager manager = getSystemService(NotificationManager.class);
+        if (manager != null) {
+            manager.createNotificationChannel(serviceChannel);
+        }
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        createNotificationChannel();
+
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Background Hunt Active")
+                .setContentText("Auto Trace Scan in progress..")
+                .setSmallIcon(R.drawable.app_icon)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setOngoing(true)
+                .build();
+
+        startForeground(1, notification);
+
+        return START_STICKY;
+    }
+
+
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -69,6 +107,7 @@ public class HuntScheduleService extends Service {
                 task.cancel(true);
 
             executor.shutdownNow();
+            stopForeground(true);
 
             Log.d(TAG, "Successfully unbound from MeshService");
         } catch (Exception e) {
