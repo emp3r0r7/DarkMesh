@@ -2207,6 +2207,10 @@ class MeshService : Service(), Logging {
         return binder
     }
 
+    fun getMyNodeInfo() : MyNodeEntity? {
+        return myNodeInfo
+    }
+
     private fun hexIdToNodeNum(hexId: String): Int {
         return hexId.removePrefix("!").toUInt(16).toInt()
     }

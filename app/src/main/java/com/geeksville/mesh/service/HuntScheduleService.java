@@ -19,8 +19,11 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
+import com.geeksville.mesh.database.entity.MyNodeEntity;
 import com.geeksville.mesh.database.entity.NodeEntity;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -95,23 +98,32 @@ public class HuntScheduleService extends Service {
             task = CompletableFuture.runAsync(() -> {
 
                 Log.d(TAG, "Starting Traceroute loop task now..");
+                MyNodeEntity myNodeEntity = meshService.getMyNodeInfo();
 
                 while(prefs.getBoolean(BACKGROUND_HUNT, false)){
 
                     try {
                         ConcurrentHashMap<Integer, NodeEntity> db = meshService.getNodeDBbyNodeNum();
+                        List<NodeEntity> nodes = new ArrayList<>(db.values());
+
+                        nodes.sort((n1, n2) ->
+                                Integer.compare(n2.getLastHeard(), n1.getLastHeard()));
 
                         Log.d("Hunt", "DB size: " + db.size());
 
-                        for(NodeEntity node : db.values()){
+                        for(NodeEntity node : nodes){
+
+                            // avoiding self traceroute here!
+                            if(myNodeEntity != null && myNodeEntity.getMyNodeNum() == node.getNum()) continue;
+
                             int packetId = meshService.getBinder().getPacketId();
-                            Log.d(TAG, "Requesting traceroute for name " + node.getLongName());
+                            Log.d(TAG, "Requesting traceroute for name " + node.getUser().getLongName());
 
                             meshService.getBinder().requestTraceroute(packetId, node.getNum());
-                            long sleepLapse = parseBackgroundScanMode();
+                            long sleepRate = parseBackgroundScanMode();
 
-                            Log.d(TAG, "Sleeping for : " + sleepLapse + " millis before keeping on..");
-                            Thread.sleep(sleepLapse);
+                            Log.d(TAG, "Sleeping for : " + sleepRate + " millis before keeping on..");
+                            Thread.sleep(sleepRate);
                         }
 
                     } catch (Exception e){
