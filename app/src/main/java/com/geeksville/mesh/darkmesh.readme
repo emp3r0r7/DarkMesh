@@ -1,0 +1,17 @@
+Darkmesh useful stuff
+
+to be as updated as possible, it is suggested to update the proto git submodule with the latest proto
+definitions available from the original repo.
+
+use your preferred shell : bash / zsh / ms ps and navigate to \DarkMesh\app\src\main\proto
+
+fetch the project tags :
+git fetch -a
+git fetch --tags
+
+checkout the latest proto tag and build again
+
+eg.
+git checkout tags/v2.6.13
+
+always test the latest proto
