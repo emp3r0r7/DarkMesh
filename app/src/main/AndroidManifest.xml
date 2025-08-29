@@ -152,7 +152,24 @@
             android:exported="false">
         </service>
 
+        <service
+            android:name="com.geeksville.mesh.service.PlanMsgService"
+            android:enabled="true"
+            android:foregroundServiceType="connectedDevice"
+            android:exported="false">
+        </service>
+
         <activity android:name="com.geeksville.mesh.ui.activity.HuntActivity"
+            android:screenOrientation="portrait"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity">
+        </activity>
+
+        <activity android:name="com.geeksville.mesh.ui.activity.PlanMsgListActivity"
+            android:screenOrientation="portrait"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity">
+        </activity>
+
+        <activity android:name="com.geeksville.mesh.ui.activity.PlanMsgActivity"
             android:screenOrientation="portrait"
             tools:ignore="DiscouragedApi,LockedOrientationActivity">
         </activity>

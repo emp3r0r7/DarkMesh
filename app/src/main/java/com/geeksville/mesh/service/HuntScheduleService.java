@@ -1,13 +1,5 @@
 package com.geeksville.mesh.service;
 
-import static com.geeksville.mesh.ui.activity.HuntActivity.BACKGROUND_HUNT;
-import static com.geeksville.mesh.ui.activity.HuntActivity.BACKGROUND_HUNT_MODE;
-import static com.geeksville.mesh.ui.activity.HuntActivity.BACKGROUND_MODE_FAST;
-import static com.geeksville.mesh.ui.activity.HuntActivity.BACKGROUND_MODE_MEDIUM;
-import static com.geeksville.mesh.ui.activity.HuntActivity.BACKGROUND_MODE_SLOW;
-import static com.geeksville.mesh.ui.activity.HuntActivity.BACKGROUND_MODE_SUPER_SLOW;
-import static com.geeksville.mesh.ui.activity.HuntActivity.SHARED_HUNT_PREFS;
-
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -21,6 +13,7 @@ import android.content.pm.ServiceInfo;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -28,6 +21,7 @@ import androidx.core.app.NotificationCompat;
 import com.emp3r0r7.darkmesh.R;
 import com.geeksville.mesh.database.entity.MyNodeEntity;
 import com.geeksville.mesh.database.entity.NodeEntity;
+import com.geeksville.mesh.prefs.UserPrefs;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,31 +32,23 @@ import java.util.concurrent.Executors;
 
 
 public class HuntScheduleService extends Service {
-
-    public static final String HUNT_SCHEDULE_BIND_LOCAL_ACTION_INTENT = "com.emp3r0r7.mesh.MeshService.BIND_LOCAL";
-
     private static final String TAG = "HuntService";
-
     private static final String CHANNEL_ID = "hunt_service_channel";
-
+    private static final int NOTIFICATION_ID = 98;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
-
     private MeshService meshService;
-
     private SharedPreferences prefs;
-
     private SharedPreferences.Editor editor;
-
     private CompletableFuture<?> task;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        prefs = getSharedPreferences(SHARED_HUNT_PREFS, MODE_PRIVATE);
+        prefs = getSharedPreferences(UserPrefs.Hunting.SHARED_HUNT_PREFS, MODE_PRIVATE);
         editor = prefs.edit();
 
         Intent intent = new Intent(this, MeshService.class);
-        intent.setAction(HUNT_SCHEDULE_BIND_LOCAL_ACTION_INTENT);
+        intent.setAction(MeshService.BIND_LOCAL_ACTION_INTENT);
 
         bindService(intent, meshServiceConnection, Context.BIND_AUTO_CREATE);
     }
@@ -89,12 +75,15 @@ public class HuntScheduleService extends Service {
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Background Hunt Active")
                 .setContentText("Auto Trace Scan in progress..")
-                .setSmallIcon(R.drawable.app_icon)
+                .setSmallIcon(R.drawable.hunt_mode_on_white)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setOngoing(true)
                 .build();
 
-        startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
+        else
+            Toast.makeText(this, "Unable to launch Hunt Foreground Service, version unsupported!", Toast.LENGTH_LONG).show();
 
         return START_STICKY;
     }
@@ -119,7 +108,7 @@ public class HuntScheduleService extends Service {
         }
 
         meshService = null;
-        editor.putBoolean(BACKGROUND_HUNT, false).commit();
+        editor.putBoolean(UserPrefs.Hunting.BACKGROUND_HUNT, false).commit();
 
         Log.d(TAG, "HuntScheduleService destroyed");
     }
@@ -136,25 +125,27 @@ public class HuntScheduleService extends Service {
         public void onServiceConnected(ComponentName name, IBinder service) {
             MeshService.MeshServiceAccessor accessor = (MeshService.MeshServiceAccessor) service;
             HuntScheduleService.this.meshService = accessor.getService();
-            editor.putBoolean(BACKGROUND_HUNT, true).commit();
+            editor.putBoolean(UserPrefs.Hunting.BACKGROUND_HUNT, true).commit();
 
             task = CompletableFuture.runAsync(() -> {
 
                 Log.d(TAG, "Starting Traceroute loop task now..");
                 MyNodeEntity myNodeEntity = meshService.getMyNodeInfo();
 
-                while(prefs.getBoolean(BACKGROUND_HUNT, false)){
+                while(prefs.getBoolean(UserPrefs.Hunting.BACKGROUND_HUNT, false)){
 
                     try {
+
                         ConcurrentHashMap<Integer, NodeEntity> db = meshService.getNodeDBbyNodeNum();
                         List<NodeEntity> nodes = new ArrayList<>(db.values());
 
                         nodes.sort((n1, n2) ->
                                 Integer.compare(n2.getLastHeard(), n1.getLastHeard()));
 
-                        Log.d("Hunt", "DB size: " + db.size());
+                        Log.d(TAG, "DB size: " + db.size());
 
                         for(NodeEntity node : nodes){
+                            long startTime = System.currentTimeMillis();
 
                             // avoiding self traceroute here!
                             if(myNodeEntity != null && myNodeEntity.getMyNodeNum() == node.getNum()) continue;
@@ -167,10 +158,21 @@ public class HuntScheduleService extends Service {
 
                             Log.d(TAG, "Sleeping for : " + sleepRate + " millis before keeping on..");
                             Thread.sleep(sleepRate);
+
+                            Log.d(TAG, "Time elapsed for Single node Hunt trace loop: " + (System.currentTimeMillis() - startTime));
                         }
 
                     } catch (Exception e){
-                        Log.e(TAG,"An error occurred while scanning local node database!");
+
+                        if(e instanceof InterruptedException){
+                            Thread.currentThread().interrupt();
+                            Log.w(TAG, "Thread has been interrupted due to service stop!");
+                            break;
+                        } else {
+                            Log.e(TAG,"An error occurred while scanning local node database!", e);
+                        }
+                    } finally {
+                        safeThrottling();
                     }
                 }
 
@@ -184,25 +186,32 @@ public class HuntScheduleService extends Service {
 
     };
 
+    private void safeThrottling(){
+        try {
+            Log.w(TAG, "Safe throttling now...");
+            Thread.sleep(15_000);
+        }catch (Exception ignored){}
+    }
+
     private long parseBackgroundScanMode(){
 
-        String scanMode = prefs.getString(BACKGROUND_HUNT_MODE, BACKGROUND_MODE_FAST);
+        String scanMode = prefs.getString(UserPrefs.Hunting.BACKGROUND_HUNT_MODE, UserPrefs.Hunting.BACKGROUND_MODE_FAST);
 
         switch (scanMode){
 
-            case BACKGROUND_MODE_FAST -> {
+            case UserPrefs.Hunting.BACKGROUND_MODE_FAST -> {
                 return 31_000;
             }
 
-            case BACKGROUND_MODE_MEDIUM -> {
+            case UserPrefs.Hunting.BACKGROUND_MODE_MEDIUM -> {
                 return 61_000;
             }
 
-            case BACKGROUND_MODE_SLOW -> {
+            case UserPrefs.Hunting.BACKGROUND_MODE_SLOW -> {
                 return 121_000;
             }
 
-            case BACKGROUND_MODE_SUPER_SLOW -> {
+            case UserPrefs.Hunting.BACKGROUND_MODE_SUPER_SLOW -> {
                 return 300_000;
             }
         }

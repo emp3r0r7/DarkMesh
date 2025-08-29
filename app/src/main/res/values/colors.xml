@@ -22,12 +22,12 @@
     <color name="colorPrimary">#B22222</color>
     <color name="colorPrimaryDark">#7A0A0A</color>
 
-    <color name="colorMsg">#1A1A1A</color>
-    <color name="colorMyMsg">#2A2A2A</color>
+    <color name="colorMsg">#C3C3C3</color>
+    <color name="colorMyMsg">#C3C3C3</color>
 
     <color name="colorAdvancedBackground">#121212</color>
 
-    <color name="colorMenuItem">#E0E0E0</color>
+    <color name="colorMenuItem">#535353</color>
 
     <color name="selectedColor">#FF003C</color>
 

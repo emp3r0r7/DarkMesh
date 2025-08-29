@@ -1,13 +1,11 @@
 package com.geeksville.mesh.service;
 
-import static com.geeksville.mesh.ui.activity.HuntActivity.HUNT_DOMAIN;
-import static com.geeksville.mesh.ui.activity.HuntActivity.HUNT_MODE;
-import static com.geeksville.mesh.ui.activity.HuntActivity.HUNT_TOKEN;
-
 import android.content.SharedPreferences;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+
+import com.geeksville.mesh.prefs.UserPrefs;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -75,12 +73,12 @@ public class HuntHttpService {
 
     public void sendDataJsonAsync(SharedPreferences huntPrefs, String jsonPayload) {
 
-        boolean isHuntEnabled = huntPrefs.getBoolean(HUNT_MODE, false);
+        boolean isHuntEnabled = huntPrefs.getBoolean(UserPrefs.Hunting.HUNT_MODE, false);
 
         if(!isHuntEnabled) return;
 
-        String domain = huntPrefs.getString(HUNT_DOMAIN, null);
-        String token = huntPrefs.getString(HUNT_TOKEN, null);
+        String domain = huntPrefs.getString(UserPrefs.Hunting.HUNT_DOMAIN, null);
+        String token = huntPrefs.getString(UserPrefs.Hunting.HUNT_TOKEN, null);
 
         if(domain == null || token == null) return;
 

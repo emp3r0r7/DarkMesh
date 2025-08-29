@@ -3,6 +3,7 @@ package com.geeksville.mesh.ui.activity;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -15,6 +16,7 @@ import androidx.appcompat.widget.SwitchCompat;
 
 import com.emp3r0r7.darkmesh.R;
 import com.geeksville.mesh.MainActivity;
+import com.geeksville.mesh.prefs.UserPrefs;
 import com.geeksville.mesh.service.HuntHttpService;
 import com.geeksville.mesh.service.HuntScheduleService;
 
@@ -23,27 +25,11 @@ import java.util.List;
 
 public class HuntActivity extends Activity {
 
-    //prefs name
-    public static final String SHARED_HUNT_PREFS = "hunt_prefs";
-
-    //prefs attributes
-    public static final String HUNT_MODE = "hunting_mode";
-    public static final String BACKGROUND_HUNT = "background_hunt";
-    public static final String HUNT_DOMAIN = "hunt_domain";
-    public static final String HUNT_TOKEN = "hunt_token";
-    public static final String BACKGROUND_HUNT_MODE = "background_hunt_mode";
-
-    //background mode params
-    public static final String BACKGROUND_MODE_FAST = "FAST";
-    public static final String BACKGROUND_MODE_MEDIUM = "MEDIUM";
-    public static final String BACKGROUND_MODE_SLOW = "SLOW";
-    public static final String BACKGROUND_MODE_SUPER_SLOW = "SUPER_SLOW";
-
     private static final List<String> scanModes = Arrays.asList(
-            BACKGROUND_MODE_FAST,
-            BACKGROUND_MODE_MEDIUM,
-            BACKGROUND_MODE_SLOW,
-            BACKGROUND_MODE_SUPER_SLOW
+            UserPrefs.Hunting.BACKGROUND_MODE_FAST,
+            UserPrefs.Hunting.BACKGROUND_MODE_MEDIUM,
+            UserPrefs.Hunting.BACKGROUND_MODE_SLOW,
+            UserPrefs.Hunting.BACKGROUND_MODE_SUPER_SLOW
     );
 
     @Override
@@ -60,11 +46,11 @@ public class HuntActivity extends Activity {
         EditText tokenInput = findViewById(R.id.tokenInput);
         Button validateButton = findViewById(R.id.validateButton);
 
-        final SharedPreferences prefs = getSharedPreferences(SHARED_HUNT_PREFS, MODE_PRIVATE);
+        final SharedPreferences prefs = getSharedPreferences(UserPrefs.Hunting.SHARED_HUNT_PREFS, MODE_PRIVATE);
         final SharedPreferences.Editor editor = prefs.edit();
-        final boolean isHuntingEnabled = prefs.getBoolean(HUNT_MODE, false);
-        final boolean backgroundHunt = prefs.getBoolean(BACKGROUND_HUNT, false);
-        final String scanMode = prefs.getString(BACKGROUND_HUNT_MODE, BACKGROUND_MODE_FAST);
+        final boolean isHuntingEnabled = prefs.getBoolean(UserPrefs.Hunting.HUNT_MODE, false);
+        final boolean backgroundHunt = prefs.getBoolean(UserPrefs.Hunting.BACKGROUND_HUNT, false);
+        final String scanMode = prefs.getString(UserPrefs.Hunting.BACKGROUND_HUNT_MODE, UserPrefs.Hunting.BACKGROUND_MODE_FAST);
 
         Spinner modeSpinner = findViewById(R.id.huntSpeedSpinner);
 
@@ -88,8 +74,8 @@ public class HuntActivity extends Activity {
         tokenInput.setEnabled(isHuntingEnabled);
         validateButton.setEnabled(isHuntingEnabled);
 
-        domainInput.setText(prefs.getString(HUNT_DOMAIN, ""));
-        tokenInput.setText(prefs.getString(HUNT_TOKEN, ""));
+        domainInput.setText(prefs.getString(UserPrefs.Hunting.HUNT_DOMAIN, ""));
+        tokenInput.setText(prefs.getString(UserPrefs.Hunting.HUNT_TOKEN, ""));
 
         huntingSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
 
@@ -98,11 +84,11 @@ public class HuntActivity extends Activity {
             validateButton.setEnabled(isChecked);
             backgroundHuntSwitch.setEnabled(isChecked);
 
-            editor.putBoolean(HUNT_MODE, isChecked).apply();
+            editor.putBoolean(UserPrefs.Hunting.HUNT_MODE, isChecked).apply();
 
             if(!isChecked){ //disabling background hunt if global hunt is off!
                 backgroundHuntSwitch.setChecked(false);
-                editor.putBoolean(BACKGROUND_HUNT, false).apply();
+                editor.putBoolean(UserPrefs.Hunting.BACKGROUND_HUNT, false).apply();
                 stopService(huntService);
             }
 
@@ -114,7 +100,7 @@ public class HuntActivity extends Activity {
             String token = String.valueOf(tokenInput.getText());
             String selectedBackgroundMode = modeSpinner.getSelectedItem().toString();
 
-            editor.putString(BACKGROUND_HUNT_MODE, selectedBackgroundMode).apply();
+            editor.putString(UserPrefs.Hunting.BACKGROUND_HUNT_MODE, selectedBackgroundMode).apply();
 
             if(domain.isBlank() || token.isBlank()) {
                 Toast.makeText(this, "You must input both domain and token!", Toast.LENGTH_LONG).show();
@@ -122,7 +108,10 @@ public class HuntActivity extends Activity {
             }
 
             if(backgroundHuntSwitch.isChecked())
-                startForegroundService(huntService);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                    startForegroundService(huntService);
+                else
+                    Toast.makeText(this, "Unable to launch Hunt Foreground Service, version unsupported!", Toast.LENGTH_LONG).show();
             else
                 stopService(huntService);
 
@@ -135,9 +124,9 @@ public class HuntActivity extends Activity {
 
                         Toast.makeText(HuntActivity.this, "Health check OK! You are now a Hunter!", Toast.LENGTH_SHORT).show();
 
-                        editor.putBoolean(HUNT_MODE, true);
-                        editor.putString(HUNT_DOMAIN, domain);
-                        editor.putString(HUNT_TOKEN, token);
+                        editor.putBoolean(UserPrefs.Hunting.HUNT_MODE, true);
+                        editor.putString(UserPrefs.Hunting.HUNT_DOMAIN, domain);
+                        editor.putString(UserPrefs.Hunting.HUNT_TOKEN, token);
 
                         editor.commit();
                         Intent intent = new Intent(HuntActivity.this.getApplicationContext(), MainActivity.class);

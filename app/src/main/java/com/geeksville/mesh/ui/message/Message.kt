@@ -266,7 +266,9 @@ internal fun MessageScreen(
                         viewModel.sendMessage(action.message, contactKey)
                     }
                 }
-                TextInput(isConnected, messageInput) { viewModel.sendMessage(it, contactKey) }
+                TextInput(isConnected, messageInput) {
+                    viewModel.sendMessage(it, contactKey)
+                }
             }
         }
     ) { innerPadding ->

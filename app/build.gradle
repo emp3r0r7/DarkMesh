@@ -30,7 +30,7 @@ android {
     compileSdk 35
     defaultConfig {
         applicationId "com.emp3r0r7.darkmesh"
-        minSdkVersion 21 // The oldest emulator image I have tried is 22 (though 21 probably works)
+        minSdkVersion 24 // The oldest emulator image I have tried is 22 (though 21 probably works)
         targetSdk 34
         versionCode 30516 // format is Mmmss (where M is 1+the numeric major number
         versionName "2.5.16"

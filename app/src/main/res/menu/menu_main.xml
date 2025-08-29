@@ -67,6 +67,12 @@
         tools:ignore="HardcodedText" />
 
     <item
+        android:id="@+id/planned_msgs"
+        android:title="Planned Messages"
+        app:showAsAction="withText"
+        tools:ignore="HardcodedText" />
+
+    <item
         android:id="@+id/save_messages_csv"
         app:showAsAction="withText"
         android:title="@string/save_messages" />

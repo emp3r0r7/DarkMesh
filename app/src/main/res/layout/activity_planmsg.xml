@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:padding="16dp"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/txtNodeId"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:ignore="HardcodedText"
+        android:text="Nodo: -" />
+
+    <TextView
+        android:id="@+id/plannerStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Stato Pianificazione Globale: UNKNOWN"
+        tools:ignore="HardcodedText" />
+
+    <Spinner
+        android:id="@+id/spinnerDay"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" />
+
+    <Button
+        android:backgroundTint="#470202"
+        android:id="@+id/btnTime"
+        android:textColor="#FFFFFF"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ora: --:--"
+        android:layout_marginTop="8dp"
+        tools:ignore="HardcodedText" />
+
+    <view class="com.geeksville.mesh.ui.activity.PlanMsgActivity$NDSpinner"
+        android:id="@+id/quick_messages"
+        android:layout_width="match_parent"
+        android:layout_height="50sp"
+        android:hint="Messaggio"
+        android:layout_marginTop="8dp"
+        tools:ignore="HardcodedText" />
+
+    <EditText
+        android:id="@+id/inputMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Messaggio"
+        android:layout_marginTop="8dp"
+        tools:ignore="HardcodedText" />
+
+    <Button
+        android:backgroundTint="#470202"
+        android:textColor="#FFFFFF"
+        android:id="@+id/btnAdd"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:ignore="HardcodedText"
+        android:text="Aggiungi"
+        android:layout_marginTop="8dp" />
+
+    <ListView
+        android:id="@+id/listRules"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="12dp"
+        android:layout_weight="1" />
+
+    <Button
+        android:backgroundTint="#470202"
+        android:textColor="#FFFFFF"
+        android:id="@+id/btnSave"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:ignore="HardcodedText"
+        android:text="Salva" />
+</LinearLayout>

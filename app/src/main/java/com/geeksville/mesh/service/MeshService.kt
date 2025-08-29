@@ -74,15 +74,13 @@ import com.geeksville.mesh.model.DeviceVersion
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.getTracerouteResponse
 import com.geeksville.mesh.position
+import com.geeksville.mesh.prefs.UserPrefs
 import com.geeksville.mesh.repository.datastore.RadioConfigRepository
 import com.geeksville.mesh.repository.location.LocationRepository
 import com.geeksville.mesh.repository.network.MQTTRepository
 import com.geeksville.mesh.repository.radio.RadioInterfaceService
 import com.geeksville.mesh.repository.radio.RadioServiceConnectionState
-import com.geeksville.mesh.service.HuntScheduleService.HUNT_SCHEDULE_BIND_LOCAL_ACTION_INTENT
 import com.geeksville.mesh.telemetry
-import com.geeksville.mesh.ui.activity.HuntActivity.BACKGROUND_HUNT
-import com.geeksville.mesh.ui.activity.HuntActivity.SHARED_HUNT_PREFS
 import com.geeksville.mesh.user
 import com.geeksville.mesh.util.ApiUtil
 import com.geeksville.mesh.util.anonymize
@@ -128,6 +126,7 @@ sealed class ServiceAction {
 @AndroidEntryPoint
 class MeshService : Service(), Logging {
 
+
     private val huntHttpService: HuntHttpService = HuntHttpService.getInstance()
 
     @Inject
@@ -153,6 +152,8 @@ class MeshService : Service(), Logging {
 
     private lateinit var huntingPrefs: SharedPreferences
 
+    lateinit var radioMeshService: IMeshService
+
     companion object : Logging {
 
         // Intents broadcast by MeshService
@@ -167,6 +168,7 @@ class MeshService : Service(), Logging {
             return actionReceived(portStr)
         }
 
+        const val BIND_LOCAL_ACTION_INTENT: String = "com.emp3r0r7.mesh.MeshService.BIND_LOCAL"
         const val ACTION_NODE_CHANGE = "$prefix.NODE_CHANGE"
         const val ACTION_MESH_CONNECTED = "$prefix.MESH_CONNECTED"
         const val ACTION_MESSAGE_STATUS = "$prefix.MESSAGE_STATUS"
@@ -199,6 +201,12 @@ class MeshService : Service(), Logging {
         val minDeviceVersion = DeviceVersion("2.3.2")
     }
 
+    fun buildContactKeyForMessage(node : NodeEntity) : String {
+        val hasPKC = nodeDBbyNodeNum[myNodeNum]?.hasPKC == true && node.hasPKC // TODO use meta.hasPKC
+        val channel = if (hasPKC) DataPacket.PKC_CHANNEL_INDEX else node.channel
+        return "$channel${node.user.id}"
+    }
+
     enum class ConnectionState {
         DISCONNECTED,
         CONNECTED,
@@ -220,7 +228,7 @@ class MeshService : Service(), Logging {
     }
     private val serviceJob = Job()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
-    private var connectionState = ConnectionState.DISCONNECTED
+    var connectionState = ConnectionState.DISCONNECTED
 
     private var locationFlow: Job? = null
     private var mqttMessageFlow: Job? = null
@@ -329,7 +337,7 @@ class MeshService : Service(), Logging {
         super.onCreate()
 
         info("Creating mesh service")
-        huntingPrefs = getSharedPreferences(SHARED_HUNT_PREFS, MODE_PRIVATE)
+        huntingPrefs = getSharedPreferences(UserPrefs.Hunting.SHARED_HUNT_PREFS, MODE_PRIVATE)
 
         // Switch to the IO thread
         serviceScope.handledLaunch {
@@ -348,6 +356,10 @@ class MeshService : Service(), Logging {
         radioConfigRepository.serviceAction.onEach(::onServiceAction)
             .launchIn(serviceScope)
 
+        if (radioConfigRepository.meshService != null){
+            radioMeshService = radioConfigRepository.meshService!!
+        }
+
         loadSettings() // Load our last known node DB
 
         // the rest of our init will happen once we are in radioConnection.onServiceConnected
@@ -357,7 +369,7 @@ class MeshService : Service(), Logging {
      * If someone binds to us, this will be called after on create
      */
     override fun onBind(intent: Intent?): IBinder {
-        return if (intent?.action == HUNT_SCHEDULE_BIND_LOCAL_ACTION_INTENT) {
+        return if (intent?.action == BIND_LOCAL_ACTION_INTENT) {
             localBinder
         } else {
             binder // AIDL
@@ -851,7 +863,7 @@ class MeshService : Service(), Logging {
                                     getUserName(packet.from), Toast.LENGTH_SHORT)
                         }
 
-                        if(!huntingPrefs.getBoolean(BACKGROUND_HUNT, false)){
+                        if(!huntingPrefs.getBoolean(UserPrefs.Hunting.BACKGROUND_HUNT, false)){
                             radioConfigRepository.setTracerouteResponse(
                                 packet.getTracerouteResponse(::getUserName)
                             )
@@ -1281,6 +1293,16 @@ class MeshService : Service(), Logging {
 
     // Called when we gain/lose connection to our radio
     private fun onConnectionChanged(c: ConnectionState) {
+
+        if (c == ConnectionState.CONNECTED){
+            val mesh = radioConfigRepository.meshService
+            if (mesh != null) {
+                radioMeshService = mesh
+            } else {
+                info("Radio mesh service is null!")
+            }
+        }
+
         debug("onConnectionChanged: $connectionState -> $c")
 
         // Perform all the steps needed once we start waiting for device sleep to complete

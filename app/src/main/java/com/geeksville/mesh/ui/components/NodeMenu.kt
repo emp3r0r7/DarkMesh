@@ -17,6 +17,7 @@
 
 package com.geeksville.mesh.ui.components
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -33,10 +34,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.model.Node
+import com.geeksville.mesh.ui.activity.PlanMsgActivity
+import com.geeksville.mesh.ui.activity.PlanMsgActivity.NODE_ID_EXTRA_PARAM
 
 @Suppress("LongMethod")
 @Composable
@@ -47,6 +51,7 @@ fun NodeMenu(
     expanded: Boolean = false,
     onAction: (NodeMenuAction) -> Unit
 ) {
+    val context = LocalContext.current
     var displayIgnoreDialog by remember { mutableStateOf(false) }
     var displayRemoveDialog by remember { mutableStateOf(false) }
     if (displayIgnoreDialog) {
@@ -112,6 +117,16 @@ fun NodeMenu(
                     onAction(NodeMenuAction.TraceRoute(node))
                 },
                 content = { Text(stringResource(R.string.traceroute)) }
+            )
+            DropdownMenuItem(
+                onClick = {
+                    onDismissRequest()
+                    val intent = Intent(context, PlanMsgActivity::class.java).apply {
+                        putExtra(NODE_ID_EXTRA_PARAM, node.num)
+                    }
+                    context.startActivity(intent)
+                },
+                content = { Text("Plan Message") }
             )
             DropdownMenuItem(
                 onClick = {

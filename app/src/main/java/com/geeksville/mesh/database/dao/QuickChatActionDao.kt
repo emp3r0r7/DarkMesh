@@ -50,4 +50,8 @@ interface QuickChatActionDao {
 
     @Query("Update quick_chat set position=position-1 where position>=:position")
     fun decrementPositionsAfter(position: Int)
+
+    @Query("SELECT * FROM quick_chat ORDER BY position ASC")
+    suspend fun getAllOnce(): List<QuickChatAction>
+
 }

@@ -70,9 +70,11 @@ import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.model.BluetoothViewModel
 import com.geeksville.mesh.model.DeviceVersion
 import com.geeksville.mesh.model.UIViewModel
+import com.geeksville.mesh.prefs.UserPrefs
 import com.geeksville.mesh.service.HuntScheduleService
 import com.geeksville.mesh.service.MeshService
 import com.geeksville.mesh.service.MeshServiceNotifications
+import com.geeksville.mesh.service.PlanMsgService
 import com.geeksville.mesh.service.ServiceRepository
 import com.geeksville.mesh.service.startService
 import com.geeksville.mesh.ui.ChannelFragment
@@ -82,9 +84,7 @@ import com.geeksville.mesh.ui.QuickChatSettingsFragment
 import com.geeksville.mesh.ui.SettingsFragment
 import com.geeksville.mesh.ui.UsersFragment
 import com.geeksville.mesh.ui.activity.HuntActivity
-import com.geeksville.mesh.ui.activity.HuntActivity.BACKGROUND_HUNT
-import com.geeksville.mesh.ui.activity.HuntActivity.HUNT_MODE
-import com.geeksville.mesh.ui.activity.HuntActivity.SHARED_HUNT_PREFS
+import com.geeksville.mesh.ui.activity.PlanMsgListActivity
 import com.geeksville.mesh.ui.components.ScannedQrCodeDialog
 import com.geeksville.mesh.ui.map.MapFragment
 import com.geeksville.mesh.ui.message.navigateToMessages
@@ -161,6 +161,9 @@ class MainActivity : AppCompatActivity(), Logging {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var huntingPrefs: SharedPreferences
+    private lateinit var msgStatusPrefs: SharedPreferences
+
+    private lateinit var planMsgServiceIntent: Intent
 
     // Used to schedule a coroutine in the GUI thread
     private val mainScope = CoroutineScope(Dispatchers.Main + Job())
@@ -232,7 +235,10 @@ class MainActivity : AppCompatActivity(), Logging {
         installSplashScreen()
         super.onCreate(savedInstanceState)
 
-        huntingPrefs = getSharedPreferences(SHARED_HUNT_PREFS, MODE_PRIVATE)
+        huntingPrefs = getSharedPreferences(UserPrefs.Hunting.SHARED_HUNT_PREFS, MODE_PRIVATE)
+        msgStatusPrefs = getSharedPreferences(UserPrefs.PlannedMessage.SHARED_PLANMSG_PREFS_STATUS, MODE_PRIVATE)
+
+        planMsgServiceIntent = Intent(this, PlanMsgService::class.java)
 
         if (savedInstanceState == null) {
             val prefs = UIViewModel.getPreferences(this)
@@ -247,6 +253,7 @@ class MainActivity : AppCompatActivity(), Logging {
             // First run: show AppIntroduction
             if (!prefs.getBoolean("app_intro_completed", false)) {
                 startActivity(Intent(this, AppIntroduction::class.java))
+                setDarkThemeFirstTime()
             }
             // Ask user to rate in play store
             (application as GeeksvilleApplication).askToRate(this)
@@ -571,6 +578,7 @@ class MainActivity : AppCompatActivity(), Logging {
         }
 
         checkIfDeviceIsHunting()
+        checkIfDeviceIsPlanningMsg()
 
         bluetoothViewModel.enabled.observe(this) { enabled ->
             if (!enabled && !requestedEnable && model.selectedBluetooth) {
@@ -668,7 +676,7 @@ class MainActivity : AppCompatActivity(), Logging {
 
             R.id.huntStatusImage -> {
 
-                if (huntingPrefs.getBoolean(HUNT_MODE, false)) {
+                if (huntingPrefs.getBoolean(UserPrefs.Hunting.HUNT_MODE, false)) {
                     Toast.makeText(
                         applicationContext,
                         "You are currently Hunting!",
@@ -681,7 +689,7 @@ class MainActivity : AppCompatActivity(), Logging {
 
             R.id.huntBackgroundStatusImage -> {
 
-                if (huntingPrefs.getBoolean(BACKGROUND_HUNT, false)) {
+                if (huntingPrefs.getBoolean(UserPrefs.Hunting.BACKGROUND_HUNT, false)) {
                     Toast.makeText(
                         applicationContext,
                         "You are currently Auto Hunting!",
@@ -694,6 +702,11 @@ class MainActivity : AppCompatActivity(), Logging {
 
             R.id.hunt -> {
                 startActivity(Intent(this, HuntActivity::class.java))
+                return true
+            }
+
+            R.id.planned_msgs -> {
+                startActivity(Intent(this, PlanMsgListActivity::class.java))
                 return true
             }
 
@@ -783,13 +796,24 @@ class MainActivity : AppCompatActivity(), Logging {
         try {
             val packageInfo: PackageInfo = packageManager.getPackageInfoCompat(packageName, 0)
             val versionName = packageInfo.versionName
-            Toast.makeText(this, "$versionName by IU0THF", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "$versionName by IU0THF\nProto 2.7.5", Toast.LENGTH_LONG).show()
         } catch (e: PackageManager.NameNotFoundException) {
             errormsg("Can not find the version: ${e.message}")
         }
     }
 
     // Theme functions
+    private fun setDarkThemeFirstTime() {
+        val prefs = UIViewModel.getPreferences(this)
+        val selectedTheme = AppCompatDelegate.MODE_NIGHT_YES
+
+        val currentTheme = prefs.getInt("theme", -1)
+        if (currentTheme != selectedTheme) {
+            prefs.edit { putInt("theme", selectedTheme) }
+            AppCompatDelegate.setDefaultNightMode(selectedTheme)
+            debug("Set dark theme as default")
+        }
+    }
 
     private fun chooseThemeDialog() {
 
@@ -798,7 +822,7 @@ class MainActivity : AppCompatActivity(), Logging {
         builder.setTitle(getString(R.string.choose_theme))
 
         val styles = mapOf(
-            //getString(R.string.theme_light) to AppCompatDelegate.MODE_NIGHT_NO,
+            getString(R.string.theme_light) to AppCompatDelegate.MODE_NIGHT_NO,
             getString(R.string.theme_dark) to AppCompatDelegate.MODE_NIGHT_YES,
             //getString(R.string.theme_system) to AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
         )
@@ -817,11 +841,13 @@ class MainActivity : AppCompatActivity(), Logging {
             prefs.edit { putInt("theme", selectedTheme) }
             AppCompatDelegate.setDefaultNightMode(selectedTheme)
             dialog.dismiss()
+            if (selectedTheme == AppCompatDelegate.MODE_NIGHT_NO) {
+                mainLooperToast("Tema light? Su DarkMesh?", Toast.LENGTH_LONG)
+            }
         }
 
         val dialog = builder.create()
         dialog.show()
-        mainLooperToast("Sorry, no light theme for you!", Toast.LENGTH_LONG)
     }
 
     private fun chooseLangDialog() {
@@ -848,13 +874,23 @@ class MainActivity : AppCompatActivity(), Logging {
         dialog.show()
     }
 
+    private fun checkIfDeviceIsPlanningMsg(){
+        val msgPlanOn = msgStatusPrefs.getBoolean(UserPrefs.PlannedMessage.PLANMSG_SERVICE_ACTIVE, false)
+        if (msgPlanOn){
+            debug("MSG Plan is ON, proceeding..")
+            startService(planMsgServiceIntent)
+        } else {
+            debug("MSG Plan is OFF, doing nothing..")
+        }
+    }
+
     private fun checkIfDeviceIsHunting() {
 
-        val huntingMode = huntingPrefs.getBoolean(HUNT_MODE, false)
-        val huntBackgroundMode = huntingPrefs.getBoolean(BACKGROUND_HUNT, false)
+        val huntingMode = huntingPrefs.getBoolean(UserPrefs.Hunting.HUNT_MODE, false)
+        val huntBackgroundMode = huntingPrefs.getBoolean(UserPrefs.Hunting.BACKGROUND_HUNT, false)
 
-        var huntModeItem = model.actionBarMenu?.findItem(R.id.huntStatusImage)
-        var huntBackgroundItem = model.actionBarMenu?.findItem(R.id.huntBackgroundStatusImage)
+        val huntModeItem = model.actionBarMenu?.findItem(R.id.huntStatusImage)
+        val huntBackgroundItem = model.actionBarMenu?.findItem(R.id.huntBackgroundStatusImage)
 
         huntModeItem?.let { it.isVisible = false}
         huntBackgroundItem?.let { it.isVisible = false }
