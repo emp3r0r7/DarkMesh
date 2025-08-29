@@ -503,6 +503,7 @@ class MainActivity : AppCompatActivity(), Logging {
         override fun onConnected(service: IMeshService) {
             connectionJob = mainScope.handledLaunch {
                 serviceRepository.setMeshService(service)
+                PlanMsgService.setRadioMeshService(service) //workaround!
 
                 try {
                     val connectionState =

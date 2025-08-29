@@ -2,7 +2,6 @@ package com.geeksville.mesh.service;
 
 import static com.geeksville.mesh.ui.activity.PlanMsgActivity.SEPARATOR_DATE_MSG;
 
-import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -45,6 +44,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class PlanMsgService extends Service {
 
     private static final String TAG = PlanMsgService.class.getSimpleName();
@@ -59,6 +63,15 @@ public class PlanMsgService extends Service {
     private CompletableFuture<?> task;
     private PowerManager.WakeLock wakeLock;
     private SharedPreferences msgStatusPrefs;
+    public static volatile IMeshService radioMeshService; //globale per tutte le istanze di PlanMsgService
+
+    public static synchronized void setRadioMeshService(IMeshService s) {
+        radioMeshService = s;
+    }
+
+    public static synchronized IMeshService getRadioMeshService() {
+        return radioMeshService;
+    }
 
     @Override
     public void onCreate() {
@@ -132,12 +145,18 @@ public class PlanMsgService extends Service {
                                 SENT_TODAY.add(sentKey);
 
                                 String contactKey = meshService.buildContactKeyForMessage(entity);
-                                sendMessage(m.msg(), contactKey);
+                                boolean ok = sendMessage(m.msg(), contactKey);
 
-                                handler.post(() ->
-                                        Toast.makeText(getApplicationContext(), "Planned message sent to" + entity.getUser().getLongName(), Toast.LENGTH_SHORT).show());
+                                if (ok){
+                                    handler.post(() ->
+                                            Toast.makeText(getApplicationContext(), "Planned message sent to" + entity.getUser().getLongName(), Toast.LENGTH_SHORT).show());
 
-                                Log.d(TAG, "Sent planned message: " + m);
+                                    Log.d(TAG, "Sent planned message: " + m);
+                                } else {
+                                    handler.post(() ->
+                                            Toast.makeText(getApplicationContext(), "Could not send message to" + entity.getUser().getLongName(), Toast.LENGTH_SHORT).show());
+                                }
+
                             }
                         }
 
@@ -374,7 +393,7 @@ public class PlanMsgService extends Service {
         Log.d(TAG, TAG + " destroyed");
     }
 
-    public void sendMessage(String str, String contactKey) throws RemoteException {
+    public boolean sendMessage(String str, String contactKey) throws RemoteException {
         // contactKey: unique contact key filter (channel)+(nodeId)
         Integer channel = null;
 
@@ -394,12 +413,12 @@ public class PlanMsgService extends Service {
 
         DataPacket p = new DataPacket(dest, (channel != null) ? channel : 0, str);
 
-        IMeshService radioMesh = meshService.getRadioMeshService();
-        //noinspection ConstantValue
-        if (radioMesh != null) {
-            radioMesh.send(p);
+        if (getRadioMeshService() != null) {
+            getRadioMeshService().send(p);
+            return true;
         } else {
             Log.d(TAG, "Could not send message radio mesh is null!");
+            return false;
         }
     }
 

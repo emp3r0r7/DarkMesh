@@ -152,8 +152,6 @@ class MeshService : Service(), Logging {
 
     private lateinit var huntingPrefs: SharedPreferences
 
-    lateinit var radioMeshService: IMeshService
-
     companion object : Logging {
 
         // Intents broadcast by MeshService
@@ -355,10 +353,6 @@ class MeshService : Service(), Logging {
             .launchIn(serviceScope)
         radioConfigRepository.serviceAction.onEach(::onServiceAction)
             .launchIn(serviceScope)
-
-        if (radioConfigRepository.meshService != null){
-            radioMeshService = radioConfigRepository.meshService!!
-        }
 
         loadSettings() // Load our last known node DB
 
@@ -1293,15 +1287,6 @@ class MeshService : Service(), Logging {
 
     // Called when we gain/lose connection to our radio
     private fun onConnectionChanged(c: ConnectionState) {
-
-        if (c == ConnectionState.CONNECTED){
-            val mesh = radioConfigRepository.meshService
-            if (mesh != null) {
-                radioMeshService = mesh
-            } else {
-                info("Radio mesh service is null!")
-            }
-        }
 
         debug("onConnectionChanged: $connectionState -> $c")
 
