@@ -44,9 +44,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import dagger.hilt.android.AndroidEntryPoint;
-
-@AndroidEntryPoint
 public class PlanMsgService extends Service {
 
     private static final String TAG = PlanMsgService.class.getSimpleName();
@@ -147,12 +144,12 @@ public class PlanMsgService extends Service {
 
                                 if (ok){
                                     handler.post(() ->
-                                            Toast.makeText(getApplicationContext(), "Planned message sent to" + entity.getUser().getLongName(), Toast.LENGTH_SHORT).show());
+                                            Toast.makeText(getApplicationContext(), "Planned message sent to " + entity.getUser().getLongName(), Toast.LENGTH_SHORT).show());
 
                                     Log.d(TAG, "Sent planned message: " + m);
                                 } else {
                                     handler.post(() ->
-                                            Toast.makeText(getApplicationContext(), "Could not send message to" + entity.getUser().getLongName(), Toast.LENGTH_SHORT).show());
+                                            Toast.makeText(getApplicationContext(), "Could not send message to " + entity.getUser().getLongName(), Toast.LENGTH_SHORT).show());
                                 }
 
                             }
