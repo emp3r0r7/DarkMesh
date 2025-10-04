@@ -17,6 +17,8 @@
 
 package com.geeksville.mesh.ui.message
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -68,6 +70,7 @@ import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.colorResource
@@ -94,6 +97,9 @@ import com.geeksville.mesh.database.entity.QuickChatAction
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.model.getChannel
+import com.geeksville.mesh.ui.activity.PlanMsgActivity
+import com.geeksville.mesh.ui.activity.PlanMsgActivity.NODE_ID_EXTRA_PARAM
+import com.geeksville.mesh.ui.components.BroadcastIconButton
 import com.geeksville.mesh.ui.components.NodeKeyStatusIcon
 import com.geeksville.mesh.ui.components.NodeMenuAction
 import com.geeksville.mesh.ui.message.components.MessageList
@@ -172,6 +178,7 @@ internal fun MessageScreen(
     navigateToNodeDetails: (Int) -> Unit,
     onNavigateBack: () -> Unit
 ) {
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
 
@@ -242,7 +249,7 @@ internal fun MessageScreen(
                     }
                 }
             } else {
-                MessageTopBar(title, channelIndex, onNavigateBack)
+                MessageTopBar(context, title, channelIndex, contactKey, channelName, onNavigateBack)
             }
         },
         bottomBar = {
@@ -365,9 +372,18 @@ private fun ActionModeTopBar(
 
 @Composable
 private fun MessageTopBar(
+    localContext: Context,
     title: String,
     channelIndex: Int?,
-    onNavigateBack: () -> Unit
+    contactKey:  String,
+    channelName: String,
+    onNavigateBack: () -> Unit,
+    onBroadcastClick: () -> Unit = {
+        val intent = Intent(localContext, PlanMsgActivity::class.java).apply {
+            putExtra(NODE_ID_EXTRA_PARAM, "$contactKey^$channelName")
+        }
+        localContext.startActivity(intent)
+    }
 ) = TopAppBar(
     title = { Text(text = title) },
     navigationIcon = {
@@ -379,6 +395,9 @@ private fun MessageTopBar(
         }
     },
     actions = {
+        if (contactKey.contains(DataPacket.ID_BROADCAST)) {
+            BroadcastIconButton(onClick = onBroadcastClick)
+        }
         if (channelIndex == DataPacket.PKC_CHANNEL_INDEX) {
             NodeKeyStatusIcon(hasPKC = true, mismatchKey = false)
         }

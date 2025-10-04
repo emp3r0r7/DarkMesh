@@ -41,17 +41,22 @@ import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 
 
-/** @noinspection FieldCanBeLocal*/
+/**
+ * @noinspection FieldCanBeLocal
+ */
 public class PlanMsgActivity extends AppCompatActivity {
     private static final String TAG = PlanMsgActivity.class.getSimpleName();
     public static final String NODE_ID_EXTRA_PARAM = "nodeId";
     public static final String PLAN_BINDER = "com.emp3r0r7.mesh.PlanMsgActivity.PLAN_BINDER";
-    public static final String[] DAYS = {"LUN","MAR","MER","GIO","VEN","SAB","DOM"};
+    public static final String[] DAYS = {"LUN", "MAR", "MER", "GIO", "VEN", "SAB", "DOM"};
     public static final String SEPARATOR_DATE_MSG = "—"; //dash piu grande
-
+    public static final String BROADCAST_ID_SIG = "^all^";
     private MeshService meshService;
-    private Integer currentNodeId;
+    private String currentNodeId;
+
     private String currentNodeName;
+    private Integer broadcastChannel = null;
+
     private SharedPreferences plannedMessagesPrefs, msgStatusPrefs;
 
     //ui
@@ -64,6 +69,7 @@ public class PlanMsgActivity extends AppCompatActivity {
     private ArrayAdapter<String> rulesAdapter;
     private final List<String> rules = new ArrayList<>();
     private final List<String> removedRules = new ArrayList<>();
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,12 +78,17 @@ public class PlanMsgActivity extends AppCompatActivity {
         plannedMessagesPrefs = getSharedPreferences(UserPrefs.PlannedMessage.SHARED_PLANNED_MSG_PREFS, MODE_PRIVATE);
         msgStatusPrefs = getSharedPreferences(UserPrefs.PlannedMessage.SHARED_PLANMSG_PREFS_STATUS, MODE_PRIVATE);
 
-        currentNodeId = getIntent().getIntExtra(NODE_ID_EXTRA_PARAM, 0);
+        currentNodeId = getIntent().getStringExtra(NODE_ID_EXTRA_PARAM);
 
-        if (currentNodeId == 0){
+        if (currentNodeId == null || currentNodeId.contains("Unknown Channel")) {
             Toast.makeText(this, "Unable to retrieve current node id", Toast.LENGTH_LONG).show();
             finish();
             return;
+        } else if (currentNodeId.contains(BROADCAST_ID_SIG)) {
+            String[] split = currentNodeId.split("\\^");
+            // chan , type, name -> 4^all^NOME
+            currentNodeName = split[2];
+            broadcastChannel = Integer.parseInt(split[0]);
         }
 
         Intent intent = new Intent(this, MeshService.class);
@@ -88,7 +99,7 @@ public class PlanMsgActivity extends AppCompatActivity {
     }
 
     @SuppressLint("SetTextI18n")
-    private void loadUI(){
+    private void loadUI() {
 
         boolean msgPlanStatus = msgStatusPrefs.getBoolean(UserPrefs.PlannedMessage.PLANMSG_SERVICE_ACTIVE, false);
         TextView statusView = findViewById(R.id.plannerStatus);
@@ -124,14 +135,20 @@ public class PlanMsgActivity extends AppCompatActivity {
             new TimePickerDialog(this, (view, hourOfDay, minute) -> {
                 selectedHour = hourOfDay;
                 selectedMinute = minute;
-                btnTime.setText(String.format(Locale.getDefault(),"Ora: %02d:%02d", hourOfDay, minute));
+                btnTime.setText(String.format(Locale.getDefault(), "Ora: %02d:%02d", hourOfDay, minute));
             }, h, m, true).show();
         });
 
         btnAdd.setOnClickListener(v -> {
-            if (selectedHour < 0) { Toast.makeText(this, "Seleziona un'ora", Toast.LENGTH_SHORT).show(); return; }
+            if (selectedHour < 0) {
+                Toast.makeText(this, "Seleziona un'ora", Toast.LENGTH_SHORT).show();
+                return;
+            }
             String msg = inputMessage.getText().toString().trim();
-            if (msg.isEmpty()) { Toast.makeText(this, "Inserisci un messaggio", Toast.LENGTH_SHORT).show(); return; }
+            if (msg.isEmpty()) {
+                Toast.makeText(this, "Inserisci un messaggio", Toast.LENGTH_SHORT).show();
+                return;
+            }
             String day = DAYS[spinnerDay.getSelectedItemPosition()];
             String row = String.format(Locale.getDefault(), "%s %02d:%02d " + SEPARATOR_DATE_MSG + " %s", day, selectedHour, selectedMinute, msg);
             rules.add(row);
@@ -150,20 +167,22 @@ public class PlanMsgActivity extends AppCompatActivity {
         btnSave.setOnClickListener(v -> saveRules());
     }
 
-    private void saveRules(){
+    private void saveRules() {
 
-        if (currentNodeName == null){
+        if (currentNodeName == null) {
             Toast.makeText(this, "Cannot save plan for null node!", Toast.LENGTH_LONG).show();
             return;
         }
 
         String joined = TextUtils.join("\n", rules);
+
         plannedMessagesPrefs.edit().putString(String.valueOf(currentNodeId), joined).apply();
+
         Toast.makeText(this, "Plan saved successfully for " + currentNodeName, Toast.LENGTH_LONG).show();
 
         // Invia ogni regola come broadcast
 
-        if (rules.isEmpty()){
+        if (rules.isEmpty()) {
             Intent intent = new Intent(PLAN_BINDER);
             intent.putExtra("nodeId", currentNodeId);
             intent.putExtra("clearAll", true);
@@ -179,7 +198,7 @@ public class PlanMsgActivity extends AppCompatActivity {
             sendRuleBroadcast(r, 1);
     }
 
-    private void sendRuleBroadcast(String rule, int removeRule){
+    private void sendRuleBroadcast(String rule, int removeRule) {
         try {
             // Esempio: "LUN 13:00 — Controllo posizione"
             String[] parts = rule.split(" ", 3); // [0]=giorno, [1]=ora:minuto, [2]=— messaggio
@@ -211,8 +230,8 @@ public class PlanMsgActivity extends AppCompatActivity {
     }
 
 
-    private void loadRules(){
-        String joined = plannedMessagesPrefs.getString(String.valueOf(currentNodeId), null);
+    private void loadRules() {
+        String joined = plannedMessagesPrefs.getString(currentNodeId, null);
         if (joined != null && !joined.isEmpty()) {
             String[] arr = joined.split("\n");
             rules.clear();
@@ -227,16 +246,19 @@ public class PlanMsgActivity extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
             MeshService.MeshServiceAccessor accessor = (MeshService.MeshServiceAccessor) service;
-            PlanMsgActivity.this.meshService = accessor.getService();
-            ConcurrentHashMap<Integer, NodeEntity> db = meshService.getNodeDBbyNodeNum();
-            NodeEntity node = db.get(currentNodeId);
 
-            if (node == null) {
-                runOnUiThread(() ->
-                        Toast.makeText(PlanMsgActivity.this, "Unable to retrieve current node name, falling back to id", Toast.LENGTH_LONG).show());
-                currentNodeName = String.valueOf(currentNodeId);
-            } else {
-                currentNodeName = node.getUser().getLongName();
+            if (broadcastChannel == null && currentNodeName == null) {
+                PlanMsgActivity.this.meshService = accessor.getService();
+                ConcurrentHashMap<Integer, NodeEntity> db = meshService.getNodeDBbyNodeNum();
+                NodeEntity node = db.get(Integer.parseInt(currentNodeId));
+
+                if (node == null) {
+                    runOnUiThread(() ->
+                            Toast.makeText(PlanMsgActivity.this, "Unable to retrieve current node name, falling back to id", Toast.LENGTH_LONG).show());
+                    currentNodeName = String.valueOf(currentNodeId);
+                } else {
+                    currentNodeName = node.getUser().getLongName();
+                }
             }
 
             List<QuickChatAction> quickChats = QuickChatBridge.getQuickChats(getApplicationContext());
@@ -276,13 +298,20 @@ public class PlanMsgActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void onNothingSelected(AdapterView<?> parent) {}
+                public void onNothingSelected(AdapterView<?> parent) {
+                }
             });
 
-            ((TextView) findViewById(R.id.txtNodeId)).setText("Pianificazione Nodo: " + currentNodeName);
+            String chanDesc = "Canale " + currentNodeName;
+            String nodeDesc = "Nodo " + currentNodeName;
+            String description = "Pianificazione " + (broadcastChannel != null ? chanDesc : nodeDesc);
+
+            ((TextView) findViewById(R.id.txtNodeId)).setText(description);
         }
+
         @Override
-        public void onServiceDisconnected(ComponentName componentName) {}
+        public void onServiceDisconnected(ComponentName componentName) {
+        }
     };
 
 
@@ -299,6 +328,7 @@ public class PlanMsgActivity extends AppCompatActivity {
         public NDSpinner(Context context, AttributeSet attrs, int defStyleAttr) {
             super(context, attrs, defStyleAttr);
         }
+
         @Override
         public void setSelection(int position, boolean animate) {
             boolean same = position == getSelectedItemPosition();
@@ -334,4 +364,5 @@ public class PlanMsgActivity extends AppCompatActivity {
 
         Log.d(TAG, PlanMsgActivity.class.getSimpleName() + " destroyed");
     }
+
 }

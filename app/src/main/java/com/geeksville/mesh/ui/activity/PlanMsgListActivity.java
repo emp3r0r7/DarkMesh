@@ -1,6 +1,7 @@
 package com.geeksville.mesh.ui.activity;
 
 import static com.geeksville.mesh.prefs.UserPrefs.PlannedMessage.SHARED_PLANMSG_PREFS_STATUS;
+import static com.geeksville.mesh.ui.activity.PlanMsgActivity.BROADCAST_ID_SIG;
 
 import android.annotation.SuppressLint;
 import android.content.ComponentName;
@@ -63,8 +64,10 @@ public class PlanMsgListActivity extends AppCompatActivity {
             PlanMsgListActivity.this.meshService = accessor.getService();
             loadUI();
         }
+
         @Override
-        public void onServiceDisconnected(ComponentName componentName) {}
+        public void onServiceDisconnected(ComponentName componentName) {
+        }
     };
 
     @Override
@@ -85,7 +88,7 @@ public class PlanMsgListActivity extends AppCompatActivity {
     }
 
     @SuppressLint("SetTextI18n")
-    private void loadUI(){
+    private void loadUI() {
 
         Intent planMsgService = new Intent(this, PlanMsgService.class);
 
@@ -98,7 +101,7 @@ public class PlanMsgListActivity extends AppCompatActivity {
 
         for (Map.Entry<String, ?> entry : all.entrySet()) {
             try {
-                int nodeId = Integer.parseInt(entry.getKey());
+                String nodeId = entry.getKey();
                 String value = (String) entry.getValue();
                 String[] values = value.split("\n");
                 boolean allEmpty = Arrays.stream(values).allMatch(TextUtils::isEmpty);
@@ -107,28 +110,53 @@ public class PlanMsgListActivity extends AppCompatActivity {
 
                 int ruleCount = value.split("\n").length;
 
-                String label = "Nodo " + nodeId;
+                final SpannableString spannable;
 
-                NodeEntity node = nodeDb.get(nodeId);
-                int start = -1, end = -1;
+                if (nodeId.contains(BROADCAST_ID_SIG)) {
+                    String label = "Chan " + nodeId;
 
-                if (node != null) {
-                    String nodeName = node.getUser().getLongName();
-                    label += " " + nodeName;
-                    start = label.indexOf(nodeName);
-                    end = start + nodeName.length();
-                }
+                    String[] split = nodeId.split("\\^");
+                    String chanName = split[2];
+                    label += " " + chanName;
+                    int start = label.lastIndexOf(chanName);
+                    int end = start + chanName.length();
+                    label += " Regole " + ruleCount;
+                    spannable = new SpannableString(label);
 
-                label += " Regole " + ruleCount;
-                SpannableString spannable = new SpannableString(label);
+                    if (start >= 0 && end > start) {
+                        spannable.setSpan(
+                                new ForegroundColorSpan(Color.parseColor("#4CAF50")), // verde
+                                start,
+                                end,
+                                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                        );
+                    }
 
-                if (start >= 0 && end > start) {
-                    spannable.setSpan(
-                            new ForegroundColorSpan(Color.parseColor("#4CAF50")), // verde
-                            start,
-                            end,
-                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-                    );
+                } else {
+
+                    String label = "Nodo " + nodeId;
+
+                    NodeEntity node = nodeDb.get(Integer.parseInt(nodeId));
+                    int start = -1, end = -1;
+
+                    if (node != null) {
+                        String nodeName = node.getUser().getLongName();
+                        label += " " + nodeName;
+                        start = label.indexOf(nodeName);
+                        end = start + nodeName.length();
+                    }
+
+                    label += " Regole " + ruleCount;
+                    spannable = new SpannableString(label);
+
+                    if (start >= 0 && end > start) {
+                        spannable.setSpan(
+                                new ForegroundColorSpan(Color.parseColor("#4CAF50")), // verde
+                                start,
+                                end,
+                                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                        );
+                    }
                 }
 
                 nodeEntries.add(spannable);
@@ -138,7 +166,7 @@ public class PlanMsgListActivity extends AppCompatActivity {
             }
         }
 
-        if(nodeEntries.isEmpty()){
+        if (nodeEntries.isEmpty()) {
             TextView title = findViewById(R.id.planListTitle);
             title.setText("Nessuna pianificazione effettuata.");
         }
@@ -153,10 +181,12 @@ public class PlanMsgListActivity extends AppCompatActivity {
 
         listView.setOnItemClickListener((parent, view, position, id) -> {
             String selected = String.valueOf(nodeEntries.get(position));
-            int nodeId = Integer.parseInt(selected.split(" ")[1]);
+
+            String nodeId = selected.split(" ")[1];
             Intent i = new Intent(PlanMsgListActivity.this, PlanMsgActivity.class);
             i.putExtra(PlanMsgActivity.NODE_ID_EXTRA_PARAM, nodeId);
             startActivity(i);
+
         });
 
         SwitchCompat serviceSwitch = findViewById(R.id.switchPlanning);
@@ -185,7 +215,7 @@ public class PlanMsgListActivity extends AppCompatActivity {
         handleListVisibility(listView, serviceActive);
     }
 
-    private void handleListVisibility(ListView listView, boolean serviceActive){
+    private void handleListVisibility(ListView listView, boolean serviceActive) {
         listView.setEnabled(serviceActive);
         listView.setAlpha(serviceActive ? 1.0f : 0.5f);
     }

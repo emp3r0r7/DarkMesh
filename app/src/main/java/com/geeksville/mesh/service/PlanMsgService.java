@@ -1,5 +1,6 @@
 package com.geeksville.mesh.service;
 
+import static com.geeksville.mesh.ui.activity.PlanMsgActivity.BROADCAST_ID_SIG;
 import static com.geeksville.mesh.ui.activity.PlanMsgActivity.SEPARATOR_DATE_MSG;
 
 import android.app.Notification;
@@ -132,26 +133,32 @@ public class PlanMsgService extends Service {
 
                                 if (SENT_TODAY.contains(sentKey)) continue;
 
-                                ConcurrentHashMap<Integer, NodeEntity> db = meshService.getNodeDBbyNodeNum();
-                                NodeEntity entity = db.get(m.nodeId());
+                                String contactKey;
+                                String readableDestination;
 
-                                if (entity == null) continue;
-
-                                SENT_TODAY.add(sentKey);
-
-                                String contactKey = meshService.buildContactKeyForMessage(entity);
-                                boolean ok = sendMessage(m.msg(), contactKey);
-
-                                if (ok){
-                                    handler.post(() ->
-                                            Toast.makeText(getApplicationContext(), "Planned message sent to " + entity.getUser().getLongName(), Toast.LENGTH_SHORT).show());
-
-                                    Log.d(TAG, "Sent planned message: " + m);
+                                if (m.nodeId.contains(BROADCAST_ID_SIG)) {
+                                    contactKey = m.nodeId;
+                                    readableDestination = contactKey.split("\\^")[2];
                                 } else {
-                                    handler.post(() ->
-                                            Toast.makeText(getApplicationContext(), "Could not send message to " + entity.getUser().getLongName(), Toast.LENGTH_SHORT).show());
+                                    ConcurrentHashMap<Integer, NodeEntity> db = meshService.getNodeDBbyNodeNum();
+                                    NodeEntity entity = db.get(Integer.parseInt(m.nodeId()));
+                                    if (entity == null) continue;
+                                    contactKey = meshService.buildContactKeyForMessage(entity);
+                                    readableDestination = entity.getUser().getLongName();
                                 }
 
+                                SENT_TODAY.add(sentKey);
+                                boolean ok = sendMessage(m.msg(), contactKey);
+
+                                if (ok) {
+                                    handler.post(() ->
+                                            Toast.makeText(getApplicationContext(), "Planned message sent to " + readableDestination, Toast.LENGTH_SHORT).show());
+
+                                    Log.d(TAG, "Sent planned message: " + m + " to" + readableDestination);
+                                } else {
+                                    handler.post(() ->
+                                            Toast.makeText(getApplicationContext(), "Could not send message to " + readableDestination, Toast.LENGTH_SHORT).show());
+                                }
                             }
                         }
 
@@ -171,7 +178,7 @@ public class PlanMsgService extends Service {
                         Log.e(TAG, "An error occurred in the polling loop", e);
 
                 } finally {
-                    if(wakeLock.isHeld()) wakeLock.release();
+                    if (wakeLock.isHeld()) wakeLock.release();
                 }
 
                 clockNext += pollRate;
@@ -233,14 +240,8 @@ public class PlanMsgService extends Service {
         if (all.isEmpty()) return;
 
         for (Map.Entry<String, ?> entry : all.entrySet()) {
-            int nodeId;
-            try {
-                nodeId = Integer.parseInt(entry.getKey());
-            } catch (NumberFormatException e) {
-                Log.w(TAG, "SharedPrefs key not valid: " + entry.getKey());
-                continue;
-            }
 
+            String nodeId = entry.getKey();
             String joined = (String) entry.getValue();
             if (joined == null || joined.trim().isEmpty()) continue;
 
@@ -275,13 +276,13 @@ public class PlanMsgService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            int nodeId = intent.getIntExtra("nodeId", 0);
+            String nodeId = intent.getStringExtra("nodeId");
             boolean clearAll = intent.getBooleanExtra("clearAll", false);
 
-            if (clearAll && nodeId != 0){
+            if (clearAll && nodeId != null) {
                 Log.d(TAG, "Plans are empty, removing all tasks..");
-                for(Map.Entry<String, ScheduledMsg> entry : taskMap.entrySet())
-                    if(entry.getKey().contains(String.valueOf(nodeId))){
+                for (Map.Entry<String, ScheduledMsg> entry : taskMap.entrySet())
+                    if (entry.getKey().contains(nodeId)) {
                         taskMap.remove(entry.getKey());
                         Log.d(TAG, "Removed Key from TaskMap: " + entry.getKey());
                     }
@@ -293,16 +294,16 @@ public class PlanMsgService extends Service {
                 String msg = intent.getStringExtra("msg");
                 int toRemove = intent.getIntExtra("toRemove", -1);
 
-                if (nodeId == 0 || day == null || time == null || msg == null || toRemove < 0) {
+                if (nodeId == null || day == null || time == null || msg == null || toRemove < 0) {
                     Log.w(TAG, "Invalid planned message received, ignoring.");
                     return;
                 }
 
                 ScheduledMsg m = new ScheduledMsg(nodeId, day, time, msg, toRemove);
-                if (toRemove == 0){
+                if (toRemove == 0) {
                     taskMap.put(m.key(), m);
                     Log.d(TAG, "Message received and planned : " + m);
-                } else{
+                } else {
                     taskMap.remove(m.key());
                     Log.d(TAG, "Message received and removed from plan : " + m);
                 }
@@ -366,13 +367,13 @@ public class PlanMsgService extends Service {
         try {
             unbindService(meshServiceConnection);
 
-            if (task != null && !task.isDone()){
+            if (task != null && !task.isDone()) {
                 task.cancel(true);
             }
 
             executor.shutdownNow();
 
-            if(wakeLock.isHeld()){
+            if (wakeLock.isHeld()) {
                 wakeLock.release();
             }
 
@@ -390,6 +391,7 @@ public class PlanMsgService extends Service {
 
     public boolean sendMessage(String str, String contactKey) throws RemoteException {
         // contactKey: unique contact key filter (channel)+(nodeId)
+        //DataPacket(to=^all, bytes=[70], dataType=1, from=^local, time=1759587741442, id=0, status=UNKNOWN, hopLimit=0, channel=4)  <- channel
         Integer channel = null;
 
         if (contactKey != null && !contactKey.isEmpty()) {
@@ -400,7 +402,10 @@ public class PlanMsgService extends Service {
         }
 
         String dest;
-        if (channel != null) {
+
+        if (channel != null && contactKey.contains(BROADCAST_ID_SIG)) {
+            dest = "^" + contactKey.split("\\^")[1];
+        } else if (channel != null) {
             dest = contactKey.substring(1);
         } else {
             dest = contactKey;
@@ -421,17 +426,17 @@ public class PlanMsgService extends Service {
      * @param day  "LUN", "MAR", ...
      * @param time "13:00"
      */
-    public record ScheduledMsg(int nodeId, String day, String time, String msg, int toRemove) {
+    public record ScheduledMsg(String nodeId, String day, String time, String msg, int toRemove) {
         public String key() {
-                return day + " " + time + "@" + nodeId;
-            }
-
-            @NonNull
-            @Override
-            public String toString() {
-                return day + " " + time + " " + SEPARATOR_DATE_MSG + " " + msg;
-            }
+            return day + " " + time + "@" + nodeId;
         }
+
+        @NonNull
+        @Override
+        public String toString() {
+            return day + " " + time + " " + SEPARATOR_DATE_MSG + " " + msg;
+        }
+    }
 
     @Nullable
     @Override

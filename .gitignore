@@ -5,6 +5,7 @@
 !/.idea/runConfigurations/
 *.iws
 *.iml
+.idea
 
 .gradle
 /local.properties
