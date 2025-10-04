@@ -154,7 +154,7 @@ public class PlanMsgService extends Service {
                                     handler.post(() ->
                                             Toast.makeText(getApplicationContext(), "Planned message sent to " + readableDestination, Toast.LENGTH_SHORT).show());
 
-                                    Log.d(TAG, "Sent planned message: " + m + " to" + readableDestination);
+                                    Log.d(TAG, "Sent planned message: " + m + " to " + readableDestination);
                                 } else {
                                     handler.post(() ->
                                             Toast.makeText(getApplicationContext(), "Could not send message to " + readableDestination, Toast.LENGTH_SHORT).show());
