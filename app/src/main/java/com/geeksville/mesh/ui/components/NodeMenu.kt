@@ -122,7 +122,7 @@ fun NodeMenu(
                 onClick = {
                     onDismissRequest()
                     val intent = Intent(context, PlanMsgActivity::class.java).apply {
-                        putExtra(NODE_ID_EXTRA_PARAM, node.num)
+                        putExtra(NODE_ID_EXTRA_PARAM, node.num.toString())
                     }
                     context.startActivity(intent)
                 },
