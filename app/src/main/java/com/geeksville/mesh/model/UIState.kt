@@ -201,6 +201,12 @@ class UIViewModel @Inject constructor(
         nodeSortOption.value = sort
     }
 
+    fun filterForNode(node: Node) {
+        val name = node.user.longName.ifBlank { node.user.shortName }
+        setNodeFilterText(name)
+        setCurrentTab(1)
+    }
+
     fun toggleShowDetails() {
         showDetails.value = !showDetails.value
         preferences.edit { putBoolean("show-details", showDetails.value) }

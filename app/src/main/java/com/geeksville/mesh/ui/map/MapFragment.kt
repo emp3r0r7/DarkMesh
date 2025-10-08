@@ -22,6 +22,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.content.res.AppCompatResources
@@ -72,6 +73,7 @@ import com.geeksville.mesh.model.map.CustomTileSource
 import com.geeksville.mesh.model.map.MarkerWithLabel
 import com.geeksville.mesh.model.map.clustering.RadiusMarkerClusterer
 import com.geeksville.mesh.ui.ScreenFragment
+import com.geeksville.mesh.ui.UsersFragment
 import com.geeksville.mesh.ui.theme.AppTheme
 import com.geeksville.mesh.util.SqlTileWriterExt
 import com.geeksville.mesh.util.addCopyright
@@ -334,11 +336,12 @@ fun MapView(
                 position = nodePosition
                 icon = markerIcon
 
-//                setOnLongClickListener {
-//                    performHapticFeedback()
-//                    TODO NodeMenu?
-//                    true
-//                }
+                setOnLongClickListener{
+                    performHapticFeedback()
+                    model.filterForNode(node)
+                    true
+                }
+
                 setNodeColors(node.colors)
                 setPrecisionBits(p.precisionBits)
             }
