@@ -54,7 +54,8 @@
         android:id="@+id/stress_test"
         android:checkable="true"
         android:checked="false"
-        android:title="@string/protocol_stress_test" />
+        android:title="Distress Beacon"
+        tools:ignore="HardcodedText" />
     <item
         android:id="@+id/radio_config"
         app:showAsAction="withText"

@@ -30,10 +30,13 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.RemoteException
+import android.text.InputType
 import android.text.method.LinkMovementMethod
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
+import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -50,10 +53,12 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.emp3r0r7.darkmesh.BuildConfig
 import com.emp3r0r7.darkmesh.R
 import com.emp3r0r7.darkmesh.databinding.ActivityMainBinding
+import com.geeksville.mesh.DataPacket.CREATOR.ID_BROADCAST
 import com.geeksville.mesh.android.BindFailedException
 import com.geeksville.mesh.android.GeeksvilleApplication
 import com.geeksville.mesh.android.Logging
@@ -68,6 +73,7 @@ import com.geeksville.mesh.android.rationaleDialog
 import com.geeksville.mesh.android.shouldShowRequestPermissionRationale
 import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.model.BluetoothViewModel
+import com.geeksville.mesh.model.Contact
 import com.geeksville.mesh.model.DeviceVersion
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.prefs.UserPrefs
@@ -103,6 +109,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import java.text.DateFormat
 import java.util.Date
 import javax.inject.Inject
@@ -162,6 +169,7 @@ class MainActivity : AppCompatActivity(), Logging {
     private lateinit var binding: ActivityMainBinding
     private lateinit var huntingPrefs: SharedPreferences
     private lateinit var msgStatusPrefs: SharedPreferences
+    private val prefStressTestEnabled = "stress_test_enabled"
 
     private lateinit var planMsgServiceIntent: Intent
 
@@ -658,13 +666,18 @@ class MainActivity : AppCompatActivity(), Logging {
         return true
     }
 
-    private val handler: Handler by lazy {
-        Handler(Looper.getMainLooper())
+    object DistressHandler {
+        val handler = Handler(Looper.getMainLooper())
     }
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        menu.findItem(R.id.stress_test).isVisible =
-            BuildConfig.DEBUG // only show stress test for debug builds (for now)
+        val stressItem = menu.findItem(R.id.stress_test)
+
+        stressItem.isVisible = true
+        stressItem.isChecked = UIViewModel
+            .getPreferences(this)
+            .getBoolean(prefStressTestEnabled, false)
+
         menu.findItem(R.id.radio_config).isEnabled = !model.isManaged
         return super.onPrepareOptionsMenu(menu)
     }
@@ -732,20 +745,36 @@ class MainActivity : AppCompatActivity(), Logging {
             }
 
             R.id.stress_test -> {
-                fun postPing() {
-                    // Send ping message and arrange delayed recursion.
-                    debug("Sending ping")
-                    val str = "Ping " + DateFormat.getTimeInstance(DateFormat.MEDIUM)
-                        .format(Date(System.currentTimeMillis()))
-                    model.sendMessage(str)
-                    handler.postDelayed({ postPing() }, 30000)
-                }
-                item.isChecked = !item.isChecked // toggle ping test
-                if (item.isChecked) {
-                    postPing()
+
+                item.isChecked = UIViewModel
+                    .getPreferences(this)
+                    .getBoolean(prefStressTestEnabled, false)
+
+                if (!item.isChecked) {
+
+                    item.isChecked = true
+                    var broadcastChannels = ArrayList<Contact>()
+
+                    lifecycleScope.launch {
+                        val contacts = model.contactList.value
+                        broadcastChannels = contacts.filter {
+                            it.contactKey.contains(ID_BROADCAST)
+                        }.toCollection(ArrayList())
+
+                        showChannelSelectorDialog(broadcastChannels, item)
+                    }
+
                 } else {
-                    handler.removeCallbacksAndMessages(null)
+
+                    UIViewModel
+                        .getPreferences(this)
+                        .edit {putBoolean(prefStressTestEnabled, false) }
+
+                    item.isChecked = false
+                    DistressHandler.handler.removeCallbacksAndMessages(null)
+                    Toast.makeText(this, "Distress Beacon Disabled!", Toast.LENGTH_LONG).show()
                 }
+
                 return true
             }
 
@@ -792,6 +821,64 @@ class MainActivity : AppCompatActivity(), Logging {
             else -> super.onOptionsItemSelected(item)
         }
     }
+
+    private fun showChannelSelectorDialog(channels: List<Contact>, item: MenuItem) {
+        val channelNames = channels.map { it.longName }.toTypedArray()
+
+        var selectedChannel: Contact? = null
+        var started = false
+
+        val inputField = EditText(this).apply {
+            hint = "Enter custom message..."
+            inputType = InputType.TYPE_CLASS_TEXT
+            setPadding(32, 32, 32, 16)
+        }
+
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(40, 16, 40, 0)
+            addView(inputField)
+        }
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle("Select Broadcast Channel")
+            .setView(layout)
+            .setSingleChoiceItems(channelNames, -1) { _, which ->
+                selectedChannel = channels[which]
+            }
+            .setPositiveButton("START") { _, _ ->
+                if (selectedChannel != null) {
+                    started = true
+                    UIViewModel.getPreferences(this).edit {
+                        putBoolean(prefStressTestEnabled, true)
+                    }
+                    val userInput = inputField.text.toString()
+                    Toast.makeText(this, "Starting Distress Beacon now..", Toast.LENGTH_LONG).show()
+                    postPing(selectedChannel.contactKey, userInput)
+                } else {
+                    Toast.makeText(this, "Please select a channel", Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("Cancel") { _, _ ->
+                item.isChecked = false
+            }
+            .create()
+
+        dialog.setOnDismissListener {
+            if (!started) item.isChecked = false
+        }
+
+        dialog.show()
+    }
+
+    fun postPing(contactKey: String, userInput: String) {
+        debug("Sending distress beacon")
+        val str = "[!BCN] $userInput " + DateFormat.getTimeInstance(DateFormat.MEDIUM)
+            .format(Date(System.currentTimeMillis()))
+        model.sendMessage(str, contactKey)
+        DistressHandler.handler.postDelayed({ postPing(contactKey, userInput) }, 30000)
+    }
+
 
     private fun getVersionInfo() {
         try {
