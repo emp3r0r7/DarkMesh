@@ -27,11 +27,10 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.hardware.usb.UsbManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.os.PowerManager
-import android.os.PowerManager.WakeLock
 import android.os.RemoteException
 import android.text.InputType
 import android.text.method.LinkMovementMethod
@@ -85,6 +84,8 @@ import com.geeksville.mesh.model.Contact
 import com.geeksville.mesh.model.DeviceVersion
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.prefs.UserPrefs
+import com.geeksville.mesh.service.DistressService
+import com.geeksville.mesh.service.GlobalRadioMesh
 import com.geeksville.mesh.service.HuntScheduleService
 import com.geeksville.mesh.service.MeshService
 import com.geeksville.mesh.service.MeshServiceNotifications
@@ -118,8 +119,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import java.text.DateFormat
-import java.util.Date
 import javax.inject.Inject
 
 /*
@@ -180,15 +179,13 @@ class MainActivity : AppCompatActivity(), Logging {
     private val prefStressTestEnabled = "stress_test_enabled"
 
     private lateinit var planMsgServiceIntent: Intent
+    private lateinit var distressBeaconServiceIntent: Intent
 
     // Used to schedule a coroutine in the GUI thread
     private val mainScope = CoroutineScope(Dispatchers.Main + Job())
 
     private val bluetoothViewModel: BluetoothViewModel by viewModels()
     private val model: UIViewModel by viewModels()
-
-    private var wakeLock: WakeLock? = null
-    val distressWakeLock: String = "DistressBCN::WakeLockTag"
 
     @Inject
     internal lateinit var serviceRepository: ServiceRepository
@@ -255,9 +252,11 @@ class MainActivity : AppCompatActivity(), Logging {
         super.onCreate(savedInstanceState)
 
         huntingPrefs = getSharedPreferences(UserPrefs.Hunting.SHARED_HUNT_PREFS, MODE_PRIVATE)
-        msgStatusPrefs = getSharedPreferences(UserPrefs.PlannedMessage.SHARED_PLANMSG_PREFS_STATUS, MODE_PRIVATE)
+        msgStatusPrefs =
+            getSharedPreferences(UserPrefs.PlannedMessage.SHARED_PLANMSG_PREFS_STATUS, MODE_PRIVATE)
 
         planMsgServiceIntent = Intent(this, PlanMsgService::class.java)
+        distressBeaconServiceIntent = Intent(this, DistressService::class.java)
 
         if (savedInstanceState == null) {
             val prefs = UIViewModel.getPreferences(this)
@@ -522,7 +521,7 @@ class MainActivity : AppCompatActivity(), Logging {
         override fun onConnected(service: IMeshService) {
             connectionJob = mainScope.handledLaunch {
                 serviceRepository.setMeshService(service)
-                PlanMsgService.setRadioMeshService(service) //workaround!
+                GlobalRadioMesh.setRadio(service) //workaround!
 
                 try {
                     val connectionState =
@@ -774,14 +773,16 @@ class MainActivity : AppCompatActivity(), Logging {
 
                         val defaults = contacts.filter { it.longName == "Channel Name" }
 
-                        if(broadcastChannels.isEmpty()) {
+                        if (broadcastChannels.isEmpty()) {
                             Toast.makeText(
                                 applicationContext,
                                 "Cannot find any suitable channel!", Toast.LENGTH_LONG
                             ).show()
-                        } else if (defaults.isNotEmpty()){
-                            Toast.makeText(applicationContext,
-                                "App is initializing, please wait...", Toast.LENGTH_LONG).show()
+                        } else if (defaults.isNotEmpty()) {
+                            Toast.makeText(
+                                applicationContext,
+                                "App is initializing, please wait...", Toast.LENGTH_LONG
+                            ).show()
                         } else {
                             showChannelSelectorDialog(broadcastChannels, item)
                         }
@@ -791,10 +792,10 @@ class MainActivity : AppCompatActivity(), Logging {
 
                     UIViewModel
                         .getPreferences(this)
-                        .edit {putBoolean(prefStressTestEnabled, false) }
+                        .edit { putBoolean(prefStressTestEnabled, false) }
 
                     item.isChecked = false
-                    DistressHandler.handler.removeCallbacksAndMessages(null)
+                    stopService(distressBeaconServiceIntent)
                     Toast.makeText(this, "Distress Beacon Disabled!", Toast.LENGTH_LONG).show()
                 }
 
@@ -920,12 +921,22 @@ class MainActivity : AppCompatActivity(), Logging {
                     Toast.makeText(this, "Starting Distress Beacon now..", Toast.LENGTH_LONG).show()
 
                     //todo include GPS!
-                    sendDistress(
-                        selectedChannel!!.contactKey,
-                        userInput, interval.toLong(),
-                        myLongName.toString(),
-                        includeName,
-                    )
+                    distressBeaconServiceIntent.apply {
+                        putExtra("contactKey", selectedChannel!!.contactKey)
+                        putExtra("userInput", userInput)
+                        putExtra("interval", interval)
+                        putExtra("myLongName", myLongName.toString())
+                        putExtra("includeName", includeName.isChecked)
+                    }
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        startForegroundService(distressBeaconServiceIntent)
+                    } else {
+                        Toast.makeText(
+                            this, "Cannot start, Android ver. unsupported!",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
 
                 } else {
                     Toast.makeText(this, "Please select a channel", Toast.LENGTH_LONG).show()
@@ -941,48 +952,6 @@ class MainActivity : AppCompatActivity(), Logging {
         }
 
         dialog.show()
-    }
-
-    fun sendDistress(contactKey: String,
-                     userInput: String,
-                     interval: Long,
-                     myName: String,
-                     includeName: CheckBox) {
-
-        val intervalLong = interval * 1000
-        val powerManager = getSystemService(POWER_SERVICE) as PowerManager
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, distressWakeLock)
-
-        try {
-            wakeLock!!.acquire((intervalLong).toLong())
-            debug("Sending distress beacon")
-            val currentTime = DateFormat.getTimeInstance(DateFormat.MEDIUM).format(Date(System.currentTimeMillis()))
-
-            var str = "[BCN] "
-            str += if(includeName.isChecked){
-                "$userInput @ $myName $currentTime"
-            } else{
-                "$userInput @ $currentTime"
-            }
-
-            model.sendMessage(str, contactKey)
-
-            DistressHandler.handler.postDelayed({
-                sendDistress(
-                    contactKey,
-                    userInput,
-                    interval,
-                    myName,
-                    includeName)}, (intervalLong)
-            )
-
-        } catch (e: Exception){
-            debug("An error occurred while distressing: $e")
-        } finally {
-            if(wakeLock != null && wakeLock!!.isHeld){
-                wakeLock!!.release()
-            }
-        }
     }
 
     private fun getVersionInfo() {
@@ -1067,9 +1036,10 @@ class MainActivity : AppCompatActivity(), Logging {
         dialog.show()
     }
 
-    private fun checkIfDeviceIsPlanningMsg(){
-        val msgPlanOn = msgStatusPrefs.getBoolean(UserPrefs.PlannedMessage.PLANMSG_SERVICE_ACTIVE, false)
-        if (msgPlanOn){
+    private fun checkIfDeviceIsPlanningMsg() {
+        val msgPlanOn =
+            msgStatusPrefs.getBoolean(UserPrefs.PlannedMessage.PLANMSG_SERVICE_ACTIVE, false)
+        if (msgPlanOn) {
             debug("MSG Plan is ON, proceeding..")
             startService(planMsgServiceIntent)
         } else {
@@ -1085,7 +1055,7 @@ class MainActivity : AppCompatActivity(), Logging {
         val huntModeItem = model.actionBarMenu?.findItem(R.id.huntStatusImage)
         val huntBackgroundItem = model.actionBarMenu?.findItem(R.id.huntBackgroundStatusImage)
 
-        huntModeItem?.let { it.isVisible = false}
+        huntModeItem?.let { it.isVisible = false }
         huntBackgroundItem?.let { it.isVisible = false }
 
         if (huntingMode) {

@@ -153,6 +153,13 @@
         </service>
 
         <service
+            android:name="com.geeksville.mesh.service.DistressService"
+            android:enabled="true"
+            android:foregroundServiceType="connectedDevice"
+            android:exported="false">
+        </service>
+
+        <service
             android:name="com.geeksville.mesh.service.PlanMsgService"
             android:enabled="true"
             android:foregroundServiceType="connectedDevice"

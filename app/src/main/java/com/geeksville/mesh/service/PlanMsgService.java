@@ -32,7 +32,6 @@ import androidx.core.content.ContextCompat;
 
 import com.emp3r0r7.darkmesh.R;
 import com.geeksville.mesh.DataPacket;
-import com.geeksville.mesh.IMeshService;
 import com.geeksville.mesh.database.entity.NodeEntity;
 import com.geeksville.mesh.prefs.UserPrefs;
 import com.geeksville.mesh.ui.activity.PlanMsgActivity;
@@ -59,16 +58,6 @@ public class PlanMsgService extends Service {
     private CompletableFuture<?> task;
     private PowerManager.WakeLock wakeLock;
     private SharedPreferences msgStatusPrefs;
-    public static volatile IMeshService radioMeshService; //globale per tutte le istanze di PlanMsgService
-
-    public static synchronized void setRadioMeshService(IMeshService s) {
-        radioMeshService = s;
-    }
-
-    public static synchronized IMeshService getRadioMeshService() {
-        return radioMeshService;
-    }
-
     @Override
     public void onCreate() {
         super.onCreate();
@@ -413,8 +402,8 @@ public class PlanMsgService extends Service {
 
         DataPacket p = new DataPacket(dest, (channel != null) ? channel : 0, str);
 
-        if (getRadioMeshService() != null) {
-            getRadioMeshService().send(p);
+        if (GlobalRadioMesh.getRadio() != null) {
+            GlobalRadioMesh.getRadio().send(p);
             return true;
         } else {
             Log.d(TAG, "Could not send message radio mesh is null!");
