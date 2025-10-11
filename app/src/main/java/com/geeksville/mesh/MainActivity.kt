@@ -35,8 +35,12 @@ import android.text.method.LinkMovementMethod
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -761,7 +765,19 @@ class MainActivity : AppCompatActivity(), Logging {
                             it.contactKey.contains(ID_BROADCAST)
                         }.toCollection(ArrayList())
 
-                        showChannelSelectorDialog(broadcastChannels, item)
+                        val defaults = contacts.filter { it.longName == "Channel Name" }
+
+                        if(broadcastChannels.isEmpty()) {
+                            Toast.makeText(
+                                applicationContext,
+                                "Cannot find any suitable channel!", Toast.LENGTH_LONG
+                            ).show()
+                        } else if (defaults.isNotEmpty()){
+                            Toast.makeText(applicationContext,
+                                "App is initializing, please wait...", Toast.LENGTH_LONG).show()
+                        } else {
+                            showChannelSelectorDialog(broadcastChannels, item)
+                        }
                     }
 
                 } else {
@@ -823,29 +839,59 @@ class MainActivity : AppCompatActivity(), Logging {
     }
 
     private fun showChannelSelectorDialog(channels: List<Contact>, item: MenuItem) {
-        val channelNames = channels.map { it.longName }.toTypedArray()
+        val channelNames = channels.map { it.longName }
 
         var selectedChannel: Contact? = null
         var started = false
 
         val inputField = EditText(this).apply {
-            hint = "Enter custom message..."
+            hint = "Custom message..."
             inputType = InputType.TYPE_CLASS_TEXT
-            setPadding(32, 32, 32, 16)
+            setPadding(32, 50, 32, 50)
         }
 
+        val inputSeconds = EditText(this).apply {
+            hint = "Loop Interval (Seconds)"
+            inputType = InputType.TYPE_CLASS_NUMBER
+            setPadding(32, 50, 32, 50)
+        }
+
+        val spinner = Spinner(this).apply {
+            adapter = ArrayAdapter(
+                this@MainActivity,
+                android.R.layout.simple_spinner_dropdown_item,
+                channelNames
+            )
+            setPadding(32, 50, 32, 50)
+
+            onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    selectedChannel = channels[position]
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>?) {
+                    selectedChannel = null
+                }
+            }
+        }
+
+        // Layout verticale come prima, ma con Spinner in alto
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(40, 16, 40, 0)
+            addView(spinner)
             addView(inputField)
+            addView(inputSeconds)
         }
 
         val dialog = MaterialAlertDialogBuilder(this)
             .setTitle("Select Broadcast Channel")
             .setView(layout)
-            .setSingleChoiceItems(channelNames, -1) { _, which ->
-                selectedChannel = channels[which]
-            }
             .setPositiveButton("START") { _, _ ->
                 if (selectedChannel != null) {
                     started = true
@@ -853,8 +899,9 @@ class MainActivity : AppCompatActivity(), Logging {
                         putBoolean(prefStressTestEnabled, true)
                     }
                     val userInput = inputField.text.toString()
+                    val interval = inputSeconds.text.toString()
                     Toast.makeText(this, "Starting Distress Beacon now..", Toast.LENGTH_LONG).show()
-                    postPing(selectedChannel.contactKey, userInput)
+                    postPing(selectedChannel!!.contactKey, userInput, interval.toLong())
                 } else {
                     Toast.makeText(this, "Please select a channel", Toast.LENGTH_LONG).show()
                 }
@@ -871,14 +918,15 @@ class MainActivity : AppCompatActivity(), Logging {
         dialog.show()
     }
 
-    fun postPing(contactKey: String, userInput: String) {
+    fun postPing(contactKey: String, userInput: String, interval: Long) {
         debug("Sending distress beacon")
-        val str = "[!BCN] $userInput " + DateFormat.getTimeInstance(DateFormat.MEDIUM)
+        val str = "[BCN] $userInput " + DateFormat.getTimeInstance(DateFormat.MEDIUM)
             .format(Date(System.currentTimeMillis()))
         model.sendMessage(str, contactKey)
-        DistressHandler.handler.postDelayed({ postPing(contactKey, userInput) }, 30000)
+        DistressHandler.handler.postDelayed({ postPing(contactKey, userInput, interval) },
+            (interval * 1000)
+        )
     }
-
 
     private fun getVersionInfo() {
         try {
