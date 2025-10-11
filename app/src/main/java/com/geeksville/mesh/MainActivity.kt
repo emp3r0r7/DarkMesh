@@ -18,9 +18,7 @@
 package com.geeksville.mesh
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.bluetooth.BluetoothAdapter
-import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageInfo
@@ -29,8 +27,6 @@ import android.hardware.usb.UsbManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.os.RemoteException
 import android.text.InputType
 import android.text.method.LinkMovementMethod
@@ -400,8 +396,8 @@ class MainActivity : AppCompatActivity(), Logging {
     private val createDocumentLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
-        if (it.resultCode == Activity.RESULT_OK) {
-            it.data?.data?.let { file_uri -> model.saveMessagesCSV(file_uri) }
+        if (it.resultCode == RESULT_OK) {
+            it.data?.data?.let { fileUri -> model.saveMessagesCSV(fileUri) }
         }
     }
 
@@ -427,7 +423,7 @@ class MainActivity : AppCompatActivity(), Logging {
         val dialog = builder.show()
 
         // Make the textview clickable. Must be called after show()
-        val view = (dialog.findViewById(android.R.id.message) as TextView?)!!
+        val view = (dialog.findViewById<TextView>(android.R.id.message))!!
         // Linkify.addLinks(view, Linkify.ALL) // not needed with this method
         view.movementMethod = LinkMovementMethod.getInstance()
 
@@ -482,7 +478,7 @@ class MainActivity : AppCompatActivity(), Logging {
     private fun showSnackbar(msgId: Int) {
         try {
             Snackbar.make(binding.root, msgId, Snackbar.LENGTH_LONG).show()
-        } catch (ex: IllegalStateException) {
+        } catch (_: IllegalStateException) {
             errormsg("Snackbar couldn't find view for msgId $msgId")
         }
     }
@@ -495,7 +491,7 @@ class MainActivity : AppCompatActivity(), Logging {
                     // dismiss
                 }
                 .show()
-        } catch (ex: IllegalStateException) {
+        } catch (_: IllegalStateException) {
             errormsg("Snackbar couldn't find view for msgString $msg")
         }
     }
@@ -551,7 +547,7 @@ class MainActivity : AppCompatActivity(), Logging {
             /* This problem can occur if we unbind, but there is already an onConnected job waiting to run.  That job runs and then makes meshService != null again
             I think I've fixed this by cancelling connectionJob.  We'll see!
              */
-            Exceptions.reportError("meshService was supposed to be null, ignoring (but reporting a bug)")
+            reportError("meshService was supposed to be null, ignoring (but reporting a bug)")
         }
 
         try {
@@ -565,7 +561,7 @@ class MainActivity : AppCompatActivity(), Logging {
         mesh.connect(
             this,
             MeshService.createIntent(),
-            Context.BIND_AUTO_CREATE + Context.BIND_ABOVE_CLIENT
+            BIND_AUTO_CREATE + BIND_ABOVE_CLIENT
         )
     }
 
@@ -638,7 +634,7 @@ class MainActivity : AppCompatActivity(), Logging {
 
         try {
             bindMeshService()
-        } catch (ex: BindFailedException) {
+        } catch (_: BindFailedException) {
             // App is probably shutting down, ignore
             errormsg("Bind of MeshService failed")
         }
@@ -674,10 +670,6 @@ class MainActivity : AppCompatActivity(), Logging {
         checkIfDeviceIsHunting()
 
         return true
-    }
-
-    object DistressHandler {
-        val handler = Handler(Looper.getMainLooper())
     }
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
@@ -869,8 +861,8 @@ class MainActivity : AppCompatActivity(), Logging {
         }
 
         val includeName = CheckBox(this).apply {
-            text = "Include ny name"
-            isChecked = false;
+            text = "Include my name"
+            isChecked = false
             setPadding(32, 50, 32, 50)
         }
 
