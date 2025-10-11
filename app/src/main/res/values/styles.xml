@@ -87,21 +87,16 @@
     </style>
 
     <style name="MyActionMode" parent="Base.Widget.AppCompat.ActionMode">
-        <item name="background">@color/colorPrimary</item>
+        <item name="background">@color/colorPrimaryDark</item>
         <item name="android:textSize">16sp</item>
         <item name="android:textColorPrimary">@color/colorOnPrimary</item>
     </style>
 
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">
         // Set the splash screen background, animated icon, and animation duration.
-        <item name="windowSplashScreenBackground">@color/selectedColor</item>
-
-        // Use windowSplashScreenAnimatedIcon to add either a drawable or an
-        // animated drawable. One of these is required.
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher2_foreground</item>
-         <item name="windowSplashScreenAnimationDuration">1000</item>  # Required for
-        # animated icons
-
+        <item name="windowSplashScreenBackground">@color/colorPrimaryDark</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/skull_splash_white</item>
+        <item name="windowSplashScreenAnimationDuration">1000</item>
         // Set the theme of the Activity that directly follows your splash screen.
         <item name="postSplashScreenTheme">@style/AppTheme</item>  # Required.
     </style>

@@ -41,7 +41,6 @@
                     android:id="@+id/toolbar"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    style="@style/MyToolbar"
                     android:visibility="visible"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -54,22 +53,26 @@
                         android:layout_height="wrap_content"
                         android:contentDescription="@string/application_icon"
                         android:scaleType="center"
-                        android:scaleX="1.5"
-                        android:scaleY="1.5"
-                        app:srcCompat="@drawable/app_icon"
+                        android:scaleX="0.7"
+                        android:scaleY="0.7"
+                        app:srcCompat="@drawable/skull_white_icon"
                         tools:layout_editor_absoluteX="16dp"
                         tools:layout_editor_absoluteY="18dp" />
 
                     <TextView
+                        android:textColor="@android:color/white"
+                        android:textStyle="italic"
                         android:id="@+id/title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:gravity="center"
                         android:minHeight="?actionBarSize"
-                        android:padding="16dp"
-                        android:text="@string/app_name"
-                        android:textAppearance="@style/TextAppearance.Widget.AppCompat.Toolbar.Title" />
+                        android:padding="4dp"
+                        android:textSize="22sp"
+                        android:text="DarkMesh™"
+                        android:textAppearance="@style/TextAppearance.Widget.AppCompat.Toolbar.Title"
+                        tools:ignore="HardcodedText" />
 
                 </com.google.android.material.appbar.MaterialToolbar>
             </androidx.constraintlayout.widget.ConstraintLayout>
