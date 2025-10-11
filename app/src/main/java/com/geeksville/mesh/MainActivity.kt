@@ -17,6 +17,7 @@
 
 package com.geeksville.mesh
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
@@ -29,6 +30,8 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
+import android.os.PowerManager.WakeLock
 import android.os.RemoteException
 import android.text.InputType
 import android.text.method.LinkMovementMethod
@@ -38,6 +41,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Spinner
@@ -182,6 +186,9 @@ class MainActivity : AppCompatActivity(), Logging {
 
     private val bluetoothViewModel: BluetoothViewModel by viewModels()
     private val model: UIViewModel by viewModels()
+
+    private var wakeLock: WakeLock? = null
+    val distressWakeLock: String = "DistressBCN::WakeLockTag"
 
     @Inject
     internal lateinit var serviceRepository: ServiceRepository
@@ -838,8 +845,12 @@ class MainActivity : AppCompatActivity(), Logging {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private fun showChannelSelectorDialog(channels: List<Contact>, item: MenuItem) {
         val channelNames = channels.map { it.longName }
+
+        val myInfo = model.ourNodeInfo.value
+        val myLongName = myInfo?.user?.longName
 
         var selectedChannel: Contact? = null
         var started = false
@@ -853,6 +864,12 @@ class MainActivity : AppCompatActivity(), Logging {
         val inputSeconds = EditText(this).apply {
             hint = "Loop Interval (Seconds)"
             inputType = InputType.TYPE_CLASS_NUMBER
+            setPadding(32, 50, 32, 50)
+        }
+
+        val includeName = CheckBox(this).apply {
+            text = "Include ny name"
+            isChecked = false;
             setPadding(32, 50, 32, 50)
         }
 
@@ -880,11 +897,11 @@ class MainActivity : AppCompatActivity(), Logging {
             }
         }
 
-        // Layout verticale come prima, ma con Spinner in alto
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(40, 16, 40, 0)
             addView(spinner)
+            addView(includeName)
             addView(inputField)
             addView(inputSeconds)
         }
@@ -901,7 +918,15 @@ class MainActivity : AppCompatActivity(), Logging {
                     val userInput = inputField.text.toString()
                     val interval = inputSeconds.text.toString()
                     Toast.makeText(this, "Starting Distress Beacon now..", Toast.LENGTH_LONG).show()
-                    postPing(selectedChannel!!.contactKey, userInput, interval.toLong())
+
+                    //todo include GPS!
+                    sendDistress(
+                        selectedChannel!!.contactKey,
+                        userInput, interval.toLong(),
+                        myLongName.toString(),
+                        includeName,
+                    )
+
                 } else {
                     Toast.makeText(this, "Please select a channel", Toast.LENGTH_LONG).show()
                 }
@@ -918,14 +943,46 @@ class MainActivity : AppCompatActivity(), Logging {
         dialog.show()
     }
 
-    fun postPing(contactKey: String, userInput: String, interval: Long) {
-        debug("Sending distress beacon")
-        val str = "[BCN] $userInput " + DateFormat.getTimeInstance(DateFormat.MEDIUM)
-            .format(Date(System.currentTimeMillis()))
-        model.sendMessage(str, contactKey)
-        DistressHandler.handler.postDelayed({ postPing(contactKey, userInput, interval) },
-            (interval * 1000)
-        )
+    fun sendDistress(contactKey: String,
+                     userInput: String,
+                     interval: Long,
+                     myName: String,
+                     includeName: CheckBox) {
+
+        val intervalLong = interval * 1000
+        val powerManager = getSystemService(POWER_SERVICE) as PowerManager
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, distressWakeLock)
+
+        try {
+            wakeLock!!.acquire((intervalLong).toLong())
+            debug("Sending distress beacon")
+            val currentTime = DateFormat.getTimeInstance(DateFormat.MEDIUM).format(Date(System.currentTimeMillis()))
+
+            var str = "[BCN] "
+            str += if(includeName.isChecked){
+                "$userInput @ $myName $currentTime"
+            } else{
+                "$userInput @ $currentTime"
+            }
+
+            model.sendMessage(str, contactKey)
+
+            DistressHandler.handler.postDelayed({
+                sendDistress(
+                    contactKey,
+                    userInput,
+                    interval,
+                    myName,
+                    includeName)}, (intervalLong)
+            )
+
+        } catch (e: Exception){
+            debug("An error occurred while distressing: $e")
+        } finally {
+            if(wakeLock != null && wakeLock!!.isHeld){
+                wakeLock!!.release()
+            }
+        }
     }
 
     private fun getVersionInfo() {
