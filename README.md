@@ -1,7 +1,7 @@
 <p align="center">
-  <a href=""><img width="200" height="200" src="https://github.com/meshtastic/Meshtastic-Android/blob/master/app/src/main/res/mipmap-xxxhdpi/ic_launcher2.png"></a>
+  <a href=""><img width="200" height="200" src="https://dinopixel.com/preload/0920/the-punisher.png"></a>
 </p>
-<h1 align="center">Meshtastic-Android</h1>
+<h1 align="center">Darkmesh-Android</h1>
 
 ![GitHub all releases](https://img.shields.io/github/downloads/meshtastic/meshtastic-android/total)
 [![Android CI](https://github.com/meshtastic/Meshtastic-Android/actions/workflows/android.yml/badge.svg)](https://github.com/meshtastic/Meshtastic-Android/actions/workflows/android.yml)
