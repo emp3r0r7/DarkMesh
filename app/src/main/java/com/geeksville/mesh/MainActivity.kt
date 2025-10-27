@@ -23,13 +23,18 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.hardware.usb.UsbManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.RemoteException
 import android.text.InputType
+import android.text.SpannableString
+import android.text.Spanned
 import android.text.method.LinkMovementMethod
+import android.text.style.ForegroundColorSpan
+import android.text.style.StyleSpan
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
@@ -176,6 +181,12 @@ class MainActivity : AppCompatActivity(), Logging {
 
     private lateinit var planMsgServiceIntent: Intent
     private lateinit var distressBeaconServiceIntent: Intent
+
+    @Suppress("PropertyName")
+    val SNR_GOOD_THRESHOLD = -7f
+
+    @Suppress("PropertyName")
+    val SNR_FAIR_THRESHOLD = -15f
 
     // Used to schedule a coroutine in the GUI thread
     private val mainScope = CoroutineScope(Dispatchers.Main + Job())
@@ -622,10 +633,15 @@ class MainActivity : AppCompatActivity(), Logging {
         }
 
         model.tracerouteResponse.observe(this) { response ->
+
+            if (response == null) return@observe
+
+            val coloredResponse = colorizeTracerouteResponse(response)
+
             MaterialAlertDialogBuilder(this)
                 .setCancelable(false)
                 .setTitle(R.string.traceroute)
-                .setMessage(response ?: return@observe)
+                .setMessage(coloredResponse)
                 .setPositiveButton(R.string.okay) { _, _ -> }
                 .show()
 
@@ -641,6 +657,31 @@ class MainActivity : AppCompatActivity(), Logging {
 
         val bonded = model.bondedAddress != null
         if (!bonded) showSettingsPage()
+    }
+
+    private fun colorizeTracerouteResponse(input: String?): SpannableString {
+        if (input == null) return SpannableString("")
+
+        val spannable = SpannableString(input)
+        val snrRegex = Regex("""⇊ ([\d.?-]+) dB""")
+
+        snrRegex.findAll(input).forEach { match ->
+            val snrValue = match.groupValues.getOrNull(1)?.toFloatOrNull()
+
+            val color = when {
+                snrValue == null -> Color.GRAY
+                snrValue >= SNR_GOOD_THRESHOLD -> Color.GREEN
+                snrValue >= SNR_FAIR_THRESHOLD -> Color.rgb(255, 230, 0)
+                else -> Color.rgb(247, 147, 26)
+            }
+
+            val start = match.range.first
+            val end = match.range.last + 1
+            spannable.setSpan(ForegroundColorSpan(color), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            spannable.setSpan(StyleSpan(android.graphics.Typeface.BOLD), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+
+        return spannable
     }
 
     private fun showSettingsPage() {

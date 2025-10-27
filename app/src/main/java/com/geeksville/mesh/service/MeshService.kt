@@ -152,6 +152,8 @@ class MeshService : Service(), Logging {
 
     private lateinit var huntingPrefs: SharedPreferences
 
+    private val tracerouteStartTimes = ConcurrentHashMap<Int, Long>()
+
     companion object : Logging {
 
         // Intents broadcast by MeshService
@@ -858,9 +860,18 @@ class MeshService : Service(), Logging {
                         }
 
                         if(!huntingPrefs.getBoolean(UserPrefs.Hunting.BACKGROUND_HUNT, false)){
-                            radioConfigRepository.setTracerouteResponse(
-                                packet.getTracerouteResponse(::getUserName)
-                            )
+                            val requestId = packet.decoded.requestId
+                            val start = tracerouteStartTimes.remove(requestId)
+                            var response = packet.getTracerouteResponse(::getUserName)
+
+                            if (response != null && start != null) {
+                                val elapsedMs = System.currentTimeMillis() - start.toLong()
+                                val seconds = elapsedMs / 1000.0
+
+                                response += "\n\nDuration: ${"%.1f".format(seconds)} s"
+                            }
+
+                            radioConfigRepository.setTracerouteResponse(response)
                         }
                     }
 
@@ -2175,6 +2186,7 @@ class MeshService : Service(), Logging {
         }
 
         override fun requestTraceroute(requestId: Int, destNum: Int) = toRemoteExceptions {
+            tracerouteStartTimes[requestId] = System.currentTimeMillis()
             sendToRadio(newMeshPacketTo(destNum).buildMeshPacket(
                 wantAck = true,
                 id = requestId,
