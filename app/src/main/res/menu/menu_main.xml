@@ -22,6 +22,15 @@
     >
 
     <item
+        android:visible="false"
+        android:id="@+id/stealthStatusMode"
+        android:icon="@drawable/stealth_mode_on"
+        app:iconTint="@color/toolbarText"
+        android:title="Stealth Mode"
+        app:showAsAction="ifRoom"
+        tools:ignore="HardcodedText" />
+
+    <item
         android:id="@+id/huntStatusImage"
         android:icon="@drawable/hunt_mode_on"
         app:iconTint="@color/toolbarText"

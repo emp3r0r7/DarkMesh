@@ -24,6 +24,7 @@ import android.content.SharedPreferences
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.graphics.Typeface
 import android.hardware.usb.UsbManager
 import android.net.Uri
 import android.os.Build
@@ -59,9 +60,11 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.emp3r0r7.darkmesh.BuildConfig
 import com.emp3r0r7.darkmesh.R
@@ -328,6 +331,7 @@ class MainActivity : AppCompatActivity(), Logging {
         }
 
         // Handle any intent
+        checkIfDeviceIsSensor()
         handleIntent(intent)
     }
 
@@ -678,7 +682,7 @@ class MainActivity : AppCompatActivity(), Logging {
             val start = match.range.first
             val end = match.range.last + 1
             spannable.setSpan(ForegroundColorSpan(color), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-            spannable.setSpan(StyleSpan(android.graphics.Typeface.BOLD), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            spannable.setSpan(StyleSpan(Typeface.BOLD), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
 
         return spannable
@@ -713,6 +717,18 @@ class MainActivity : AppCompatActivity(), Logging {
         return true
     }
 
+    private fun checkIfDeviceIsSensor(){
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                model.deviceRole.collect { role ->
+                    val stealthStatus = model.actionBarMenu?.findItem(R.id.stealthStatusMode)
+                    stealthStatus?.isVisible = role == ConfigProtos.Config.DeviceConfig.Role.SENSOR
+                }
+            }
+        }
+    }
+
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         val stressItem = menu.findItem(R.id.stress_test)
 
@@ -730,6 +746,15 @@ class MainActivity : AppCompatActivity(), Logging {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
+
+            R.id.stealthStatusMode -> {
+                Toast.makeText(
+                    applicationContext,
+                    "You are in stealth mode!",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return true
+            }
 
             R.id.huntStatusImage -> {
 

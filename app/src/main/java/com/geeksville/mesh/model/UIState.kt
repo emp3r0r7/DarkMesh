@@ -72,6 +72,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
@@ -191,6 +192,20 @@ class UIViewModel @Inject constructor(
 
     val quickChatActions get() = quickChatActionRepository.getAllActions()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /**
+     * Flow reattivo che espone il ruolo corrente del dispositivo (CLIENT, ROUTER, TRACKER, ecc.)
+     * derivato da localConfig.device.role.
+     */
+
+    val deviceRole: StateFlow<Config.DeviceConfig.Role> =
+        radioConfigRepository.localConfigFlow
+            .map { it.device.role }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = Config.DeviceConfig.Role.UNRECOGNIZED
+            )
 
     private val nodeFilterText = MutableStateFlow("")
     private val nodeSortOption = MutableStateFlow(NodeSortOption.LAST_HEARD)
