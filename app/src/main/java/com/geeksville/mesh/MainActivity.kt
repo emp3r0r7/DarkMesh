@@ -332,6 +332,7 @@ class MainActivity : AppCompatActivity(), Logging {
 
         // Handle any intent
         checkIfDeviceIsSensor()
+        checkIfDeviceIsHidden()
         handleIntent(intent)
     }
 
@@ -729,6 +730,18 @@ class MainActivity : AppCompatActivity(), Logging {
         }
     }
 
+    private fun checkIfDeviceIsHidden(){
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                model.deviceRole.collect { role ->
+                    val stealthStatus = model.actionBarMenu?.findItem(R.id.probeStatusMode)
+                    stealthStatus?.isVisible = role == ConfigProtos.Config.DeviceConfig.Role.CLIENT_HIDDEN
+                }
+            }
+        }
+    }
+
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         val stressItem = menu.findItem(R.id.stress_test)
 
@@ -746,6 +759,15 @@ class MainActivity : AppCompatActivity(), Logging {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
+
+            R.id.probeStatusMode -> {
+                Toast.makeText(
+                    applicationContext,
+                    "You can read all packets via USB!",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return true
+            }
 
             R.id.stealthStatusMode -> {
                 Toast.makeText(
