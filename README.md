@@ -79,7 +79,7 @@ A dedicated runtime mode intended for maximum discretion and minimal airtime. Ke
 
 ### Client HIDDEN Mode — serial sniffer / passive capture
 A client-side mode designed for serial-connected capture and offline analysis:
-- When configured as **Client HIDDEN**, the node **forwards every received packet** to the serial interface (UART) regardless of whether the packet would be processed by a normal client.
+- When configured as **Client HIDDEN**, the node **forwards every received packet** to the serial interface regardless of whether the packet would be processed by a normal client.
 - This mode effectively turns the device into a **passive sniffer** that outputs raw/decoded packets to serial for an attached logger or downstream processor.
 - **Use case:** connect the device via serial to a host (e.g., laptop or embedded logger) to capture all mesh traffic for forensic analysis, long-term logging, or to feed custom decoders.
 
@@ -91,7 +91,7 @@ A client-side mode designed for serial-connected capture and offline analysis:
 
 ## ⚠️ Operational Notes & Security Considerations
 
-- **Anonymity limitations:** While SENSOR mode reduces exposure (no telemetry, ephemeral node IDs), it does **not** make the node cryptographically anonymous. RF fingerprinting, timing analysis, or gateway correlation can still deanonymize signals in some threat models. Use appropriate OPSEC and understand the local legal/regulatory context.
+- **Anonymity limitations:** While SENSOR mode reduces exposure (no telemetry, ephemeral node IDs), it does **not** make the node completely anonymous. RF fingerprinting, timing analysis, or gateway correlation can still deanonymize signals in some threat models. Use appropriate OPSEC and understand the local legal/regulatory context.
 - **Testing:** Validate behavior in controlled environments before deploying to production/field. Confirm ephemeral-ID behavior and channel restrictions match your operational needs.
 - **Backup:** Always keep a backup of device configuration and keys before flashing custom firmware.
 ---
