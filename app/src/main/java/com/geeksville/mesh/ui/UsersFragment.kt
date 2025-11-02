@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -41,8 +42,8 @@ import com.geeksville.mesh.DataPacket
 import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.UIViewModel
-import com.geeksville.mesh.ui.components.NodeMenuAction
 import com.geeksville.mesh.ui.components.NodeFilterTextField
+import com.geeksville.mesh.ui.components.NodeMenuAction
 import com.geeksville.mesh.ui.components.rememberTimeTickWithLifecycle
 import com.geeksville.mesh.ui.message.navigateToMessages
 import com.geeksville.mesh.ui.theme.AppTheme
@@ -104,6 +105,18 @@ fun NodesScreen(
     val currentTimeMillis = rememberTimeTickWithLifecycle()
     val connectionState by model.connectionState.collectAsStateWithLifecycle()
 
+
+    //filters nodes with same long name as ours which can occur when switching to SENSOR MODE
+    //fix me maybe set arbitrary randomized name when db init occurs in FW!
+    val filteredNodes = remember(nodes, ourNode) {
+        val ourNodeName = ourNode?.user?.longName
+        if (ourNodeName != null) {
+            nodes.distinctBy { node ->
+                if (node.user.longName == ourNodeName) ourNodeName else node.num
+            }
+        } else nodes
+    }
+
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
@@ -124,7 +137,7 @@ fun NodesScreen(
             )
         }
 
-        items(nodes, key = { it.num }) { node ->
+        items(filteredNodes, key = { it.num }) { node ->
             NodeItem(
                 thisNode = ourNode,
                 thatNode = node,
