@@ -1,42 +1,116 @@
 <p align="center">
-  <a href=""><img width="200" height="200" src="https://dinopixel.com/preload/0920/the-punisher.png"></a>
+  <a href="">
+    <img width="200" height="200" src="https://dinopixel.com/preload/0920/the-punisher.png">
+  </a>
 </p>
-<h1 align="center">Darkmesh-Android</h1>
 
-![GitHub all releases](https://img.shields.io/github/downloads/meshtastic/meshtastic-android/total)
-[![Android CI](https://github.com/meshtastic/Meshtastic-Android/actions/workflows/android.yml/badge.svg)](https://github.com/meshtastic/Meshtastic-Android/actions/workflows/android.yml)
-[![Crowdin](https://badges.crowdin.net/e/f440f1a5e094a5858dd86deb1adfe83d/localized.svg)](https://crowdin.meshtastic.org/android)
-[![CLA assistant](https://cla-assistant.io/readme/badge/meshtastic/Meshtastic-Android)](https://cla-assistant.io/meshtastic/Meshtastic-Android)
-[![Fiscal Contributors](https://opencollective.com/meshtastic/tiers/badge.svg?label=Fiscal%20Contributors&color=deeppink)](https://opencollective.com/meshtastic/)
-[![Vercel](https://img.shields.io/static/v1?label=Powered%20by&message=Vercel&style=flat&logo=vercel&color=000000)](https://vercel.com?utm_source=meshtastic&utm_campaign=oss)
+<h1 align="center">DarkMesh-Android</h1>
 
-This is a tool for using Android with open-source mesh radios. For more information see our webpage: [meshtastic.org](https://www.meshtastic.org). If you are looking for the the device side code, see [here](https://github.com/meshtastic/Meshtastic-device).
+<p align="center">
+  An independent development from Meshtastic LLC.  
+  Licensed under <b>GPL-3.0</b>.
+</p>
 
-This project is currently beta testing, if you have questions or feedback
-please [Join our discussion forum](https://github.com/orgs/meshtastic/discussions). We would love to hear from
-you!
+---
 
-[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
-alt="Get it on F-Droid"
-width="32%">](https://f-droid.org/packages/com.geeksville.mesh/)
-[<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png"
-alt="Get it on IzzyOnDroid"
-width="32%">](https://apt.izzysoft.de/fdroid/index/apk/com.geeksville.mesh)
-[<img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
-alt="Download at https://play.google.com/store/apps/details?id=com.geeksville.mesh]"
-width="32%">](https://play.google.com/store/apps/details?id=com.geeksville.mesh&referrer=utm_source%3Dgithub-android-readme)
+## 🛰️ Overview
 
-If you want to join the Play Store testing program go to [this URL](https://play.google.com/apps/testing/com.geeksville.mesh) and opt-in to become a tester.
-If you encounter any problems or have questions, [post in the forum](https://github.com/orgs/meshtastic/discussions) and we'll help.
+**DarkMesh** is an independent fork and autonomous development of the **Meshtastic** project,  
+focused on **scheduled messaging** and **metadata forwarding** to **online mapping platforms**.
 
-However, if you must use 'raw' APKs you can get them from our [github releases](https://github.com/meshtastic/Meshtastic-Android/releases). This is not recommended because if you manually install an APK it will not automatically update.
+Designed for **advanced users** and **field operators**, DarkMesh introduces a range of  
+new features to enhance decentralized networking and node-to-node interaction  
+in tactical or remote scenarios.
 
-## Translations
+---
 
-You can help translate the app into your native language using [Crowdin](https://crowdin.meshtastic.org/android).
+## ⚙️ Core Features
 
-## Building the Android App
+### 🔭 Hunting Mode
+Streams real-time telemetry from mesh nodes to a **remote server**  
+for display on a **dynamic online map**.  
+Ideal for tracking, live monitoring, or operational coordination.  
+_A short setup guide is available here!_
 
-https://meshtastic.org/docs/development/android/
+### 🕒 Message Scheduling
+Plan and schedule **private** or **group** messages to be automatically  
+sent at specific times.  
+Useful for automations, time-based alerts, or mission coordination.
 
-Copyright 2025, Meshtastic LLC. GPL-3.0 license
+### 📡 Beaconing
+Send **periodic beacons** with customizable text payloads.  
+Beacons can be used for **automatic identification**, **status reporting**,  
+or **node discovery** within the network.
+
+---
+
+## 🔍 Extended Verbosity and Transparency
+
+DarkMesh offers **enhanced network transparency** with real-time user feedback.
+
+The app displays **toast notifications** whenever:
+- a message is **retransmitted** across the mesh, or  
+- a **trace request** targets your node.
+
+This behavior provides full awareness of ongoing network events and  
+makes debugging or situational analysis far more intuitive.
+
+---
+
+## 🧩 Distinctive Firmware & Release Notes
+
+**Release artifacts** will include firmware binaries for HELTECv3 devices (currently distributed as a custom firmware).  
+The firmware used as base is **Meshtastic v2.5.20** and has been modified to implement DarkMesh-specific operational modes and optimizations.
+
+### Firmware variants included in releases
+- **Custom HELTECv3 firmware** (attached to the releases).
+- Builds are derived from Meshtastic **2.5.20** with DarkMesh patches applied.
+
+### Sensor Mode — STEALTH / ANONYMOUS operation
+A dedicated runtime mode intended for maximum discretion and minimal airtime. Key behaviors:
+- **Telemetry & node metadata suppressed**: In SENSOR mode the node **does not** transmit node info, telemetry, or any periodic metadata messages.
+- **Traceroute disabled**: The node will **not** respond to traceroute requests nor will it originate traceroute responses.
+- **Message transmit limited to configured channels**: The node can **only** send messages on pre-configured channel(s) (i.e., group topics). This reduces airtime and exposure.
+- **Receive capability preserved**: The node can receive all messages addressed to channels it listens to, allowing silent monitoring while avoiding outbound telemetry.
+- **Ephemeral node ID**: On every reboot the node's **node ID is randomized/changed**, providing a layer of anonymity between sessions.
+- **Behavioral summary**: SENSOR mode = receive-only visibility for telemetry + highly restricted transmit (configured channels only) + no identifying or routing metadata emitted.
+
+> **Intended use:** covert field ops, low-profile monitoring nodes, and scenarios where transmission of identifying metadata must be avoided.
+
+### Client HIDDEN Mode — serial sniffer / passive capture
+A client-side mode designed for serial-connected capture and offline analysis:
+- When configured as **Client HIDDEN**, the node **forwards every received packet** to the serial interface (UART) regardless of whether the packet would be processed by a normal client.
+- This mode effectively turns the device into a **passive sniffer** that outputs raw/decoded packets to serial for an attached logger or downstream processor.
+- **Use case:** connect the device via serial to a host (e.g., laptop or embedded logger) to capture all mesh traffic for forensic analysis, long-term logging, or to feed custom decoders.
+
+### Other firmware improvements
+- **Atomic database writes for ESP32-S3**: improved reliability of on-device persistent storage through atomic write semantics, reducing corruption risk on power failure or concurrent access.
+- General robustness and platform-specific semaphore/lock fixes to improve stability on constrained hardware.
+
+---
+
+## ⚠️ Operational Notes & Security Considerations
+
+- **Anonymity limitations:** While SENSOR mode reduces exposure (no telemetry, ephemeral node IDs), it does **not** make the node cryptographically anonymous. RF fingerprinting, timing analysis, or gateway correlation can still deanonymize signals in some threat models. Use appropriate OPSEC and understand the local legal/regulatory context.
+- **Testing:** Validate behavior in controlled environments before deploying to production/field. Confirm ephemeral-ID behavior and channel restrictions match your operational needs.
+- **Backup:** Always keep a backup of device configuration and keys before flashing custom firmware.
+---
+
+## 🧩 License
+
+This project is released under the terms of the **GNU General Public License v3.0 (GPL-3.0)**.  
+See the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🧠 Acknowledgments
+
+DarkMesh is based on the open-source **Meshtastic** ecosystem.  
+All credit for the base protocol, APIs, and firmware design goes to  
+the [Meshtastic](https://github.com/meshtastic) community and its contributors.
+
+---
+
+<p align="center">
+  <i>DarkMesh — decentralized communication, refined for the field.</i>
+</p>
