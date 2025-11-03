@@ -30,7 +30,7 @@ in tactical or remote scenarios.
 Streams real-time telemetry from mesh nodes to a **remote server**  
 for display on a **dynamic online map**.  
 Ideal for tracking, live monitoring, or operational coordination.  
-_A short setup guide is available here!_
+[_A short setup guide is available here!_](https://mesh.loracity.it/mappa-dei-nodi-meshtastic-ricevuti-via-radio/)
 
 ### 🕒 Message Scheduling
 Plan and schedule **private** or **group** messages to be automatically  
