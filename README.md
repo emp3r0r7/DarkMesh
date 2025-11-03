@@ -7,7 +7,7 @@
 <h1 align="center">DarkMesh-Android</h1>
 
 <p align="center">
-  An independent development from Meshtastic LLC.  
+  An independent development from Meshtastic LLC. focused on Privacy and Field Operators.
   Licensed under <b>GPL-3.0</b>.
 </p>
 
