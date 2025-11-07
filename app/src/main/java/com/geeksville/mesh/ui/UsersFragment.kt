@@ -110,10 +110,10 @@ fun NodesScreen(
     //fix me maybe set arbitrary randomized name when db init occurs in FW!
     val filteredNodes = remember(nodes, ourNode) {
         val ourNodeName = ourNode?.user?.longName
-        if (ourNodeName != null) {
-            nodes.distinctBy { node ->
-                if (node.user.longName == ourNodeName) ourNodeName else node.num
-            }
+        val ourNodeId = ourNode?.user?.id
+
+        if (ourNodeName != null && ourNodeId != null) {
+            nodes.filterNot { it.user.longName == ourNodeName && it.user.id != ourNodeId }
         } else nodes
     }
 
