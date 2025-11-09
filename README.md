@@ -63,7 +63,7 @@ makes debugging or situational analysis far more intuitive.
 The firmware used as base is **Meshtastic v2.5.20** and has been modified to implement DarkMesh-specific operational modes and optimizations.
 
 ### Firmware variants included in releases
-- **Custom HELTECv3 firmware** (attached to the releases).
+- **Custom HELTECv3 firmware** (Released on private request).
 - Builds are derived from Meshtastic **2.5.20** with DarkMesh patches applied.
 
 ### Sensor Mode — STEALTH / ANONYMOUS operation
