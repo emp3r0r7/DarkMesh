@@ -19,12 +19,12 @@ package com.geeksville.mesh.repository.datastore
 
 import androidx.datastore.core.DataStore
 import com.geeksville.mesh.android.Logging
-import com.geeksville.mesh.AppOnlyProtos.ChannelSet
-import com.geeksville.mesh.ChannelProtos.Channel
-import com.geeksville.mesh.ChannelProtos.ChannelSettings
-import com.geeksville.mesh.ConfigProtos
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import org.meshtastic.proto.AppOnlyProtos.ChannelSet
+import org.meshtastic.proto.ChannelProtos.Channel
+import org.meshtastic.proto.ChannelProtos.ChannelSettings
+import org.meshtastic.proto.ConfigProtos
 import java.io.IOException
 import javax.inject.Inject
 

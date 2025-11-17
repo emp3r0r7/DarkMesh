@@ -19,7 +19,7 @@ package com.geeksville.mesh.util
 
 import android.icu.util.LocaleData
 import android.icu.util.ULocale
-import com.geeksville.mesh.ConfigProtos.Config.DisplayConfig
+import org.meshtastic.proto.ConfigProtos.Config.DisplayConfig
 import java.util.Locale
 
 enum class DistanceUnit(

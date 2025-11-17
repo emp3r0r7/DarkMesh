@@ -31,14 +31,14 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.geeksville.mesh.ModuleConfigProtos.ModuleConfig.StoreForwardConfig
-import com.geeksville.mesh.copy
 import com.geeksville.mesh.model.RadioConfigViewModel
-import com.geeksville.mesh.moduleConfig
 import com.geeksville.mesh.ui.components.EditTextPreference
 import com.geeksville.mesh.ui.components.PreferenceCategory
 import com.geeksville.mesh.ui.components.PreferenceFooter
 import com.geeksville.mesh.ui.components.SwitchPreference
+import org.meshtastic.proto.ModuleConfigProtos.ModuleConfig.StoreForwardConfig
+import org.meshtastic.proto.copy
+import org.meshtastic.proto.moduleConfig
 
 @Composable
 fun StoreForwardConfigScreen(

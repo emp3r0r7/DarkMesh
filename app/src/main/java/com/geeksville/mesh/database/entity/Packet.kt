@@ -24,10 +24,10 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.geeksville.mesh.DataPacket
-import com.geeksville.mesh.MeshProtos.User
 import com.geeksville.mesh.model.Message
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.util.getShortDateTime
+import org.meshtastic.proto.MeshProtos.User
 
 data class PacketEntity(
     @Embedded val packet: Packet,

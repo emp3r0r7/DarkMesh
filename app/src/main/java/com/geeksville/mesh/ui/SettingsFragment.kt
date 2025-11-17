@@ -39,7 +39,6 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.asLiveData
 import com.emp3r0r7.darkmesh.R
 import com.emp3r0r7.darkmesh.databinding.SettingsFragmentBinding
-import com.geeksville.mesh.ConfigProtos
 import com.geeksville.mesh.android.GeeksvilleApplication
 import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.android.getBluetoothPermissions
@@ -62,6 +61,7 @@ import com.geeksville.mesh.util.exceptionToSnackbar
 import com.geeksville.mesh.util.onEditorAction
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
+import org.meshtastic.proto.ConfigProtos
 import javax.inject.Inject
 
 @AndroidEntryPoint

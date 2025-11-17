@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.emp3r0r7.darkmesh.R
-import com.geeksville.mesh.MeshProtos
+import org.meshtastic.proto.MeshProtos
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.CopyrightOverlay

@@ -21,6 +21,8 @@ import android.os.Parcel
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
+import org.meshtastic.proto.MeshProtos
+import org.meshtastic.proto.Portnums
 
 /**
  * Generic [Parcel.readParcelable] Android 13 compatibility extension.

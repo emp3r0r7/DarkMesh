@@ -17,9 +17,10 @@
 
 package com.geeksville.mesh.model
 
-import com.geeksville.mesh.MeshProtos
-import com.geeksville.mesh.MeshProtos.RouteDiscovery
-import com.geeksville.mesh.Portnums
+
+import org.meshtastic.proto.MeshProtos
+import org.meshtastic.proto.MeshProtos.RouteDiscovery
+import org.meshtastic.proto.Portnums
 
 val MeshProtos.MeshPacket.fullRouteDiscovery: RouteDiscovery?
     get() = with(decoded) {

@@ -76,13 +76,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.fragment.app.activityViewModels
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emp3r0r7.darkmesh.R
-import com.geeksville.mesh.AppOnlyProtos.ChannelSet
-import com.geeksville.mesh.ChannelProtos
-import com.geeksville.mesh.ConfigProtos
 import com.geeksville.mesh.analytics.DataPair
 import com.geeksville.mesh.android.BuildUtils.debug
 import com.geeksville.mesh.android.BuildUtils.errormsg
@@ -90,9 +88,6 @@ import com.geeksville.mesh.android.GeeksvilleApplication
 import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.android.getCameraPermissions
 import com.geeksville.mesh.android.hasCameraPermission
-import com.geeksville.mesh.channelSet
-import com.geeksville.mesh.channelSettings
-import com.geeksville.mesh.copy
 import com.geeksville.mesh.model.Channel
 import com.geeksville.mesh.model.ChannelOption
 import com.geeksville.mesh.model.UIViewModel
@@ -114,6 +109,12 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 import dagger.hilt.android.AndroidEntryPoint
+import org.meshtastic.proto.AppOnlyProtos.ChannelSet
+import org.meshtastic.proto.ChannelProtos
+import org.meshtastic.proto.ConfigProtos
+import org.meshtastic.proto.channelSet
+import org.meshtastic.proto.channelSettings
+import org.meshtastic.proto.copy
 
 @AndroidEntryPoint
 class ChannelFragment : ScreenFragment("Channel"), Logging {
@@ -169,7 +170,7 @@ fun ChannelScreen(
 
     val barcodeLauncher = rememberLauncherForActivityResult(ScanContract()) { result ->
         if (result.contents != null) {
-            viewModel.requestChannelUrl(Uri.parse(result.contents))
+            viewModel.requestChannelUrl(result.contents.toUri())
         }
     }
 
@@ -428,7 +429,7 @@ private fun EditChannelUrl(
         value = valueState.toString(),
         onValueChange = {
             isError = runCatching {
-                valueState = Uri.parse(it)
+                valueState = it.toUri()
                 valueState.toChannelSet()
             }.isFailure
         },

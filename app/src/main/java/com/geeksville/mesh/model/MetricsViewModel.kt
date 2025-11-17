@@ -28,19 +28,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.emp3r0r7.darkmesh.R
-import com.geeksville.mesh.ConfigProtos.Config.DisplayConfig.DisplayUnits
 import com.geeksville.mesh.CoroutineDispatchers
-import com.geeksville.mesh.MeshProtos.HardwareModel
-import com.geeksville.mesh.MeshProtos.MeshPacket
-import com.geeksville.mesh.MeshProtos.Position
-import com.geeksville.mesh.Portnums.PortNum
-import com.geeksville.mesh.TelemetryProtos.Telemetry
 import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.database.MeshLogRepository
 import com.geeksville.mesh.database.entity.MeshLog
 import com.geeksville.mesh.model.map.CustomTileSource
 import com.geeksville.mesh.repository.datastore.RadioConfigRepository
 import com.geeksville.mesh.ui.Route
+import com.geeksville.mesh.ui.Route.Telemetry
 import com.geeksville.mesh.ui.map.MAP_STYLE_ID
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -57,6 +52,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import org.meshtastic.proto.ConfigProtos.Config.DisplayConfig.DisplayUnits
+import org.meshtastic.proto.MeshProtos.HardwareModel
+import org.meshtastic.proto.MeshProtos.MeshPacket
+import org.meshtastic.proto.MeshProtos.Position
+import org.meshtastic.proto.Portnums.PortNum
+import org.meshtastic.proto.TelemetryProtos
 import java.io.BufferedWriter
 import java.io.FileNotFoundException
 import java.io.FileWriter
@@ -71,8 +72,8 @@ data class MetricsState(
     val isFahrenheit: Boolean = false,
     val displayUnits: DisplayUnits = DisplayUnits.METRIC,
     val node: Node? = null,
-    val deviceMetrics: List<Telemetry> = emptyList(),
-    val environmentMetrics: List<Telemetry> = emptyList(),
+    val deviceMetrics: List<TelemetryProtos.Telemetry> = emptyList(),
+    val environmentMetrics: List<TelemetryProtos.Telemetry> = emptyList(),
     val signalMetrics: List<MeshPacket> = emptyList(),
     val tracerouteRequests: List<MeshLog> = emptyList(),
     val tracerouteResults: List<MeshPacket> = emptyList(),
@@ -85,12 +86,12 @@ data class MetricsState(
     fun hasTracerouteLogs() = tracerouteRequests.isNotEmpty()
     fun hasPositionLogs() = positionLogs.isNotEmpty()
 
-    fun deviceMetricsFiltered(timeFrame: TimeFrame): List<Telemetry> {
+    fun deviceMetricsFiltered(timeFrame: TimeFrame): List<TelemetryProtos.Telemetry> {
         val oldestTime = timeFrame.calculateOldestTime()
         return deviceMetrics.filter { it.time >= oldestTime }
     }
 
-    fun environmentMetricsFiltered(timeFrame: TimeFrame): List<Telemetry> {
+    fun environmentMetricsFiltered(timeFrame: TimeFrame): List<TelemetryProtos.Telemetry> {
         val oldestTime = timeFrame.calculateOldestTime()
         return environmentMetrics.filter { it.time >= oldestTime }
     }

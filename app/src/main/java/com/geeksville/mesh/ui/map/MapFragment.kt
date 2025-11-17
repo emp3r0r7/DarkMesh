@@ -22,7 +22,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.content.res.AppCompatResources
@@ -58,14 +57,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.DataPacket
-import com.geeksville.mesh.MeshProtos.Waypoint
 import com.geeksville.mesh.android.BuildUtils.debug
 import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.android.getLocationPermissions
 import com.geeksville.mesh.android.gpsDisabled
 import com.geeksville.mesh.android.hasGps
 import com.geeksville.mesh.android.hasLocationPermission
-import com.geeksville.mesh.copy
 import com.geeksville.mesh.database.entity.Packet
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.UIViewModel
@@ -73,17 +70,19 @@ import com.geeksville.mesh.model.map.CustomTileSource
 import com.geeksville.mesh.model.map.MarkerWithLabel
 import com.geeksville.mesh.model.map.clustering.RadiusMarkerClusterer
 import com.geeksville.mesh.ui.ScreenFragment
-import com.geeksville.mesh.ui.UsersFragment
 import com.geeksville.mesh.ui.theme.AppTheme
+import com.geeksville.mesh.util.ApiUtil
 import com.geeksville.mesh.util.SqlTileWriterExt
 import com.geeksville.mesh.util.addCopyright
 import com.geeksville.mesh.util.addScaleBarOverlay
 import com.geeksville.mesh.util.createLatLongGrid
 import com.geeksville.mesh.util.formatAgo
 import com.geeksville.mesh.util.zoomIn
-import com.geeksville.mesh.waypoint
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
+import org.meshtastic.proto.MeshProtos.Waypoint
+import org.meshtastic.proto.copy
+import org.meshtastic.proto.waypoint
 import org.osmdroid.bonuspack.utils.BonusPackHelper.getBitmapFromVectorDrawable
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
@@ -316,7 +315,8 @@ fun MapView(
     fun MapView.onNodesChanged(nodes: Collection<Node>): List<MarkerWithLabel> {
         val nodesWithPosition = nodes.filter { it.validPosition != null }
         val ourNode = model.ourNodeInfo.value
-        val gpsFormat = model.config.display.gpsFormat.number
+
+        val gpsFormat = ApiUtil.safeGpsFormat(model.config.display.gpsFormat)
         val displayUnits = model.config.display.units.number
         return nodesWithPosition.map { node ->
             val (p, u) = node.position to node.user

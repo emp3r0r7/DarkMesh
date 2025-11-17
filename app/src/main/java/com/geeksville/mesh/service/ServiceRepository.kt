@@ -18,7 +18,6 @@
 package com.geeksville.mesh.service
 
 import com.geeksville.mesh.IMeshService
-import com.geeksville.mesh.MeshProtos.MeshPacket
 import com.geeksville.mesh.android.Logging
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import org.meshtastic.proto.MeshProtos.MeshPacket
 import javax.inject.Inject
 import javax.inject.Singleton
 

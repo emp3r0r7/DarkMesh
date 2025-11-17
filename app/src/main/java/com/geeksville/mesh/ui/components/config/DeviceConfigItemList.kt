@@ -36,15 +36,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emp3r0r7.darkmesh.R
-import com.geeksville.mesh.ConfigProtos.Config.DeviceConfig
-import com.geeksville.mesh.config
-import com.geeksville.mesh.copy
 import com.geeksville.mesh.model.RadioConfigViewModel
 import com.geeksville.mesh.ui.components.DropDownPreference
 import com.geeksville.mesh.ui.components.EditTextPreference
 import com.geeksville.mesh.ui.components.PreferenceCategory
 import com.geeksville.mesh.ui.components.PreferenceFooter
 import com.geeksville.mesh.ui.components.SwitchPreference
+import org.meshtastic.proto.ConfigProtos.Config.DeviceConfig
+import org.meshtastic.proto.config
+import org.meshtastic.proto.copy
 
 private val DeviceConfig.Role.stringRes: Int
     get() = when (this) {

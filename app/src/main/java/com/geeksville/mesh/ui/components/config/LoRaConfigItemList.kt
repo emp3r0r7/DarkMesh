@@ -32,10 +32,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.geeksville.mesh.ChannelProtos.ChannelSettings
-import com.geeksville.mesh.ConfigProtos.Config.LoRaConfig
-import com.geeksville.mesh.config
-import com.geeksville.mesh.copy
 import com.geeksville.mesh.model.Channel
 import com.geeksville.mesh.model.RadioConfigViewModel
 import com.geeksville.mesh.model.RegionInfo
@@ -46,6 +42,10 @@ import com.geeksville.mesh.ui.components.EditTextPreference
 import com.geeksville.mesh.ui.components.PreferenceCategory
 import com.geeksville.mesh.ui.components.PreferenceFooter
 import com.geeksville.mesh.ui.components.SwitchPreference
+import org.meshtastic.proto.ChannelProtos.ChannelSettings
+import org.meshtastic.proto.ConfigProtos.Config.LoRaConfig
+import org.meshtastic.proto.config
+import org.meshtastic.proto.copy
 
 @Composable
 fun LoRaConfigScreen(

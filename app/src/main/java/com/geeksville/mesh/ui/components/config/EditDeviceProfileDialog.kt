@@ -41,9 +41,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.emp3r0r7.darkmesh.R
-import com.geeksville.mesh.ClientOnlyProtos.DeviceProfile
 import com.geeksville.mesh.ui.components.SwitchPreference
 import com.google.protobuf.Descriptors
+import org.meshtastic.proto.ClientOnlyProtos.DeviceProfile
 
 private const val SupportedFields = 7
 

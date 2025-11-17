@@ -91,7 +91,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emp3r0r7.darkmesh.R
-import com.geeksville.mesh.ConfigProtos.Config.DisplayConfig.DisplayUnits
 import com.geeksville.mesh.model.MetricsState
 import com.geeksville.mesh.model.MetricsViewModel
 import com.geeksville.mesh.model.Node
@@ -102,6 +101,7 @@ import com.geeksville.mesh.util.DistanceUnit
 import com.geeksville.mesh.util.formatAgo
 import com.geeksville.mesh.util.formatUptime
 import com.geeksville.mesh.util.thenIf
+import org.meshtastic.proto.ConfigProtos.Config.DisplayConfig.DisplayUnits
 import kotlin.math.ln
 
 @Composable

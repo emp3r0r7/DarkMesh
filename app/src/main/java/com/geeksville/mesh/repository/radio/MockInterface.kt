@@ -18,27 +18,27 @@
 package com.geeksville.mesh.repository.radio
 
 import com.emp3r0r7.darkmesh.BuildConfig
-import com.geeksville.mesh.AdminProtos
-import com.geeksville.mesh.ChannelProtos
-import com.geeksville.mesh.ConfigKt
-import com.geeksville.mesh.ConfigProtos
 import com.geeksville.mesh.DataPacket
-import com.geeksville.mesh.MeshProtos
-import com.geeksville.mesh.Portnums
 import com.geeksville.mesh.Position
 import com.geeksville.mesh.android.Logging
-import com.geeksville.mesh.channel
 import com.geeksville.mesh.concurrent.handledLaunch
-import com.geeksville.mesh.config
-import com.geeksville.mesh.deviceMetadata
-import com.geeksville.mesh.fromRadio
 import com.geeksville.mesh.model.Channel
 import com.geeksville.mesh.model.getInitials
-import com.geeksville.mesh.queueStatus
 import com.google.protobuf.ByteString
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.delay
+import org.meshtastic.proto.AdminProtos
+import org.meshtastic.proto.ChannelProtos
+import org.meshtastic.proto.ConfigKt
+import org.meshtastic.proto.ConfigProtos
+import org.meshtastic.proto.MeshProtos
+import org.meshtastic.proto.Portnums
+import org.meshtastic.proto.channel
+import org.meshtastic.proto.config
+import org.meshtastic.proto.deviceMetadata
+import org.meshtastic.proto.fromRadio
+import org.meshtastic.proto.queueStatus
 import kotlin.random.Random
 
 private val defaultLoRaConfig = ConfigKt.loRaConfig {

@@ -31,37 +31,20 @@ import androidx.core.app.ServiceCompat
 import androidx.core.location.LocationCompat
 import com.emp3r0r7.darkmesh.BuildConfig
 import com.emp3r0r7.darkmesh.R
-import com.geeksville.mesh.AdminProtos
-import com.geeksville.mesh.AppOnlyProtos
-import com.geeksville.mesh.ChannelProtos
-import com.geeksville.mesh.ConfigProtos
 import com.geeksville.mesh.CoroutineDispatchers
 import com.geeksville.mesh.DataPacket
 import com.geeksville.mesh.IMeshService
-import com.geeksville.mesh.LocalOnlyProtos.LocalConfig
-import com.geeksville.mesh.LocalOnlyProtos.LocalModuleConfig
-import com.geeksville.mesh.MeshProtos
-import com.geeksville.mesh.MeshProtos.MeshPacket
-import com.geeksville.mesh.MeshProtos.ToRadio
 import com.geeksville.mesh.MeshUser
 import com.geeksville.mesh.MessageStatus
-import com.geeksville.mesh.ModuleConfigProtos
 import com.geeksville.mesh.MyNodeInfo
 import com.geeksville.mesh.NodeInfo
-import com.geeksville.mesh.PaxcountProtos
-import com.geeksville.mesh.Portnums
 import com.geeksville.mesh.Position
-import com.geeksville.mesh.StoreAndForwardProtos
-import com.geeksville.mesh.TelemetryProtos
-import com.geeksville.mesh.TelemetryProtos.LocalStats
 import com.geeksville.mesh.analytics.DataPair
 import com.geeksville.mesh.android.GeeksvilleApplication
 import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.android.hasLocationPermission
 import com.geeksville.mesh.android.mainLooperToast
 import com.geeksville.mesh.concurrent.handledLaunch
-import com.geeksville.mesh.config
-import com.geeksville.mesh.copy
 import com.geeksville.mesh.database.MeshLogRepository
 import com.geeksville.mesh.database.PacketRepository
 import com.geeksville.mesh.database.entity.MeshLog
@@ -69,19 +52,15 @@ import com.geeksville.mesh.database.entity.MyNodeEntity
 import com.geeksville.mesh.database.entity.NodeEntity
 import com.geeksville.mesh.database.entity.Packet
 import com.geeksville.mesh.database.entity.ReactionEntity
-import com.geeksville.mesh.fromRadio
 import com.geeksville.mesh.model.DeviceVersion
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.getTracerouteResponse
-import com.geeksville.mesh.position
 import com.geeksville.mesh.prefs.UserPrefs
 import com.geeksville.mesh.repository.datastore.RadioConfigRepository
 import com.geeksville.mesh.repository.location.LocationRepository
 import com.geeksville.mesh.repository.network.MQTTRepository
 import com.geeksville.mesh.repository.radio.RadioInterfaceService
 import com.geeksville.mesh.repository.radio.RadioServiceConnectionState
-import com.geeksville.mesh.telemetry
-import com.geeksville.mesh.user
 import com.geeksville.mesh.util.ApiUtil
 import com.geeksville.mesh.util.anonymize
 import com.geeksville.mesh.util.toOneLineString
@@ -101,6 +80,27 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withTimeoutOrNull
+import org.meshtastic.proto.AdminProtos
+import org.meshtastic.proto.AppOnlyProtos
+import org.meshtastic.proto.ChannelProtos
+import org.meshtastic.proto.ConfigProtos
+import org.meshtastic.proto.LocalOnlyProtos.LocalConfig
+import org.meshtastic.proto.LocalOnlyProtos.LocalModuleConfig
+import org.meshtastic.proto.MeshProtos
+import org.meshtastic.proto.MeshProtos.MeshPacket
+import org.meshtastic.proto.MeshProtos.ToRadio
+import org.meshtastic.proto.ModuleConfigProtos
+import org.meshtastic.proto.PaxcountProtos
+import org.meshtastic.proto.Portnums
+import org.meshtastic.proto.StoreAndForwardProtos
+import org.meshtastic.proto.TelemetryProtos
+import org.meshtastic.proto.TelemetryProtos.LocalStats
+import org.meshtastic.proto.config
+import org.meshtastic.proto.copy
+import org.meshtastic.proto.fromRadio
+import org.meshtastic.proto.position
+import org.meshtastic.proto.telemetry
+import org.meshtastic.proto.user
 import java.util.Random
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -1164,12 +1164,12 @@ class MeshService : Service(), Logging {
                         p?.data?.to?.let {
 
                             if(it.contains("all")){
-                                mainLooperToast("Message to channel retransmitted by mesh...", Toast.LENGTH_SHORT)
+                                mainLooperToast("Channel message traveling...", Toast.LENGTH_SHORT)
                             } else {
-                                mainLooperToast("Message to ${getUserName(hexIdToNodeNum(it))} retransmitted by mesh...", Toast.LENGTH_SHORT)
+                                mainLooperToast("Message to ${getUserName(hexIdToNodeNum(it))} traveling...", Toast.LENGTH_SHORT)
                             }
 
-                        } ?: mainLooperToast("Message has been retransmitted by mesh...", Toast.LENGTH_SHORT)
+                        } ?: mainLooperToast("Message traveling...", Toast.LENGTH_SHORT)
                     } catch(e :Exception){
                         debug("An error occurred while reading packet: ${packet.toPIIString()}")
                     }
@@ -2217,7 +2217,7 @@ class MeshService : Service(), Logging {
 
         override fun requestNodedbReset(requestId: Int, destNum: Int) = toRemoteExceptions {
             sendToRadio(newMeshPacketTo(destNum).buildAdminPacket(id = requestId) {
-                nodedbReset = 1
+                nodedbReset = true
             })
         }
     }

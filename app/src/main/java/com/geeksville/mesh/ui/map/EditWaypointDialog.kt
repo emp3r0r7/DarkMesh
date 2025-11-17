@@ -57,12 +57,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.emp3r0r7.darkmesh.R
-import com.geeksville.mesh.MeshProtos.Waypoint
-import com.geeksville.mesh.copy
+
 import com.geeksville.mesh.ui.components.EditTextPreference
 import com.geeksville.mesh.ui.components.EmojiPickerDialog
 import com.geeksville.mesh.ui.theme.AppTheme
-import com.geeksville.mesh.waypoint
+import org.meshtastic.proto.MeshProtos.Waypoint
+import org.meshtastic.proto.copy
+import org.meshtastic.proto.waypoint
 
 @Suppress("LongMethod")
 @OptIn(ExperimentalLayoutApi::class)

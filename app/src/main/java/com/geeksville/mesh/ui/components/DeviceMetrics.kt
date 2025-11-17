@@ -58,7 +58,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emp3r0r7.darkmesh.R
-import com.geeksville.mesh.TelemetryProtos.Telemetry
 import com.geeksville.mesh.model.MetricsViewModel
 import com.geeksville.mesh.model.TimeFrame
 import com.geeksville.mesh.ui.BatteryInfo
@@ -68,6 +67,7 @@ import com.geeksville.mesh.ui.theme.DarkGray
 import com.geeksville.mesh.util.GraphUtil
 import com.geeksville.mesh.util.GraphUtil.createPath
 import com.geeksville.mesh.util.GraphUtil.plotPoint
+import org.meshtastic.proto.TelemetryProtos.Telemetry
 
 private val DEVICE_METRICS_COLORS = listOf(Color.Green, Color.Magenta, Color.Cyan)
 private const val MAX_PERCENT_VALUE = 100f

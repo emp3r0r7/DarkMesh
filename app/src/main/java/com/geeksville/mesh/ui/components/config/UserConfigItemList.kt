@@ -34,8 +34,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.geeksville.mesh.MeshProtos
-import com.geeksville.mesh.copy
 import com.geeksville.mesh.model.RadioConfigViewModel
 import com.geeksville.mesh.model.getInitials
 import com.geeksville.mesh.ui.components.EditTextPreference
@@ -43,7 +41,9 @@ import com.geeksville.mesh.ui.components.PreferenceCategory
 import com.geeksville.mesh.ui.components.PreferenceFooter
 import com.geeksville.mesh.ui.components.RegularPreference
 import com.geeksville.mesh.ui.components.SwitchPreference
-import com.geeksville.mesh.user
+import org.meshtastic.proto.MeshProtos
+import org.meshtastic.proto.copy
+import org.meshtastic.proto.user
 
 @Composable
 fun UserConfigScreen(

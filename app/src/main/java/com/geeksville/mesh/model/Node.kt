@@ -18,16 +18,21 @@
 package com.geeksville.mesh.model
 
 import android.graphics.Color
-import com.geeksville.mesh.ConfigProtos.Config.DisplayConfig
-import com.geeksville.mesh.MeshProtos
-import com.geeksville.mesh.PaxcountProtos
-import com.geeksville.mesh.TelemetryProtos.DeviceMetrics
-import com.geeksville.mesh.TelemetryProtos.EnvironmentMetrics
-import com.geeksville.mesh.TelemetryProtos.PowerMetrics
+
 import com.geeksville.mesh.util.GPSFormat
 import com.geeksville.mesh.util.latLongToMeter
 import com.geeksville.mesh.util.toDistanceString
 import com.google.protobuf.ByteString
+import org.meshtastic.proto.ConfigProtos.Config.DisplayConfig
+import org.meshtastic.proto.DeviceUIProtos.DeviceUIConfig.GpsCoordinateFormat.DEC_VALUE
+import org.meshtastic.proto.DeviceUIProtos.DeviceUIConfig.GpsCoordinateFormat.DMS_VALUE
+import org.meshtastic.proto.DeviceUIProtos.DeviceUIConfig.GpsCoordinateFormat.MGRS_VALUE
+import org.meshtastic.proto.DeviceUIProtos.DeviceUIConfig.GpsCoordinateFormat.UTM_VALUE
+import org.meshtastic.proto.MeshProtos
+import org.meshtastic.proto.PaxcountProtos
+import org.meshtastic.proto.TelemetryProtos.DeviceMetrics
+import org.meshtastic.proto.TelemetryProtos.EnvironmentMetrics
+import org.meshtastic.proto.TelemetryProtos.PowerMetrics
 
 @Suppress("MagicNumber")
 data class Node(
@@ -102,10 +107,10 @@ data class Node(
     }
 
     fun gpsString(gpsFormat: Int): String = when (gpsFormat) {
-        DisplayConfig.GpsCoordinateFormat.DEC_VALUE -> GPSFormat.toDEC(latitude, longitude)
-        DisplayConfig.GpsCoordinateFormat.DMS_VALUE -> GPSFormat.toDMS(latitude, longitude)
-        DisplayConfig.GpsCoordinateFormat.UTM_VALUE -> GPSFormat.toUTM(latitude, longitude)
-        DisplayConfig.GpsCoordinateFormat.MGRS_VALUE -> GPSFormat.toMGRS(latitude, longitude)
+        DEC_VALUE -> GPSFormat.toDEC(latitude, longitude)
+        DMS_VALUE -> GPSFormat.toDMS(latitude, longitude)
+        UTM_VALUE -> GPSFormat.toUTM(latitude, longitude)
+        MGRS_VALUE -> GPSFormat.toMGRS(latitude, longitude)
         else -> GPSFormat.toDEC(latitude, longitude)
     }
 

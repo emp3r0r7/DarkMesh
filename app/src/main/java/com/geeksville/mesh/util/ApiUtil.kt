@@ -1,7 +1,5 @@
 package com.geeksville.mesh.util
 
-import com.geeksville.mesh.MeshProtos.MeshPacket
-import com.geeksville.mesh.Portnums
 import com.geeksville.mesh.model.custom.TracerouteJson
 import com.geeksville.mesh.model.custom.TracerouteNode
 import com.geeksville.mesh.model.custom.TraceroutePath
@@ -10,8 +8,18 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.protobuf.util.JsonFormat
+import org.meshtastic.proto.ConfigProtos.Config.DisplayConfig.DeprecatedGpsCoordinateFormat
+import org.meshtastic.proto.MeshProtos.MeshPacket
+import org.meshtastic.proto.Portnums
 
 object ApiUtil {
+
+    fun safeGpsFormat(gps: DeprecatedGpsCoordinateFormat): Int {
+        return if (gps == DeprecatedGpsCoordinateFormat.UNRECOGNIZED)
+            DeprecatedGpsCoordinateFormat.UNUSED.getNumber()
+
+        else gps.getNumber()
+    }
 
     fun mergePacketAndPayload(myNodeID: String,
                               packet: MeshPacket): String {

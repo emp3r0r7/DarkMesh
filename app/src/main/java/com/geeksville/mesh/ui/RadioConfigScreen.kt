@@ -64,12 +64,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emp3r0r7.darkmesh.R
-import com.geeksville.mesh.ClientOnlyProtos.DeviceProfile
 import com.geeksville.mesh.model.RadioConfigState
 import com.geeksville.mesh.model.RadioConfigViewModel
 import com.geeksville.mesh.ui.components.PreferenceCategory
 import com.geeksville.mesh.ui.components.config.EditDeviceProfileDialog
 import com.geeksville.mesh.ui.components.config.PacketResponseStateDialog
+import org.meshtastic.proto.ClientOnlyProtos.DeviceProfile
 
 private fun getNavRouteFrom(routeName: String): Any? {
     return ConfigRoute.entries.find { it.name == routeName }?.route

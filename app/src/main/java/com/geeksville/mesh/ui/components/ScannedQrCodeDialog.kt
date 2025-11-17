@@ -50,11 +50,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.emp3r0r7.darkmesh.R
-import com.geeksville.mesh.AppOnlyProtos.ChannelSet
-import com.geeksville.mesh.channelSet
-import com.geeksville.mesh.copy
 import com.geeksville.mesh.model.Channel
 import com.geeksville.mesh.ui.components.config.ChannelSelection
+import org.meshtastic.proto.AppOnlyProtos.ChannelSet
+import org.meshtastic.proto.channelSet
+import org.meshtastic.proto.copy
 
 /**
  * Enables the user to select which channels to accept after scanning a QR code.

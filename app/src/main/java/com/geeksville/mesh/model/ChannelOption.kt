@@ -18,9 +18,9 @@
 package com.geeksville.mesh.model
 
 import com.emp3r0r7.darkmesh.R
-import com.geeksville.mesh.ConfigProtos.Config.LoRaConfig
-import com.geeksville.mesh.ConfigProtos.Config.LoRaConfig.ModemPreset
-import com.geeksville.mesh.ConfigProtos.Config.LoRaConfig.RegionCode
+import org.meshtastic.proto.ConfigProtos.Config.LoRaConfig
+import org.meshtastic.proto.ConfigProtos.Config.LoRaConfig.ModemPreset
+import org.meshtastic.proto.ConfigProtos.Config.LoRaConfig.RegionCode
 
 /**
  * hash a string into an integer using the djb2 algorithm by Dan Bernstein

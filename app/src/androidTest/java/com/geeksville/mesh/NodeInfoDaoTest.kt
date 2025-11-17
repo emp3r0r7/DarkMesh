@@ -36,6 +36,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.meshtastic.proto.MeshProtos
+import org.meshtastic.proto.user
 
 @RunWith(AndroidJUnit4::class)
 class NodeInfoDaoTest {

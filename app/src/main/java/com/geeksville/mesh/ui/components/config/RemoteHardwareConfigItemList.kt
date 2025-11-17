@@ -31,14 +31,14 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.geeksville.mesh.ModuleConfigProtos.ModuleConfig.RemoteHardwareConfig
-import com.geeksville.mesh.copy
 import com.geeksville.mesh.model.RadioConfigViewModel
-import com.geeksville.mesh.moduleConfig
 import com.geeksville.mesh.ui.components.EditListPreference
 import com.geeksville.mesh.ui.components.PreferenceCategory
 import com.geeksville.mesh.ui.components.PreferenceFooter
 import com.geeksville.mesh.ui.components.SwitchPreference
+import org.meshtastic.proto.ModuleConfigProtos.ModuleConfig.RemoteHardwareConfig
+import org.meshtastic.proto.copy
+import org.meshtastic.proto.moduleConfig
 
 @Composable
 fun RemoteHardwareConfigScreen(

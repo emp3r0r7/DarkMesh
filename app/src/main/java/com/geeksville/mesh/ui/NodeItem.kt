@@ -56,9 +56,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.emp3r0r7.darkmesh.R
-import com.geeksville.mesh.ConfigProtos.Config.DeviceConfig
-import com.geeksville.mesh.ConfigProtos.Config.DisplayConfig
-import com.geeksville.mesh.MeshProtos
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.ui.components.NodeKeyStatusIcon
 import com.geeksville.mesh.ui.components.NodeMenu
@@ -69,6 +66,9 @@ import com.geeksville.mesh.ui.compose.SatelliteCountInfo
 import com.geeksville.mesh.ui.preview.NodePreviewParameterProvider
 import com.geeksville.mesh.ui.theme.AppTheme
 import com.geeksville.mesh.util.toDistanceString
+import org.meshtastic.proto.ConfigProtos.Config.DeviceConfig
+import org.meshtastic.proto.ConfigProtos.Config.DisplayConfig
+import org.meshtastic.proto.MeshProtos
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterialApi::class)

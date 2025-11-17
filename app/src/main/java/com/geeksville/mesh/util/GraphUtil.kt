@@ -18,11 +18,11 @@
 package com.geeksville.mesh.util
 
 import android.content.res.Resources
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawContext
-import com.geeksville.mesh.TelemetryProtos.Telemetry
+import org.meshtastic.proto.TelemetryProtos.Telemetry
 
 object GraphUtil {
 

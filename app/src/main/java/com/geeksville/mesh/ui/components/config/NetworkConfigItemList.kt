@@ -43,9 +43,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emp3r0r7.darkmesh.R
-import com.geeksville.mesh.ConfigProtos.Config.NetworkConfig
-import com.geeksville.mesh.config
-import com.geeksville.mesh.copy
 import com.geeksville.mesh.model.RadioConfigViewModel
 import com.geeksville.mesh.ui.components.DropDownPreference
 import com.geeksville.mesh.ui.components.EditIPv4Preference
@@ -57,6 +54,9 @@ import com.geeksville.mesh.ui.components.SimpleAlertDialog
 import com.geeksville.mesh.ui.components.SwitchPreference
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
+import org.meshtastic.proto.ConfigProtos.Config.NetworkConfig
+import org.meshtastic.proto.config
+import org.meshtastic.proto.copy
 
 @Composable
 private fun ScanErrorDialog(

@@ -17,13 +17,14 @@
 
 package com.geeksville.mesh.util
 
-import com.geeksville.mesh.MeshProtos
 import com.geeksville.mesh.Position
 import mil.nga.grid.features.Point
 import mil.nga.mgrs.MGRS
 import mil.nga.mgrs.utm.UTM
+import org.meshtastic.proto.MeshProtos
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
+import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.acos
 import kotlin.math.atan2
@@ -31,7 +32,6 @@ import kotlin.math.cos
 import kotlin.math.log2
 import kotlin.math.pow
 import kotlin.math.sin
-import kotlin.math.PI
 
 /*******************************************************************************
  * Revive some of my old Gaggle source code...

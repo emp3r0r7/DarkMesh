@@ -20,13 +20,12 @@ package com.geeksville.mesh.model
 import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Base64
-import com.geeksville.mesh.AppOnlyProtos.ChannelSet
 import com.geeksville.mesh.android.BuildUtils.errormsg
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import com.journeyapps.barcodescanner.BarcodeEncoder
+import org.meshtastic.proto.AppOnlyProtos.ChannelSet
 import java.net.MalformedURLException
-import kotlin.jvm.Throws
 
 private const val MESHTASTIC_HOST = "meshtastic.org"
 private const val MESHTASTIC_PATH = "/e/"

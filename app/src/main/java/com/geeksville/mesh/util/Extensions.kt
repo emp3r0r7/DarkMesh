@@ -19,7 +19,7 @@ package com.geeksville.mesh.util
 
 import android.widget.EditText
 import com.emp3r0r7.darkmesh.BuildConfig
-import com.geeksville.mesh.ConfigProtos
+import org.meshtastic.proto.ConfigProtos
 
 /**
  * When printing strings to logs sometimes we want to print useful debugging information about users

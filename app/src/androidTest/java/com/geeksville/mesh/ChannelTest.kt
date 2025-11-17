@@ -26,6 +26,7 @@ import com.geeksville.mesh.model.toChannelSet
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.meshtastic.proto.channelSet
 
 @RunWith(AndroidJUnit4::class)
 class ChannelTest {

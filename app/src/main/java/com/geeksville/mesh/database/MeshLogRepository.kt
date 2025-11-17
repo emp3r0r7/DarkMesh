@@ -18,9 +18,6 @@
 package com.geeksville.mesh.database
 
 import com.geeksville.mesh.CoroutineDispatchers
-import com.geeksville.mesh.Portnums
-import com.geeksville.mesh.MeshProtos.MeshPacket
-import com.geeksville.mesh.TelemetryProtos.Telemetry
 import com.geeksville.mesh.database.dao.MeshLogDao
 import com.geeksville.mesh.database.entity.MeshLog
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -30,6 +27,9 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.withContext
+import org.meshtastic.proto.MeshProtos.MeshPacket
+import org.meshtastic.proto.Portnums
+import org.meshtastic.proto.TelemetryProtos.Telemetry
 import javax.inject.Inject
 
 class MeshLogRepository @Inject constructor(

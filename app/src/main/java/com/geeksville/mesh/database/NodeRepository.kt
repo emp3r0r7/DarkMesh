@@ -21,7 +21,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.coroutineScope
 import com.geeksville.mesh.CoroutineDispatchers
 import com.geeksville.mesh.DataPacket
-import com.geeksville.mesh.MeshProtos
 import com.geeksville.mesh.database.dao.NodeInfoDao
 import com.geeksville.mesh.database.entity.MetadataEntity
 import com.geeksville.mesh.database.entity.MyNodeEntity
@@ -39,6 +38,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
+import org.meshtastic.proto.MeshProtos
 import javax.inject.Inject
 import javax.inject.Singleton
 

@@ -18,12 +18,13 @@
 package com.geeksville.mesh
 
 import androidx.core.os.LocaleListCompat
-import com.geeksville.mesh.ConfigProtos.Config.DisplayConfig.DisplayUnits
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
-import java.util.*
+import org.meshtastic.proto.ConfigProtos.Config.DisplayConfig.DisplayUnits
+import org.meshtastic.proto.MeshProtos
+import java.util.Locale
 
 class NodeInfoTest {
     private val model = MeshProtos.HardwareModel.ANDROID_SIM

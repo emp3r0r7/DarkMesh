@@ -67,12 +67,13 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.viewModels
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.emp3r0r7.darkmesh.R
-import com.geeksville.mesh.MeshProtos.DeviceMetadata
 import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.model.MetricsViewModel
 import com.geeksville.mesh.model.RadioConfigViewModel
@@ -109,6 +110,7 @@ import com.geeksville.mesh.util.UiText
 import com.google.accompanist.themeadapter.appcompat.AppCompatTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.serialization.Serializable
+import org.meshtastic.proto.MeshProtos.DeviceMetadata
 
 internal fun FragmentManager.navigateToNavGraph(
     destNum: Int? = null,
@@ -330,123 +332,134 @@ fun NavGraph(
             NodeDetailScreen { navController.navigate(route = it) }
         }
         composable<Route.DeviceMetrics> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.NodeDetail>() }
+            val parentEntry = rememberParentEntry<Route.NodeDetail>(navController)
             DeviceMetricsScreen(hiltViewModel<MetricsViewModel>(parentEntry))
         }
         composable<Route.NodeMap> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.NodeDetail>() }
+            val parentEntry = rememberParentEntry<Route.NodeDetail>(navController)
             NodeMapScreen(hiltViewModel<MetricsViewModel>(parentEntry))
         }
         composable<Route.PositionLog> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.NodeDetail>() }
+            val parentEntry = rememberParentEntry<Route.NodeDetail>(navController)
             PositionLogScreen(hiltViewModel<MetricsViewModel>(parentEntry))
         }
         composable<Route.EnvironmentMetrics> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.NodeDetail>() }
+            val parentEntry = rememberParentEntry<Route.NodeDetail>(navController)
             EnvironmentMetricsScreen(hiltViewModel<MetricsViewModel>(parentEntry))
         }
         composable<Route.SignalMetrics> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.NodeDetail>() }
+            val parentEntry = rememberParentEntry<Route.NodeDetail>(navController)
             SignalMetricsScreen(hiltViewModel<MetricsViewModel>(parentEntry))
         }
         composable<Route.TracerouteLog> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.NodeDetail>() }
+            val parentEntry = rememberParentEntry<Route.NodeDetail>(navController)
             TracerouteLogScreen(hiltViewModel<MetricsViewModel>(parentEntry))
         }
         composable<Route.RadioConfig> {
             RadioConfigScreen { navController.navigate(route = it) }
         }
         composable<Route.User> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
             UserConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Channels> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry =  rememberParentEntry<Route.RadioConfig>(navController)
             ChannelConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Device> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry =  rememberParentEntry<Route.RadioConfig>(navController)
             DeviceConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Position> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry =  rememberParentEntry<Route.RadioConfig>(navController)
             PositionConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Power> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry =  rememberParentEntry<Route.RadioConfig>(navController)
             PowerConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Network> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry =  rememberParentEntry<Route.RadioConfig>(navController)
             NetworkConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Display> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry =  rememberParentEntry<Route.RadioConfig>(navController)
             DisplayConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.LoRa> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry =  rememberParentEntry<Route.RadioConfig>(navController)
             LoRaConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Bluetooth> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
             BluetoothConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Security> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
             SecurityConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.MQTT> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
             MQTTConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Serial> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
             SerialConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.ExtNotification> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
             ExternalNotificationConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.StoreForward> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
             StoreForwardConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.RangeTest> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
             RangeTestConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Telemetry> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
             TelemetryConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.CannedMessage> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
             CannedMessageConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Audio> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
             AudioConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.RemoteHardware> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
             RemoteHardwareConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.NeighborInfo> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
             NeighborInfoConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.AmbientLighting> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
             AmbientLightingConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.DetectionSensor> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
             DetectionSensorConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Paxcounter> {
-            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
+            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
             PaxcounterConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
     }
+
 }
+
+@Composable
+inline fun <reified P : Any> rememberParentEntry(navController: NavHostController): NavBackStackEntry {
+    val backStackEntry by navController.currentBackStackEntryAsState()
+
+    return remember(backStackEntry) {
+        navController.getBackStackEntry<P>()
+    }
+}
+

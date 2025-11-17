@@ -19,12 +19,12 @@ package com.geeksville.mesh.database
 
 import androidx.room.TypeConverter
 import com.geeksville.mesh.DataPacket
-import com.geeksville.mesh.MeshProtos
-import com.geeksville.mesh.PaxcountProtos
-import com.geeksville.mesh.TelemetryProtos
 import com.geeksville.mesh.android.Logging
 import com.google.protobuf.InvalidProtocolBufferException
 import kotlinx.serialization.json.Json
+import org.meshtastic.proto.MeshProtos
+import org.meshtastic.proto.PaxcountProtos
+import org.meshtastic.proto.TelemetryProtos
 
 @Suppress("TooManyFunctions")
 class Converters : Logging {

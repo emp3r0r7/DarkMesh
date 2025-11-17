@@ -24,9 +24,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
-import com.geeksville.mesh.ConfigProtos.Config.DisplayConfig.DisplayUnits
 import com.geeksville.mesh.util.metersIn
 import com.geeksville.mesh.util.toString
+import org.meshtastic.proto.ConfigProtos.Config.DisplayConfig.DisplayUnits
 
 @Composable
 fun ElevationInfo(

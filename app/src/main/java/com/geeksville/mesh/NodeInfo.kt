@@ -20,10 +20,17 @@ package com.geeksville.mesh
 import android.graphics.Color
 import android.os.Parcelable
 import com.geeksville.mesh.util.GPSFormat
+import com.geeksville.mesh.util.anonymize
 import com.geeksville.mesh.util.bearing
 import com.geeksville.mesh.util.latLongToMeter
-import com.geeksville.mesh.util.anonymize
 import kotlinx.parcelize.Parcelize
+import org.meshtastic.proto.ConfigProtos
+import org.meshtastic.proto.DeviceUIProtos.DeviceUIConfig.GpsCoordinateFormat.DEC_VALUE
+import org.meshtastic.proto.DeviceUIProtos.DeviceUIConfig.GpsCoordinateFormat.DMS_VALUE
+import org.meshtastic.proto.DeviceUIProtos.DeviceUIConfig.GpsCoordinateFormat.MGRS_VALUE
+import org.meshtastic.proto.DeviceUIProtos.DeviceUIConfig.GpsCoordinateFormat.UTM_VALUE
+import org.meshtastic.proto.MeshProtos
+import org.meshtastic.proto.TelemetryProtos
 
 //
 // model objects that directly map to the corresponding protobufs
@@ -116,10 +123,10 @@ data class Position(
     }
 
     fun gpsString(gpsFormat: Int): String = when (gpsFormat) {
-        ConfigProtos.Config.DisplayConfig.GpsCoordinateFormat.DEC_VALUE -> GPSFormat.DEC(this)
-        ConfigProtos.Config.DisplayConfig.GpsCoordinateFormat.DMS_VALUE -> GPSFormat.DMS(this)
-        ConfigProtos.Config.DisplayConfig.GpsCoordinateFormat.UTM_VALUE -> GPSFormat.UTM(this)
-        ConfigProtos.Config.DisplayConfig.GpsCoordinateFormat.MGRS_VALUE -> GPSFormat.MGRS(this)
+        DEC_VALUE -> GPSFormat.DEC(this)
+        DMS_VALUE -> GPSFormat.DMS(this)
+        UTM_VALUE -> GPSFormat.UTM(this)
+        MGRS_VALUE -> GPSFormat.MGRS(this)
         else -> GPSFormat.DEC(this)
     }
 

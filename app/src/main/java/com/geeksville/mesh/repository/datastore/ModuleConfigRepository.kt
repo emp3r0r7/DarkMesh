@@ -19,10 +19,10 @@ package com.geeksville.mesh.repository.datastore
 
 import androidx.datastore.core.DataStore
 import com.geeksville.mesh.android.Logging
-import com.geeksville.mesh.ModuleConfigProtos.ModuleConfig
-import com.geeksville.mesh.LocalOnlyProtos.LocalModuleConfig
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import org.meshtastic.proto.LocalOnlyProtos.LocalModuleConfig
+import org.meshtastic.proto.ModuleConfigProtos.ModuleConfig
 import java.io.IOException
 import javax.inject.Inject
 

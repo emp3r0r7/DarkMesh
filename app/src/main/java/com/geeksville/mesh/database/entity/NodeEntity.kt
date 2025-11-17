@@ -25,15 +25,15 @@ import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.geeksville.mesh.DeviceMetrics
 import com.geeksville.mesh.EnvironmentMetrics
-import com.geeksville.mesh.MeshProtos
 import com.geeksville.mesh.MeshUser
 import com.geeksville.mesh.NodeInfo
-import com.geeksville.mesh.PaxcountProtos
 import com.geeksville.mesh.Position
-import com.geeksville.mesh.TelemetryProtos
-import com.geeksville.mesh.copy
 import com.geeksville.mesh.model.Node
 import com.google.protobuf.ByteString
+import org.meshtastic.proto.MeshProtos
+import org.meshtastic.proto.PaxcountProtos
+import org.meshtastic.proto.TelemetryProtos
+import org.meshtastic.proto.copy
 
 data class NodeWithRelations(
     @Embedded val node: NodeEntity,

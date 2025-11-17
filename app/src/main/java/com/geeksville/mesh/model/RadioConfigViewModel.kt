@@ -26,20 +26,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.emp3r0r7.darkmesh.R
-import com.geeksville.mesh.AdminProtos
-import com.geeksville.mesh.ChannelProtos
-import com.geeksville.mesh.ClientOnlyProtos.DeviceProfile
-import com.geeksville.mesh.ConfigProtos
 import com.geeksville.mesh.IMeshService
-import com.geeksville.mesh.MeshProtos
-import com.geeksville.mesh.ModuleConfigProtos
-import com.geeksville.mesh.Portnums
 import com.geeksville.mesh.Position
 import com.geeksville.mesh.android.Logging
-import com.geeksville.mesh.config
 import com.geeksville.mesh.database.entity.MyNodeEntity
-import com.geeksville.mesh.deviceProfile
-import com.geeksville.mesh.moduleConfig
 import com.geeksville.mesh.repository.datastore.RadioConfigRepository
 import com.geeksville.mesh.service.MeshService.ConnectionState
 import com.geeksville.mesh.ui.AdminRoute
@@ -63,6 +53,16 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.meshtastic.proto.AdminProtos
+import org.meshtastic.proto.ChannelProtos
+import org.meshtastic.proto.ClientOnlyProtos.DeviceProfile
+import org.meshtastic.proto.ConfigProtos
+import org.meshtastic.proto.MeshProtos
+import org.meshtastic.proto.ModuleConfigProtos
+import org.meshtastic.proto.Portnums
+import org.meshtastic.proto.config
+import org.meshtastic.proto.deviceProfile
+import org.meshtastic.proto.moduleConfig
 import java.io.FileOutputStream
 import javax.inject.Inject
 

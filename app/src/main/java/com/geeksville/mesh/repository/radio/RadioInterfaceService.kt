@@ -23,7 +23,6 @@ import androidx.core.content.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.coroutineScope
 import com.geeksville.mesh.CoroutineDispatchers
-import com.geeksville.mesh.MeshProtos
 import com.geeksville.mesh.android.BinaryLogFile
 import com.geeksville.mesh.android.BuildUtils
 import com.geeksville.mesh.android.GeeksvilleApplication
@@ -45,6 +44,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import org.meshtastic.proto.MeshProtos
 import javax.inject.Inject
 import javax.inject.Singleton
 

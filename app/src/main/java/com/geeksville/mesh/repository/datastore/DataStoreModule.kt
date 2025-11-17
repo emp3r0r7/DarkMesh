@@ -22,9 +22,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStoreFile
-import com.geeksville.mesh.AppOnlyProtos.ChannelSet
-import com.geeksville.mesh.LocalOnlyProtos.LocalConfig
-import com.geeksville.mesh.LocalOnlyProtos.LocalModuleConfig
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -33,6 +30,9 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import org.meshtastic.proto.AppOnlyProtos.ChannelSet
+import org.meshtastic.proto.LocalOnlyProtos.LocalConfig
+import org.meshtastic.proto.LocalOnlyProtos.LocalModuleConfig
 import javax.inject.Singleton
 
 @InstallIn(SingletonComponent::class)

@@ -67,8 +67,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emp3r0r7.darkmesh.R
-import com.geeksville.mesh.ChannelProtos.ChannelSettings
-import com.geeksville.mesh.channelSettings
 import com.geeksville.mesh.model.Channel
 import com.geeksville.mesh.model.RadioConfigViewModel
 import com.geeksville.mesh.ui.components.PreferenceCategory
@@ -76,6 +74,8 @@ import com.geeksville.mesh.ui.components.PreferenceFooter
 import com.geeksville.mesh.ui.components.dragContainer
 import com.geeksville.mesh.ui.components.dragDropItemsIndexed
 import com.geeksville.mesh.ui.components.rememberDragDropState
+import org.meshtastic.proto.ChannelProtos.ChannelSettings
+import org.meshtastic.proto.channelSettings
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable

@@ -17,22 +17,11 @@
 
 package com.geeksville.mesh.repository.datastore
 
-import com.geeksville.mesh.AppOnlyProtos.ChannelSet
-import com.geeksville.mesh.ChannelProtos.Channel
-import com.geeksville.mesh.ChannelProtos.ChannelSettings
-import com.geeksville.mesh.ClientOnlyProtos.DeviceProfile
-import com.geeksville.mesh.ConfigProtos.Config
 import com.geeksville.mesh.IMeshService
-import com.geeksville.mesh.LocalOnlyProtos.LocalConfig
-import com.geeksville.mesh.LocalOnlyProtos.LocalModuleConfig
-import com.geeksville.mesh.MeshProtos.DeviceMetadata
-import com.geeksville.mesh.MeshProtos.MeshPacket
-import com.geeksville.mesh.ModuleConfigProtos.ModuleConfig
 import com.geeksville.mesh.database.NodeRepository
 import com.geeksville.mesh.database.entity.MetadataEntity
 import com.geeksville.mesh.database.entity.MyNodeEntity
 import com.geeksville.mesh.database.entity.NodeEntity
-import com.geeksville.mesh.deviceProfile
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.getChannelUrl
 import com.geeksville.mesh.service.MeshService.ConnectionState
@@ -44,6 +33,17 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import org.meshtastic.proto.AppOnlyProtos.ChannelSet
+import org.meshtastic.proto.ChannelProtos.Channel
+import org.meshtastic.proto.ChannelProtos.ChannelSettings
+import org.meshtastic.proto.ClientOnlyProtos.DeviceProfile
+import org.meshtastic.proto.ConfigProtos.Config
+import org.meshtastic.proto.LocalOnlyProtos.LocalConfig
+import org.meshtastic.proto.LocalOnlyProtos.LocalModuleConfig
+import org.meshtastic.proto.MeshProtos.DeviceMetadata
+import org.meshtastic.proto.MeshProtos.MeshPacket
+import org.meshtastic.proto.ModuleConfigProtos.ModuleConfig
+import org.meshtastic.proto.deviceProfile
 import javax.inject.Inject
 
 /**

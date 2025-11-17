@@ -30,23 +30,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.emp3r0r7.darkmesh.R
-import com.geeksville.mesh.AppOnlyProtos
-import com.geeksville.mesh.ChannelProtos
-import com.geeksville.mesh.ChannelProtos.ChannelSettings
-import com.geeksville.mesh.ConfigProtos.Config
 import com.geeksville.mesh.DataPacket
 import com.geeksville.mesh.IMeshService
-import com.geeksville.mesh.LocalOnlyProtos.LocalConfig
-import com.geeksville.mesh.LocalOnlyProtos.LocalModuleConfig
-import com.geeksville.mesh.MeshProtos
-import com.geeksville.mesh.Portnums
 import com.geeksville.mesh.Position
 import com.geeksville.mesh.android.Logging
-import com.geeksville.mesh.channel
-import com.geeksville.mesh.channelSet
-import com.geeksville.mesh.channelSettings
-import com.geeksville.mesh.config
-import com.geeksville.mesh.copy
 import com.geeksville.mesh.database.MeshLogRepository
 import com.geeksville.mesh.database.NodeRepository
 import com.geeksville.mesh.database.PacketRepository
@@ -59,6 +46,7 @@ import com.geeksville.mesh.repository.radio.RadioInterfaceService
 import com.geeksville.mesh.service.MeshService
 import com.geeksville.mesh.service.ServiceAction
 import com.geeksville.mesh.ui.map.MAP_STYLE_ID
+import com.geeksville.mesh.util.ApiUtil
 import com.geeksville.mesh.util.getShortDate
 import com.geeksville.mesh.util.positionToMeter
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -78,6 +66,19 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.meshtastic.proto.AppOnlyProtos
+import org.meshtastic.proto.ChannelProtos
+import org.meshtastic.proto.ChannelProtos.ChannelSettings
+import org.meshtastic.proto.ConfigProtos.Config
+import org.meshtastic.proto.LocalOnlyProtos.LocalConfig
+import org.meshtastic.proto.LocalOnlyProtos.LocalModuleConfig
+import org.meshtastic.proto.MeshProtos
+import org.meshtastic.proto.Portnums
+import org.meshtastic.proto.channel
+import org.meshtastic.proto.channelSet
+import org.meshtastic.proto.channelSettings
+import org.meshtastic.proto.config
+import org.meshtastic.proto.copy
 import java.io.BufferedWriter
 import java.io.FileNotFoundException
 import java.io.FileWriter
@@ -243,7 +244,7 @@ class UIViewModel @Inject constructor(
             sort = sort,
             filter = filter,
             includeUnknown = includeUnknown,
-            gpsFormat = profile.config.display.gpsFormat.number,
+            gpsFormat = ApiUtil.safeGpsFormat(profile.config.display.gpsFormat),
             distanceUnits = profile.config.display.units.number,
             tempInFahrenheit = profile.moduleConfig.telemetry.environmentDisplayFahrenheit,
             showDetails = showDetails,

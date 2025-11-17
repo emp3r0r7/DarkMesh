@@ -31,11 +31,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.geeksville.mesh.ConfigProtos
-import com.geeksville.mesh.ConfigProtos.Config.PositionConfig
 import com.geeksville.mesh.Position
-import com.geeksville.mesh.config
-import com.geeksville.mesh.copy
 import com.geeksville.mesh.model.RadioConfigViewModel
 import com.geeksville.mesh.ui.components.BitwisePreference
 import com.geeksville.mesh.ui.components.DropDownPreference
@@ -43,6 +39,9 @@ import com.geeksville.mesh.ui.components.EditTextPreference
 import com.geeksville.mesh.ui.components.PreferenceCategory
 import com.geeksville.mesh.ui.components.PreferenceFooter
 import com.geeksville.mesh.ui.components.SwitchPreference
+import org.meshtastic.proto.ConfigProtos.Config.PositionConfig
+import org.meshtastic.proto.config
+import org.meshtastic.proto.copy
 
 @Composable
 fun PositionConfigScreen(
@@ -190,8 +189,8 @@ fun PositionConfigItemList(
         item {
             DropDownPreference(title = "GPS mode",
                 enabled = enabled,
-                items = ConfigProtos.Config.PositionConfig.GpsMode.entries
-                    .filter { it != ConfigProtos.Config.PositionConfig.GpsMode.UNRECOGNIZED }
+                items = PositionConfig.GpsMode.entries
+                    .filter { it != PositionConfig.GpsMode.UNRECOGNIZED }
                     .map { it to it.name },
                 selectedItem = positionInput.gpsMode,
                 onItemSelected = { positionInput = positionInput.copy { gpsMode = it } })
@@ -210,7 +209,7 @@ fun PositionConfigItemList(
             BitwisePreference(title = "Position flags",
                 value = positionInput.positionFlags,
                 enabled = enabled,
-                items = ConfigProtos.Config.PositionConfig.PositionFlags.entries
+                items = PositionConfig.PositionFlags.entries
                     .filter { it != PositionConfig.PositionFlags.UNSET && it != PositionConfig.PositionFlags.UNRECOGNIZED }
                     .map { it.number to it.name },
                 onItemSelected = { positionInput = positionInput.copy { positionFlags = it } }

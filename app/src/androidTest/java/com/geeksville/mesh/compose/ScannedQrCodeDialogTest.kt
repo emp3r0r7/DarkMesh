@@ -24,17 +24,17 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.emp3r0r7.darkmesh.R
-import com.geeksville.mesh.AppOnlyProtos.ChannelSet
-import com.geeksville.mesh.ConfigProtos
-import com.geeksville.mesh.channelSet
-import com.geeksville.mesh.channelSettings
-import com.geeksville.mesh.copy
 import com.geeksville.mesh.model.Channel
 import com.geeksville.mesh.ui.components.ScannedQrCodeDialog
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.meshtastic.proto.AppOnlyProtos.ChannelSet
+import org.meshtastic.proto.ConfigProtos
+import org.meshtastic.proto.channelSet
+import org.meshtastic.proto.channelSettings
+import org.meshtastic.proto.copy
 
 @RunWith(AndroidJUnit4::class)
 class ScannedQrCodeDialogTest {

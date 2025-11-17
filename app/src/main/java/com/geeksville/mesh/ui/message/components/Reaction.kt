@@ -57,11 +57,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.geeksville.mesh.MeshProtos
 import com.geeksville.mesh.database.entity.Reaction
 import com.geeksville.mesh.ui.components.BottomSheetDialog
 import com.geeksville.mesh.ui.components.EmojiPickerDialog
 import com.geeksville.mesh.ui.theme.AppTheme
+import org.meshtastic.proto.MeshProtos
 
 @Composable
 fun ReactionButton(

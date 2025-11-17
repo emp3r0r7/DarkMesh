@@ -19,7 +19,6 @@ package com.geeksville.mesh.database
 
 import com.geeksville.mesh.DataPacket
 import com.geeksville.mesh.MessageStatus
-import com.geeksville.mesh.Portnums.PortNum
 import com.geeksville.mesh.database.dao.PacketDao
 import com.geeksville.mesh.database.entity.ContactSettings
 import com.geeksville.mesh.database.entity.Packet
@@ -27,6 +26,7 @@ import com.geeksville.mesh.database.entity.ReactionEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import org.meshtastic.proto.Portnums.PortNum
 import javax.inject.Inject
 
 class PacketRepository @Inject constructor(private val packetDaoLazy: dagger.Lazy<PacketDao>) {

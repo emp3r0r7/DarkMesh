@@ -21,10 +21,10 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.geeksville.mesh.DeviceMetrics
 import com.geeksville.mesh.DeviceMetrics.Companion.currentTime
 import com.geeksville.mesh.EnvironmentMetrics
-import com.geeksville.mesh.MeshProtos
 import com.geeksville.mesh.MeshUser
 import com.geeksville.mesh.NodeInfo
 import com.geeksville.mesh.Position
+import org.meshtastic.proto.MeshProtos
 import kotlin.random.Random
 
 

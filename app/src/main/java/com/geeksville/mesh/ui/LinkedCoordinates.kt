@@ -39,12 +39,15 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
-import com.geeksville.mesh.ConfigProtos.Config.DisplayConfig.GpsCoordinateFormat
 import com.geeksville.mesh.android.BuildUtils.debug
 import com.geeksville.mesh.ui.theme.AppTheme
 import com.geeksville.mesh.ui.theme.HyperlinkCyan
 import com.geeksville.mesh.util.GPSFormat
 import kotlinx.coroutines.launch
+import org.meshtastic.proto.DeviceUIProtos.DeviceUIConfig.GpsCoordinateFormat.DEC_VALUE
+import org.meshtastic.proto.DeviceUIProtos.DeviceUIConfig.GpsCoordinateFormat.DMS_VALUE
+import org.meshtastic.proto.DeviceUIProtos.DeviceUIConfig.GpsCoordinateFormat.MGRS_VALUE
+import org.meshtastic.proto.DeviceUIProtos.DeviceUIConfig.GpsCoordinateFormat.UTM_VALUE
 import java.net.URLEncoder
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -103,10 +106,10 @@ private fun rememberAnnotatedString(
     )
     withStyle(style = style) {
         val gpsString = when (format) {
-            GpsCoordinateFormat.DEC_VALUE -> GPSFormat.toDEC(latitude, longitude)
-            GpsCoordinateFormat.DMS_VALUE -> GPSFormat.toDMS(latitude, longitude)
-            GpsCoordinateFormat.UTM_VALUE -> GPSFormat.toUTM(latitude, longitude)
-            GpsCoordinateFormat.MGRS_VALUE -> GPSFormat.toMGRS(latitude, longitude)
+            DEC_VALUE -> GPSFormat.toDEC(latitude, longitude)
+            DMS_VALUE -> GPSFormat.toDMS(latitude, longitude)
+            UTM_VALUE -> GPSFormat.toUTM(latitude, longitude)
+            MGRS_VALUE -> GPSFormat.toMGRS(latitude, longitude)
             else -> GPSFormat.toDEC(latitude, longitude)
         }
         append(gpsString)
