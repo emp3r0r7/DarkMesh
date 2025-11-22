@@ -17,6 +17,7 @@
 
 package com.geeksville.mesh.ui
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -119,9 +120,7 @@ internal fun FragmentManager.navigateToNavGraph(
     val radioConfigFragment = NavGraphFragment().apply {
         arguments = bundleOf("destNum" to destNum, "startDestination" to startDestination)
     }
-    beginTransaction()
-        .replace(R.id.mainActivityLayout, radioConfigFragment)
-        .addToBackStack(null)
+    beginTransaction().replace(R.id.mainActivityLayout, radioConfigFragment).addToBackStack(null)
         .commit()
 }
 
@@ -131,12 +130,9 @@ class NavGraphFragment : ScreenFragment("NavGraph"), Logging {
     private val model: RadioConfigViewModel by viewModels()
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        @Suppress("DEPRECATION")
-        val destNum = arguments?.getSerializable("destNum") as? Int
+        @Suppress("DEPRECATION") val destNum = arguments?.getSerializable("destNum") as? Int
         val startDestination: Any = when (arguments?.getString("startDestination")) {
             "NodeDetails" -> Route.NodeDetail(destNum!!)
             else -> Route.RadioConfig(destNum)
@@ -164,8 +160,7 @@ class NavGraphFragment : ScreenFragment("NavGraph"), Logging {
                                     }
                                 },
                             )
-                        }
-                    ) { innerPadding ->
+                        }) { innerPadding ->
                         NavGraph(
                             navController = navController,
                             startDestination = startDestination,
@@ -179,10 +174,9 @@ class NavGraphFragment : ScreenFragment("NavGraph"), Logging {
 }
 
 enum class AdminRoute(@StringRes val title: Int) {
-    REBOOT(R.string.reboot),
-    SHUTDOWN(R.string.shutdown),
-    FACTORY_RESET(R.string.factory_reset),
-    NODEDB_RESET(R.string.nodedb_reset),
+    REBOOT(R.string.reboot), SHUTDOWN(R.string.shutdown), FACTORY_RESET(R.string.factory_reset), NODEDB_RESET(
+        R.string.nodedb_reset
+    ),
 }
 
 sealed interface Route {
@@ -191,54 +185,132 @@ sealed interface Route {
 
     @Serializable
     data class RadioConfig(val destNum: Int? = null) : Route
-    @Serializable data object User : Route
-    @Serializable data object Channels : Route
-    @Serializable data object Device : Route
-    @Serializable data object Position : Route
-    @Serializable data object Power : Route
-    @Serializable data object Network : Route
-    @Serializable data object Display : Route
-    @Serializable data object LoRa : Route
-    @Serializable data object Bluetooth : Route
-    @Serializable data object Security : Route
 
-    @Serializable data object MQTT : Route
-    @Serializable data object Serial : Route
-    @Serializable data object ExtNotification : Route
-    @Serializable data object StoreForward : Route
-    @Serializable data object RangeTest : Route
-    @Serializable data object Telemetry : Route
-    @Serializable data object CannedMessage : Route
-    @Serializable data object Audio : Route
-    @Serializable data object RemoteHardware : Route
-    @Serializable data object NeighborInfo : Route
-    @Serializable data object AmbientLighting : Route
-    @Serializable data object DetectionSensor : Route
-    @Serializable data object Paxcounter : Route
+    @Serializable
+    data object User : Route
+
+    @Serializable
+    data object Channels : Route
+
+    @Serializable
+    data object Device : Route
+
+    @Serializable
+    data object Position : Route
+
+    @Serializable
+    data object Power : Route
+
+    @Serializable
+    data object Network : Route
+
+    @Serializable
+    data object Display : Route
+
+    @Serializable
+    data object LoRa : Route
+
+    @Serializable
+    data object Bluetooth : Route
+
+    @Serializable
+    data object Security : Route
+
+    @Serializable
+    data object MQTT : Route
+
+    @Serializable
+    data object Serial : Route
+
+    @Serializable
+    data object ExtNotification : Route
+
+    @Serializable
+    data object StoreForward : Route
+
+    @Serializable
+    data object RangeTest : Route
+
+    @Serializable
+    data object Telemetry : Route
+
+    @Serializable
+    data object CannedMessage : Route
+
+    @Serializable
+    data object Audio : Route
+
+    @Serializable
+    data object RemoteHardware : Route
+
+    @Serializable
+    data object NeighborInfo : Route
+
+    @Serializable
+    data object AmbientLighting : Route
+
+    @Serializable
+    data object DetectionSensor : Route
+
+    @Serializable
+    data object Paxcounter : Route
 
     @Serializable
     data class NodeDetail(val destNum: Int) : Route
-    @Serializable data object DeviceMetrics : Route
-    @Serializable data object NodeMap : Route
-    @Serializable data object PositionLog : Route
-    @Serializable data object EnvironmentMetrics : Route
-    @Serializable data object SignalMetrics : Route
-    @Serializable data object TracerouteLog : Route
+
+    @Serializable
+    data object DeviceMetrics : Route
+
+    @Serializable
+    data object NodeMap : Route
+
+    @Serializable
+    data object PositionLog : Route
+
+    @Serializable
+    data object EnvironmentMetrics : Route
+
+    @Serializable
+    data object SignalMetrics : Route
+
+    @Serializable
+    data object TracerouteLog : Route
 }
 
 // Config (type = AdminProtos.AdminMessage.ConfigType)
-enum class ConfigRoute(val title: String, val route: Route, val icon: ImageVector?, val type: Int = 0) {
-    USER("User", Route.User, Icons.Default.Person, 0),
-    CHANNELS("Channels", Route.Channels, Icons.AutoMirrored.Default.List, 0),
-    DEVICE("Device", Route.Device, Icons.Default.Router, 0),
-    POSITION("Position", Route.Position, Icons.Default.LocationOn, 1),
-    POWER("Power", Route.Power, Icons.Default.Power, 2),
-    NETWORK("Network", Route.Network, Icons.Default.Wifi, 3),
-    DISPLAY("Display", Route.Display, Icons.Default.DisplaySettings, 4),
-    LORA("LoRa", Route.LoRa, Icons.Default.CellTower, 5),
-    BLUETOOTH("Bluetooth", Route.Bluetooth, Icons.Default.Bluetooth, 6),
-    SECURITY("Security", Route.Security, Icons.Default.Security, type = 7),
-    ;
+enum class ConfigRoute(
+    val title: String, val route: Route, val icon: ImageVector?, val type: Int = 0
+) {
+    USER("User", Route.User, Icons.Default.Person, 0), CHANNELS(
+        "Channels",
+        Route.Channels,
+        Icons.AutoMirrored.Default.List,
+        0
+    ),
+    DEVICE("Device", Route.Device, Icons.Default.Router, 0), POSITION(
+        "Position",
+        Route.Position,
+        Icons.Default.LocationOn,
+        1
+    ),
+    POWER("Power", Route.Power, Icons.Default.Power, 2), NETWORK(
+        "Network",
+        Route.Network,
+        Icons.Default.Wifi,
+        3
+    ),
+    DISPLAY("Display", Route.Display, Icons.Default.DisplaySettings, 4), LORA(
+        "LoRa",
+        Route.LoRa,
+        Icons.Default.CellTower,
+        5
+    ),
+    BLUETOOTH("Bluetooth", Route.Bluetooth, Icons.Default.Bluetooth, 6), SECURITY(
+        "Security",
+        Route.Security,
+        Icons.Default.Security,
+        type = 7
+    ), ;
 
     companion object {
         fun filterExcludedFrom(metadata: DeviceMetadata?): List<ConfigRoute> = entries.filter {
@@ -253,21 +325,67 @@ enum class ConfigRoute(val title: String, val route: Route, val icon: ImageVecto
 }
 
 // ModuleConfig (type = AdminProtos.AdminMessage.ModuleConfigType)
-enum class ModuleRoute(val title: String, val route: Route, val icon: ImageVector?, val type: Int = 0) {
-    MQTT("MQTT", Route.MQTT, Icons.Default.Cloud, 0),
-    SERIAL("Serial", Route.Serial, Icons.Default.Usb, 1),
-    EXT_NOTIFICATION("External Notification", Route.ExtNotification, Icons.Default.Notifications, 2),
-    STORE_FORWARD("Store & Forward", Route.StoreForward, Icons.AutoMirrored.Default.Forward, 3),
-    RANGE_TEST("Range Test", Route.RangeTest, Icons.Default.Speed, 4),
-    TELEMETRY("Telemetry", Route.Telemetry, Icons.Default.DataUsage, 5),
-    CANNED_MESSAGE("Canned Message", Route.CannedMessage, Icons.AutoMirrored.Default.Message, 6),
-    AUDIO("Audio", Route.Audio, Icons.AutoMirrored.Default.VolumeUp, 7),
-    REMOTE_HARDWARE("Remote Hardware", Route.RemoteHardware, Icons.Default.SettingsRemote, 8),
-    NEIGHBOR_INFO("Neighbor Info", Route.NeighborInfo, Icons.Default.People, 9),
-    AMBIENT_LIGHTING("Ambient Lighting", Route.AmbientLighting, Icons.Default.LightMode, 10),
-    DETECTION_SENSOR("Detection Sensor", Route.DetectionSensor, Icons.Default.Sensors, 11),
-    PAXCOUNTER("Paxcounter", Route.Paxcounter, Icons.Default.PermScanWifi, 12),
-    ;
+enum class ModuleRoute(
+    val title: String, val route: Route, val icon: ImageVector?, val type: Int = 0
+) {
+    MQTT("MQTT", Route.MQTT, Icons.Default.Cloud, 0), SERIAL(
+        "Serial",
+        Route.Serial,
+        Icons.Default.Usb,
+        1
+    ),
+    EXT_NOTIFICATION(
+        "External Notification", Route.ExtNotification, Icons.Default.Notifications, 2
+    ),
+    STORE_FORWARD(
+        "Store & Forward",
+        Route.StoreForward,
+        Icons.AutoMirrored.Default.Forward,
+        3
+    ),
+    RANGE_TEST("Range Test", Route.RangeTest, Icons.Default.Speed, 4), TELEMETRY(
+        "Telemetry",
+        Route.Telemetry,
+        Icons.Default.DataUsage,
+        5
+    ),
+    CANNED_MESSAGE(
+        "Canned Message",
+        Route.CannedMessage,
+        Icons.AutoMirrored.Default.Message,
+        6
+    ),
+    AUDIO(
+        "Audio",
+        Route.Audio,
+        Icons.AutoMirrored.Default.VolumeUp,
+        7
+    ),
+    REMOTE_HARDWARE(
+        "Remote Hardware",
+        Route.RemoteHardware,
+        Icons.Default.SettingsRemote,
+        8
+    ),
+    NEIGHBOR_INFO(
+        "Neighbor Info",
+        Route.NeighborInfo,
+        Icons.Default.People,
+        9
+    ),
+    AMBIENT_LIGHTING(
+        "Ambient Lighting",
+        Route.AmbientLighting,
+        Icons.Default.LightMode,
+        10
+    ),
+    DETECTION_SENSOR(
+        "Detection Sensor",
+        Route.DetectionSensor,
+        Icons.Default.Sensors,
+        11
+    ),
+    PAXCOUNTER("Paxcounter", Route.Paxcounter, Icons.Default.PermScanWifi, 12), ;
 
     val bitfield: Int get() = 1 shl ordinal
 
@@ -300,22 +418,20 @@ private fun MeshAppBar(
     navigateUp: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    TopAppBar(
-        title = { Text(currentScreen) },
-        modifier = modifier,
-        navigationIcon = {
-            if (canNavigateBack) {
-                IconButton(onClick = navigateUp) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(id = R.string.navigate_back),
-                    )
-                }
+    TopAppBar(title = { Text(currentScreen) }, modifier = modifier, navigationIcon = {
+        if (canNavigateBack) {
+            IconButton(onClick = navigateUp) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(id = R.string.navigate_back),
+                )
             }
         }
-    )
+    })
 }
 
+
+@SuppressLint("UnrememberedGetBackStackEntry", "ModifierParameter")
 @Suppress("LongMethod")
 @Composable
 fun NavGraph(
@@ -332,134 +448,123 @@ fun NavGraph(
             NodeDetailScreen { navController.navigate(route = it) }
         }
         composable<Route.DeviceMetrics> {
-            val parentEntry = rememberParentEntry<Route.NodeDetail>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.NodeDetail>() }
             DeviceMetricsScreen(hiltViewModel<MetricsViewModel>(parentEntry))
         }
         composable<Route.NodeMap> {
-            val parentEntry = rememberParentEntry<Route.NodeDetail>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.NodeDetail>() }
             NodeMapScreen(hiltViewModel<MetricsViewModel>(parentEntry))
         }
         composable<Route.PositionLog> {
-            val parentEntry = rememberParentEntry<Route.NodeDetail>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.NodeDetail>() }
             PositionLogScreen(hiltViewModel<MetricsViewModel>(parentEntry))
         }
         composable<Route.EnvironmentMetrics> {
-            val parentEntry = rememberParentEntry<Route.NodeDetail>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.NodeDetail>() }
             EnvironmentMetricsScreen(hiltViewModel<MetricsViewModel>(parentEntry))
         }
         composable<Route.SignalMetrics> {
-            val parentEntry = rememberParentEntry<Route.NodeDetail>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.NodeDetail>() }
             SignalMetricsScreen(hiltViewModel<MetricsViewModel>(parentEntry))
         }
         composable<Route.TracerouteLog> {
-            val parentEntry = rememberParentEntry<Route.NodeDetail>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.NodeDetail>() }
             TracerouteLogScreen(hiltViewModel<MetricsViewModel>(parentEntry))
         }
         composable<Route.RadioConfig> {
             RadioConfigScreen { navController.navigate(route = it) }
         }
         composable<Route.User> {
-            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             UserConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Channels> {
-            val parentEntry =  rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             ChannelConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Device> {
-            val parentEntry =  rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             DeviceConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Position> {
-            val parentEntry =  rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             PositionConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Power> {
-            val parentEntry =  rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             PowerConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Network> {
-            val parentEntry =  rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             NetworkConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Display> {
-            val parentEntry =  rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             DisplayConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.LoRa> {
-            val parentEntry =  rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             LoRaConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Bluetooth> {
-            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             BluetoothConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Security> {
-            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             SecurityConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.MQTT> {
-            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             MQTTConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Serial> {
-            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             SerialConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.ExtNotification> {
-            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             ExternalNotificationConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.StoreForward> {
-            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             StoreForwardConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.RangeTest> {
-            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             RangeTestConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Telemetry> {
-            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             TelemetryConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.CannedMessage> {
-            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             CannedMessageConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Audio> {
-            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             AudioConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.RemoteHardware> {
-            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             RemoteHardwareConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.NeighborInfo> {
-            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             NeighborInfoConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.AmbientLighting> {
-            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             AmbientLightingConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.DetectionSensor> {
-            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             DetectionSensorConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
         composable<Route.Paxcounter> {
-            val parentEntry = rememberParentEntry<Route.RadioConfig>(navController)
+            val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }
             PaxcounterConfigScreen(hiltViewModel<RadioConfigViewModel>(parentEntry))
         }
     }
-
 }
-
-@Composable
-inline fun <reified P : Any> rememberParentEntry(navController: NavHostController): NavBackStackEntry {
-    val backStackEntry by navController.currentBackStackEntryAsState()
-
-    return remember(backStackEntry) {
-        navController.getBackStackEntry<P>()
-    }
-}
-
