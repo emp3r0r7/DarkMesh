@@ -48,6 +48,10 @@ import com.geeksville.mesh.ui.components.rememberTimeTickWithLifecycle
 import com.geeksville.mesh.ui.message.navigateToMessages
 import com.geeksville.mesh.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.meshtastic.proto.ConfigProtos
 
 @AndroidEntryPoint
 class UsersFragment : ScreenFragment("Users"), Logging {
@@ -108,7 +112,7 @@ fun NodesScreen(
 
     //filters nodes with same long name as ours which can occur when switching to SENSOR MODE
     //fix me maybe set arbitrary randomized name when db init occurs in FW!
-    val filteredNodes = remember(nodes, ourNode) {
+    val filteredNodes = run {
         val ourNodeName = ourNode?.user?.longName
         val ourNodeId = ourNode?.user?.id
 
