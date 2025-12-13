@@ -28,9 +28,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -41,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geeksville.mesh.DataPacket
 import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.model.Node
+import com.geeksville.mesh.model.RelayModel
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.ui.components.NodeFilterTextField
 import com.geeksville.mesh.ui.components.NodeMenuAction
@@ -48,10 +50,6 @@ import com.geeksville.mesh.ui.components.rememberTimeTickWithLifecycle
 import com.geeksville.mesh.ui.message.navigateToMessages
 import com.geeksville.mesh.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import org.meshtastic.proto.ConfigProtos
 
 @AndroidEntryPoint
 class UsersFragment : ScreenFragment("Users"), Logging {
@@ -79,9 +77,13 @@ class UsersFragment : ScreenFragment("Users"), Logging {
         return ComposeView(requireContext()).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
+
+                val relayNode by model.lastRelayNode.collectAsStateWithLifecycle()
+
                 AppTheme {
                     NodesScreen(
                         model = model,
+                        relayNode = relayNode,
                         navigateToMessages = ::navigateToMessages,
                         navigateToNodeDetails = ::navigateToNodeDetails,
                     )
@@ -96,6 +98,7 @@ class UsersFragment : ScreenFragment("Users"), Logging {
 @Suppress("LongMethod")
 fun NodesScreen(
     model: UIViewModel = hiltViewModel(),
+    relayNode: RelayModel?,
     navigateToMessages: (Node) -> Unit,
     navigateToNodeDetails: (Int) -> Unit,
 ) {
@@ -126,6 +129,11 @@ fun NodesScreen(
         modifier = Modifier.fillMaxSize(),
     ) {
         stickyHeader {
+
+            if (relayNode != null) {
+                RelayInfoBox(relayNode)
+            }
+
             NodeFilterTextField(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -139,6 +147,7 @@ fun NodesScreen(
                 showDetails = state.showDetails,
                 onToggleShowDetails = model::toggleShowDetails,
             )
+
         }
 
         items(filteredNodes, key = { it.num }) { node ->
@@ -166,3 +175,62 @@ fun NodesScreen(
         }
     }
 }
+
+
+@Composable
+fun RelayInfoBox(relayNode: RelayModel) {
+
+    val (nodeName, timeLabel) = parseNodeNameAndTimestamp(relayNode)
+
+    androidx.compose.material.Surface(
+        elevation = 4.dp,
+        shape = RoundedCornerShape(10.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+    ) {
+        Text(
+            text = "🔁 Gateway: " +
+                    "$nodeName • $timeLabel",
+            modifier = Modifier.padding(12.dp)
+        )
+    }
+}
+
+private fun parseNodeNameAndTimestamp(relayNode: RelayModel): Pair<String?, String>{
+
+    val nodeName: String? = if(relayNode.node == null){
+        relayNode.simpleRelayModel?.nodeLongName
+    } else {
+        relayNode.node.user.longName
+    }
+
+    var timestamp: Long? = if(relayNode.event == null){
+        relayNode.simpleRelayModel?.timestamp
+    } else {
+        relayNode.event.timestamp
+    }
+
+    var timestampString: String = if(timestamp != null) {
+        formatRelayTime(timestamp)
+    } else {
+        "undefined"
+    }
+
+    return nodeName to timestampString
+
+}
+
+private fun formatRelayTime(timestampMillis: Long, nowMillis: Long = System.currentTimeMillis()): String {
+    val diffMillis = nowMillis - timestampMillis
+    val diffSeconds = diffMillis / 1000
+
+    return when {
+        diffSeconds < 60 -> "now"
+        else -> {
+            val minutes = diffSeconds / 60
+            "$minutes min ago"
+        }
+    }
+}
+

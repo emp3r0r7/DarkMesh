@@ -52,9 +52,11 @@ import com.geeksville.mesh.util.positionToMeter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -136,6 +138,23 @@ internal fun getChannelList(
     }
 }
 
+data class RelayEvent(
+    val relayNodeNum: Int,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+data class SimpleRelayModel(
+    val nodeLongName: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+data class RelayModel(
+    val event: RelayEvent?,
+    val node: Node?,
+    val simpleRelayModel: SimpleRelayModel?
+)
+
+
 data class NodesUiState(
     val sort: NodeSortOption = NodeSortOption.LAST_HEARD,
     val filter: String = "",
@@ -173,6 +192,9 @@ class UIViewModel @Inject constructor(
     private val quickChatActionRepository: QuickChatActionRepository,
     private val preferences: SharedPreferences
 ) : ViewModel(), Logging {
+
+    private val _lastRelayNode = MutableStateFlow<RelayModel?>(null)
+    val lastRelayNode = _lastRelayNode.asStateFlow()
 
     var actionBarMenu: Menu? = null
     val meshService: IMeshService? get() = radioConfigRepository.meshService
@@ -212,6 +234,10 @@ class UIViewModel @Inject constructor(
     private val nodeSortOption = MutableStateFlow(NodeSortOption.LAST_HEARD)
     private val includeUnknown = MutableStateFlow(preferences.getBoolean("include-unknown", false))
     private val showDetails = MutableStateFlow(preferences.getBoolean("show-details", false))
+
+    fun updateLastRelayNode(node: RelayModel?) {
+        _lastRelayNode.value = node
+    }
 
     fun setSortOption(sort: NodeSortOption) {
         nodeSortOption.value = sort
@@ -295,6 +321,30 @@ class UIViewModel @Inject constructor(
         radioConfigRepository.channelSetFlow.onEach { channelSet ->
             _channels.value = channelSet
         }.launchIn(viewModelScope)
+
+        radioConfigRepository.relayEvents
+            .onEach { event ->
+                val nodes = nodeDB.nodeDBbyNum.value.values.toList()
+                val relayNode = Packet.getRelayNode(event.relayNodeNum, nodes)
+                relayNode?.let {
+
+                    val relayModel = RelayModel(
+                        event,
+                        relayNode,
+                        null
+                    )
+
+                    updateLastRelayNode(relayModel)
+
+                    viewModelScope.launch {
+                        delay(300_000) // 5 min to remove it from UI!
+                        if (lastRelayNode.value == relayModel) {
+                            updateLastRelayNode(null)
+                        }
+                    }
+                }
+            }
+            .launchIn(viewModelScope)
 
         debug("ViewModel created")
     }

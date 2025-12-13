@@ -86,6 +86,8 @@ import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.model.BluetoothViewModel
 import com.geeksville.mesh.model.Contact
 import com.geeksville.mesh.model.DeviceVersion
+import com.geeksville.mesh.model.RelayModel
+import com.geeksville.mesh.model.SimpleRelayModel
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.prefs.UserPrefs
 import com.geeksville.mesh.service.DistressService
@@ -596,6 +598,31 @@ class MainActivity : AppCompatActivity(), Logging {
         serviceRepository.setMeshService(null)
     }
 
+    private fun setFirstRespondingNodeForGateway(traceResponse: String?){
+
+        if(traceResponse != null && !traceResponse.isEmpty()){
+            try {
+                val nearestNodeName = traceResponse.split("■")[2].split("\n")[0]
+
+                val simpleRelayModel = SimpleRelayModel(
+                    nearestNodeName,
+                )
+
+                val relayModel = RelayModel(
+                    null,
+                    null,
+                    simpleRelayModel
+                )
+
+                model.updateLastRelayNode(relayModel)
+
+            } catch (e: Exception){
+                debug("Could not determine first responding node! ${e.message}")
+            }
+        }
+
+    }
+
     override fun onStop() {
         unbindMeshService()
         super.onStop()
@@ -641,6 +668,8 @@ class MainActivity : AppCompatActivity(), Logging {
         model.tracerouteResponse.observe(this) { response ->
 
             if (response == null) return@observe
+
+            setFirstRespondingNodeForGateway(response)
 
             val coloredResponse = colorizeTracerouteResponse(response)
 

@@ -60,7 +60,8 @@ data class DataPacket(
     var status: MessageStatus? = MessageStatus.UNKNOWN,
     var hopLimit: Int = 0,
     var channel: Int = 0, // channel index
-) : Parcelable {
+    var relayNode: Int? = null,
+    ) : Parcelable {
 
     /**
      * If there was an error with this message, this string describes what was wrong.
@@ -130,6 +131,8 @@ data class DataPacket(
         if (!bytes!!.contentEquals(other.bytes!!)) return false
         if (status != other.status) return false
         if (hopLimit != other.hopLimit) return false
+        if (relayNode != other.relayNode) return false
+
 
         return true
     }
@@ -144,6 +147,7 @@ data class DataPacket(
         result = 31 * result + status.hashCode()
         result = 31 * result + hopLimit
         result = 31 * result + channel
+        result = 31 * result + relayNode.hashCode()
         return result
     }
 
@@ -157,6 +161,7 @@ data class DataPacket(
         parcel.writeParcelable(status, flags)
         parcel.writeInt(hopLimit)
         parcel.writeInt(channel)
+        parcel.writeInt(relayNode ?: -1)
     }
 
     override fun describeContents(): Int {
@@ -174,6 +179,7 @@ data class DataPacket(
         status = parcel.readParcelableCompat(MessageStatus::class.java.classLoader)
         hopLimit = parcel.readInt()
         channel = parcel.readInt()
+        relayNode = parcel.readInt().let { if (it == -1) null else it }
     }
 
     companion object CREATOR : Parcelable.Creator<DataPacket> {

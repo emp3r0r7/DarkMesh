@@ -54,6 +54,7 @@ import com.geeksville.mesh.database.entity.Packet
 import com.geeksville.mesh.database.entity.ReactionEntity
 import com.geeksville.mesh.model.DeviceVersion
 import com.geeksville.mesh.model.Node
+import com.geeksville.mesh.model.RelayEvent
 import com.geeksville.mesh.model.getTracerouteResponse
 import com.geeksville.mesh.prefs.UserPrefs
 import com.geeksville.mesh.repository.datastore.RadioConfigRepository
@@ -663,7 +664,8 @@ class MeshService : Service(), Logging {
                 bytes = data.payload.toByteArray(),
                 hopLimit = packet.hopLimit,
                 channel = if (packet.pkiEncrypted) DataPacket.PKC_CHANNEL_INDEX else packet.channel,
-            )
+                relayNode = packet.relayNode,
+                )
         }
     }
 
@@ -722,6 +724,14 @@ class MeshService : Service(), Logging {
         }
     }
 
+    fun detectRelayNode(relayNode: Int?) {
+        if (relayNode != null && relayNode != 0) {
+            radioConfigRepository.emitRelayEvent(
+                RelayEvent(relayNode)
+            )
+        }
+    }
+
     // Update our model and resend as needed for a MeshPacket we just received from the radio
     private fun handleReceivedData(packet: MeshPacket) {
         myNodeInfo?.let { myInfo ->
@@ -729,8 +739,11 @@ class MeshService : Service(), Logging {
             val bytes = data.payload.toByteArray()
             val fromId = toNodeID(packet.from)
             val dataPacket = toDataPacket(packet)
+            val relayNode = dataPacket?.relayNode
 
             if (dataPacket != null) {
+
+                detectRelayNode(relayNode)
 
                 // We ignore most messages that we sent
                 val fromUs = myInfo.myNodeNum == packet.from
@@ -745,6 +758,7 @@ class MeshService : Service(), Logging {
                 var shouldBroadcast = !fromUs
 
                 when (data.portnumValue) {
+
                     Portnums.PortNum.TEXT_MESSAGE_APP_VALUE -> {
                         if (data.emoji != 0) {
                             debug("Received EMOJI from $fromId")
@@ -814,7 +828,7 @@ class MeshService : Service(), Logging {
                             radioConfigRepository.setErrorMessage(getString(R.string.error_duty_cycle))
                         }
 
-                        handleAckNak(packet, data.requestId, fromId, u.errorReasonValue)
+                        handleAckNak(packet, data.requestId, fromId, u.errorReasonValue, relayNode)
                         queueResponse.remove(data.requestId)?.complete(true)
                     }
 
@@ -1152,7 +1166,7 @@ class MeshService : Service(), Logging {
     /**
      * Handle an ack/nak packet by updating sent message status
      */
-    private fun handleAckNak(packet: MeshPacket, requestId: Int, fromId: String, routingError: Int) {
+    private fun handleAckNak(packet: MeshPacket, requestId: Int, fromId: String, routingError: Int, relayNode: Int?) {
         serviceScope.handledLaunch {
             val isAck = routingError == MeshProtos.Routing.Error.NONE_VALUE
             val p = packetRepository.get().getPacketById(requestId)
@@ -1176,7 +1190,13 @@ class MeshService : Service(), Logging {
 
                     MessageStatus.DELIVERED
                 }
-                else -> MessageStatus.ERROR
+                else -> {
+
+                    if(routingError == 5){
+                        mainLooperToast("Max retries exceeded ..", Toast.LENGTH_SHORT)
+                    }
+                    MessageStatus.ERROR
+                }
             }
             if (p != null && p.data.status != MessageStatus.RECEIVED) {
                 p.data.status = m

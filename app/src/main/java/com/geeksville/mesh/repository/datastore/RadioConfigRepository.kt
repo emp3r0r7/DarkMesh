@@ -23,14 +23,17 @@ import com.geeksville.mesh.database.entity.MetadataEntity
 import com.geeksville.mesh.database.entity.MyNodeEntity
 import com.geeksville.mesh.database.entity.NodeEntity
 import com.geeksville.mesh.model.Node
+import com.geeksville.mesh.model.RelayEvent
 import com.geeksville.mesh.model.getChannelUrl
 import com.geeksville.mesh.service.MeshService.ConnectionState
 import com.geeksville.mesh.service.ServiceAction
 import com.geeksville.mesh.service.ServiceRepository
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import org.meshtastic.proto.AppOnlyProtos.ChannelSet
@@ -45,11 +48,13 @@ import org.meshtastic.proto.MeshProtos.MeshPacket
 import org.meshtastic.proto.ModuleConfigProtos.ModuleConfig
 import org.meshtastic.proto.deviceProfile
 import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Class responsible for radio configuration data.
  * Combines access to [nodeDB], [ChannelSet], [LocalConfig] & [LocalModuleConfig].
  */
+@Singleton
 class RadioConfigRepository @Inject constructor(
     private val serviceRepository: ServiceRepository,
     private val nodeDB: NodeRepository,
@@ -218,4 +223,17 @@ class RadioConfigRepository @Inject constructor(
     fun clearTracerouteResponse() {
         setTracerouteResponse(null)
     }
+
+    private val _relayEvents = MutableSharedFlow<RelayEvent>(
+        replay = 0,
+        extraBufferCapacity = 1
+    )
+
+    val relayEvents = _relayEvents.asSharedFlow()
+
+    fun emitRelayEvent(event: RelayEvent) {
+       _relayEvents.tryEmit(event)
+    }
+
+
 }

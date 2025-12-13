@@ -70,7 +70,24 @@ data class Packet(
     @ColumnInfo(name = "packet_id", defaultValue = "0") val packetId: Int = 0,
     @ColumnInfo(name = "routing_error", defaultValue = "-1") var routingError: Int = -1,
     @ColumnInfo(name = "reply_id", defaultValue = "0") val replyId: Int = 0,
-)
+) {
+    companion object {
+        const val RELAY_NODE_SUFFIX_MASK = 0xFF
+
+        fun getRelayNode(relayNodeId: Int, nodes: List<Node>): Node? {
+            val relayNodeIdSuffix = relayNodeId and RELAY_NODE_SUFFIX_MASK
+            val candidateRelayNodes = nodes.filter { (it.num and RELAY_NODE_SUFFIX_MASK) == relayNodeIdSuffix }
+            val closestRelayNode =
+                if (candidateRelayNodes.size == 1) {
+                    candidateRelayNodes.first()
+                } else {
+                    candidateRelayNodes.minByOrNull { it.hopsAway }
+                }
+            return closestRelayNode
+        }
+    }
+}
+
 
 @Entity(tableName = "contact_settings")
 data class ContactSettings(
