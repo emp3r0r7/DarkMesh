@@ -52,6 +52,7 @@ import com.geeksville.mesh.util.positionToMeter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -88,6 +89,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import javax.inject.Inject
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.minutes
 
 // Given a human name, strip out the first letter of the first three words and return that as the initials for
 // that user. If the original name is only one word, strip vowels from the original name and if the result is
@@ -138,20 +140,11 @@ internal fun getChannelList(
     }
 }
 
-data class RelayEvent(
-    val relayNodeNum: Int,
-    val timestamp: Long = System.currentTimeMillis()
-)
-
-data class SimpleRelayModel(
-    val nodeLongName: String,
-    val timestamp: Long = System.currentTimeMillis()
-)
-
-data class RelayModel(
-    val event: RelayEvent?,
-    val node: Node?,
-    val simpleRelayModel: SimpleRelayModel?
+data class RelayEvent (
+    val relayNodeLastByte: Int = -1,
+    val relayNodeIdentifier: Int = 0,
+    var nodeLongName: String? = null,
+    val timestamp: Long = System.currentTimeMillis(),
 )
 
 
@@ -193,8 +186,9 @@ class UIViewModel @Inject constructor(
     private val preferences: SharedPreferences
 ) : ViewModel(), Logging {
 
-    private val _lastRelayNode = MutableStateFlow<RelayModel?>(null)
+    private val _lastRelayNode = MutableStateFlow<RelayEvent?>(null)
     val lastRelayNode = _lastRelayNode.asStateFlow()
+    private var relayNodeexpireJob: Job? = null
 
     var actionBarMenu: Menu? = null
     val meshService: IMeshService? get() = radioConfigRepository.meshService
@@ -235,16 +229,33 @@ class UIViewModel @Inject constructor(
     private val includeUnknown = MutableStateFlow(preferences.getBoolean("include-unknown", false))
     private val showDetails = MutableStateFlow(preferences.getBoolean("show-details", false))
 
-    fun updateLastRelayNode(node: RelayModel?) {
+    fun updateLastRelayNode(node: RelayEvent?) {
         _lastRelayNode.value = node
+    }
+
+    /**
+     * Useful when NOT updating [_lastRelayNode] from emitter
+     */
+    fun updateLastRelayNodeWithTimeout(node: RelayEvent){
+        _lastRelayNode.value = node
+        expireRelayNode()
     }
 
     fun setSortOption(sort: NodeSortOption) {
         nodeSortOption.value = sort
     }
 
-    fun filterForNode(node: Node) {
-        val name = node.user.longName.ifBlank { node.user.shortName }
+    fun filterForNode(node: Node?, longName: String?) {
+
+        var name: String
+
+        if(node != null){
+            name = node.user.longName.ifBlank { node.user.shortName }
+        } else if (longName != null){
+            name = longName
+
+        } else return
+
         setNodeFilterText(name)
         setCurrentTab(1)
     }
@@ -323,24 +334,26 @@ class UIViewModel @Inject constructor(
         }.launchIn(viewModelScope)
 
         radioConfigRepository.relayEvents
-            .onEach { event ->
+            .onEach { relayEvent ->
                 val nodes = nodeDB.nodeDBbyNum.value.values.toList()
-                val relayNode = Packet.getRelayNode(event.relayNodeNum, nodes)
-                relayNode?.let {
 
-                    val relayModel = RelayModel(
-                        event,
-                        relayNode,
-                        null
-                    )
+                if (relayEvent.relayNodeLastByte > 0){
 
-                    updateLastRelayNode(relayModel)
+                    val relayNodeEntity = Packet.getRelayNode(relayEvent.relayNodeLastByte, nodes)
+                    relayNodeEntity?.let {
 
-                    viewModelScope.launch {
-                        delay(300_000) // 5 min to remove it from UI!
-                        if (lastRelayNode.value == relayModel) {
-                            updateLastRelayNode(null)
-                        }
+                        relayEvent.nodeLongName = relayNodeEntity.user.longName
+                        updateLastRelayNode(relayEvent)
+                        expireRelayNode()
+                    }
+
+                } else if (relayEvent.relayNodeIdentifier != 0){
+                    nodes.first { it.num == relayEvent.relayNodeIdentifier }.let {
+                     matchingNode ->
+
+                        relayEvent.nodeLongName = matchingNode.user.longName
+                        updateLastRelayNode(relayEvent)
+                        expireRelayNode()
                     }
                 }
             }
@@ -775,5 +788,13 @@ class UIViewModel @Inject constructor(
 
     fun setNodeFilterText(text: String) {
         nodeFilterText.value = text
+    }
+
+    private fun expireRelayNode() {
+        relayNodeexpireJob?.cancel()
+        relayNodeexpireJob = viewModelScope.launch {
+            delay(60.minutes)
+            updateLastRelayNode(null)
+        }
     }
 }

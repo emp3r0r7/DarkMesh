@@ -86,8 +86,7 @@ import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.model.BluetoothViewModel
 import com.geeksville.mesh.model.Contact
 import com.geeksville.mesh.model.DeviceVersion
-import com.geeksville.mesh.model.RelayModel
-import com.geeksville.mesh.model.SimpleRelayModel
+import com.geeksville.mesh.model.RelayEvent
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.prefs.UserPrefs
 import com.geeksville.mesh.service.DistressService
@@ -604,17 +603,11 @@ class MainActivity : AppCompatActivity(), Logging {
             try {
                 val nearestNodeName = traceResponse.split("■")[2].split("\n")[0]
 
-                val simpleRelayModel = SimpleRelayModel(
-                    nearestNodeName,
+                val relayEvent = RelayEvent(
+                    nodeLongName = nearestNodeName
                 )
 
-                val relayModel = RelayModel(
-                    null,
-                    null,
-                    simpleRelayModel
-                )
-
-                model.updateLastRelayNode(relayModel)
+                model.updateLastRelayNodeWithTimeout(relayEvent)
 
             } catch (e: Exception){
                 debug("Could not determine first responding node! ${e.message}")

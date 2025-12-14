@@ -21,7 +21,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -34,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.activityViewModels
@@ -42,7 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geeksville.mesh.DataPacket
 import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.model.Node
-import com.geeksville.mesh.model.RelayModel
+import com.geeksville.mesh.model.RelayEvent
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.ui.components.NodeFilterTextField
 import com.geeksville.mesh.ui.components.NodeMenuAction
@@ -50,6 +53,9 @@ import com.geeksville.mesh.ui.components.rememberTimeTickWithLifecycle
 import com.geeksville.mesh.ui.message.navigateToMessages
 import com.geeksville.mesh.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @AndroidEntryPoint
 class UsersFragment : ScreenFragment("Users"), Logging {
@@ -98,7 +104,7 @@ class UsersFragment : ScreenFragment("Users"), Logging {
 @Suppress("LongMethod")
 fun NodesScreen(
     model: UIViewModel = hiltViewModel(),
-    relayNode: RelayModel?,
+    relayNode: RelayEvent?,
     navigateToMessages: (Node) -> Unit,
     navigateToNodeDetails: (Int) -> Unit,
 ) {
@@ -131,7 +137,7 @@ fun NodesScreen(
         stickyHeader {
 
             if (relayNode != null) {
-                RelayInfoBox(relayNode)
+                RelayInfoBox(relayNode, model)
             }
 
             NodeFilterTextField(
@@ -177,10 +183,12 @@ fun NodesScreen(
 }
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun RelayInfoBox(relayNode: RelayModel) {
+fun RelayInfoBox(relayNode: RelayEvent, model: UIViewModel) {
 
     val (nodeName, timeLabel) = parseNodeNameAndTimestamp(relayNode)
+    val context = LocalContext.current
 
     androidx.compose.material.Surface(
         elevation = 4.dp,
@@ -188,49 +196,48 @@ fun RelayInfoBox(relayNode: RelayModel) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
-    ) {
+            .combinedClickable(
+                onClick = {
+                    Toast.makeText(
+                        context,
+                        "Nodo Gateway in prossimità: $nodeName",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                },
+                onLongClick = {
+
+                    var longName = relayNode.nodeLongName
+
+                    //fixme, use a more reliable way to do this
+                    longName?.let {
+                        /* this filter is used when the gateway is obtained from the latest
+                           traceroute done by the user */
+                        if(longName.contains("(") && longName.contains(")")) {
+
+                            longName = relayNode.nodeLongName
+                                ?.substringBefore("(")
+                                ?.trim()
+                        }
+                    }
+
+                    model.filterForNode(null, longName)
+                }
+            )
+    )  {
         Text(
-            text = "🔁 Gateway: " +
+            text = "⏩ " +
                     "$nodeName • $timeLabel",
             modifier = Modifier.padding(12.dp)
         )
     }
 }
 
-private fun parseNodeNameAndTimestamp(relayNode: RelayModel): Pair<String?, String>{
-
-    val nodeName: String? = if(relayNode.node == null){
-        relayNode.simpleRelayModel?.nodeLongName
-    } else {
-        relayNode.node.user.longName
-    }
-
-    var timestamp: Long? = if(relayNode.event == null){
-        relayNode.simpleRelayModel?.timestamp
-    } else {
-        relayNode.event.timestamp
-    }
-
-    var timestampString: String = if(timestamp != null) {
-        formatRelayTime(timestamp)
-    } else {
-        "undefined"
-    }
-
-    return nodeName to timestampString
-
+private fun parseNodeNameAndTimestamp(relayNode: RelayEvent): Pair<String?, String>{
+    val nodeName = relayNode.nodeLongName ?: "undefined"
+    return nodeName to formatRelayTime(relayNode.timestamp)
 }
 
-private fun formatRelayTime(timestampMillis: Long, nowMillis: Long = System.currentTimeMillis()): String {
-    val diffMillis = nowMillis - timestampMillis
-    val diffSeconds = diffMillis / 1000
-
-    return when {
-        diffSeconds < 60 -> "now"
-        else -> {
-            val minutes = diffSeconds / 60
-            "$minutes min ago"
-        }
-    }
+private fun formatRelayTime(timestampMillis: Long): String {
+    val sdf = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+    return sdf.format(Date(timestampMillis))
 }
-

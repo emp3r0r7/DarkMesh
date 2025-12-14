@@ -724,10 +724,22 @@ class MeshService : Service(), Logging {
         }
     }
 
-    fun detectRelayNode(relayNode: Int?) {
-        if (relayNode != null && relayNode != 0) {
+    private fun detectRelayNode(relayNodeLastByte: Int?, packet: MeshPacket, fromUs: Boolean) {
+
+        //We prioritize relaynode from packets and if not found, we fallback to hop evaluation
+        if (relayNodeLastByte != null && relayNodeLastByte != 0) {
             radioConfigRepository.emitRelayEvent(
-                RelayEvent(relayNode)
+                RelayEvent(
+                    relayNodeLastByte = relayNodeLastByte
+                )
+            )
+
+        } else if (!fromUs && packet.hopStart - packet.hopLimit <= 0){
+
+            radioConfigRepository.emitRelayEvent(
+                RelayEvent(
+                    relayNodeIdentifier = packet.from
+                )
             )
         }
     }
@@ -739,16 +751,16 @@ class MeshService : Service(), Logging {
             val bytes = data.payload.toByteArray()
             val fromId = toNodeID(packet.from)
             val dataPacket = toDataPacket(packet)
-            val relayNode = dataPacket?.relayNode
+            val relayNodeLastByte = dataPacket?.relayNode
 
             if (dataPacket != null) {
-
-                detectRelayNode(relayNode)
 
                 // We ignore most messages that we sent
                 val fromUs = myInfo.myNodeNum == packet.from
 
                 debug("Received data from $fromId, portnum=${data.portnum} ${bytes.size} bytes")
+
+                detectRelayNode(relayNodeLastByte, packet, fromUs)
 
                 dataPacket.status = MessageStatus.RECEIVED
 
@@ -828,7 +840,7 @@ class MeshService : Service(), Logging {
                             radioConfigRepository.setErrorMessage(getString(R.string.error_duty_cycle))
                         }
 
-                        handleAckNak(packet, data.requestId, fromId, u.errorReasonValue, relayNode)
+                        handleAckNak(packet, data.requestId, fromId, u.errorReasonValue)
                         queueResponse.remove(data.requestId)?.complete(true)
                     }
 
@@ -1166,7 +1178,7 @@ class MeshService : Service(), Logging {
     /**
      * Handle an ack/nak packet by updating sent message status
      */
-    private fun handleAckNak(packet: MeshPacket, requestId: Int, fromId: String, routingError: Int, relayNode: Int?) {
+    private fun handleAckNak(packet: MeshPacket, requestId: Int, fromId: String, routingError: Int) {
         serviceScope.handledLaunch {
             val isAck = routingError == MeshProtos.Routing.Error.NONE_VALUE
             val p = packetRepository.get().getPacketById(requestId)

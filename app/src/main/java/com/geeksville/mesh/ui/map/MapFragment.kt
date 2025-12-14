@@ -338,7 +338,7 @@ fun MapView(
 
                 setOnLongClickListener{
                     performHapticFeedback()
-                    model.filterForNode(node)
+                    model.filterForNode(node, null)
                     true
                 }
 
