@@ -17,7 +17,7 @@ public class GlobalRadioMesh {
         return radioMeshService;
     }
 
-    public static void sendMessage(String str, String contactKey) {
+    public static void sendMessage(String str, String contactKey, Integer replyId) {
 
         if (radioMeshService == null) {
             debug("Could not send message, RadioMesh is null!");
@@ -35,7 +35,7 @@ public class GlobalRadioMesh {
             }
             String dest = (channel != null) ? contactKey.substring(1) : contactKey;
 
-            DataPacket p = new DataPacket(dest, (channel != null) ? channel : 0, str);
+            DataPacket p = new DataPacket(dest, (channel != null) ? channel : 0, str, replyId);
             radioMeshService.send(p);
         } catch (Exception e) {
             debug("Could not send  message");

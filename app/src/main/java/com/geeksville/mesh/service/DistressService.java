@@ -81,7 +81,7 @@ public class DistressService extends Service {
                         str += userInput + " @ " + currentTime;
                     }
 
-                    GlobalRadioMesh.sendMessage(str, contactKey);
+                    GlobalRadioMesh.sendMessage(str, contactKey, 0);
                     Thread.sleep(interval);
                 } catch (Exception e) {
                     debug("An error occurred while distressing: " + e);

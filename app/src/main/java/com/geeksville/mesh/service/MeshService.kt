@@ -665,6 +665,7 @@ class MeshService : Service(), Logging {
                 hopLimit = packet.hopLimit,
                 channel = if (packet.pkiEncrypted) DataPacket.PKC_CHANNEL_INDEX else packet.channel,
                 relayNode = packet.relayNode,
+                replyId = data.replyId
                 )
         }
     }
@@ -678,6 +679,10 @@ class MeshService : Service(), Logging {
         ) {
             portnumValue = p.dataType
             payload = ByteString.copyFrom(p.bytes)
+
+            if (p.replyId != null && p.replyId != 0) {
+                this.replyId = p.replyId!!
+            }
         }
     }
 
@@ -1613,7 +1618,7 @@ class MeshService : Service(), Logging {
         insertMeshLog(packetToSave)
 
         newNodes.add(info)
-        radioConfigRepository.setStatusMessage("Nodes (${newNodes.size} / 200)")
+        radioConfigRepository.setStatusMessage("Nodes (${newNodes.size} / 500)")
     }
 
     private var rawMyNodeInfo: MeshProtos.MyNodeInfo? = null

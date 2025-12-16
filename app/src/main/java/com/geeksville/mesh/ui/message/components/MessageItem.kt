@@ -18,6 +18,7 @@
 package com.geeksville.mesh.ui.message.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,7 +26,9 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
@@ -42,6 +45,7 @@ import androidx.compose.material.icons.twotone.CloudUpload
 import androidx.compose.material.icons.twotone.HowToReg
 import androidx.compose.material.icons.twotone.Warning
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -54,6 +58,7 @@ import androidx.compose.ui.unit.sp
 import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.DataPacket
 import com.geeksville.mesh.MessageStatus
+import com.geeksville.mesh.model.Message
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.ui.components.AutoLinkText
 import com.geeksville.mesh.ui.components.UserAvatar
@@ -70,11 +75,14 @@ internal fun MessageItem(
     messageStatus: MessageStatus?,
     selected: Boolean,
     modifier: Modifier = Modifier,
+    highlighted: Boolean = false,
+    repliedMessage: Message? = null,
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {},
     onChipClick: () -> Unit = {},
     onStatusClick: () -> Unit = {},
     onSendReaction: (String) -> Unit = {},
+    onQuotedClick: (Message) -> Unit = {},
 ) = Row(
     modifier = Modifier
         .fillMaxWidth()
@@ -99,6 +107,14 @@ internal fun MessageItem(
         ) { onChipClick() }
     }
 
+    val highlightColor by animateColorAsState(
+        targetValue = if (highlighted)
+            MaterialTheme.colors.primary.copy(alpha = 0.18f)
+        else
+            colorResource(id = messageColor),
+        label = "messageHighlight"
+    )
+
     Card(
         modifier = Modifier
             .weight(1f)
@@ -111,7 +127,7 @@ internal fun MessageItem(
                 onClick = onClick,
                 onLongClick = onLongClick,
             ),
-            color = colorResource(id = messageColor),
+            color = highlightColor
         ) {
             Row(
                 modifier = Modifier
@@ -134,6 +150,14 @@ internal fun MessageItem(
                             )
                         )
                     }
+                    repliedMessage?.let {
+                        QuotedMessageBubble(
+                            message = it,
+                            onClick = { onQuotedClick(it) }
+                        )
+                        Spacer(Modifier.height(4.dp))
+                    }
+
                     AutoLinkText(
                         text = messageText.orEmpty(),
                         style = LocalTextStyle.current.copy(
@@ -173,6 +197,40 @@ internal fun MessageItem(
     }
     if (!fromLocal) {
         ReactionButton(Modifier.padding(16.dp), onSendReaction)
+    }
+}
+
+
+@Composable
+fun QuotedMessageBubble(message: Message, onClick: () -> Unit) {
+
+    var replyNode = message.node.user.longName
+
+    if(message.node.user.id == DataPacket.ID_LOCAL){
+        replyNode = "You"
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = MaterialTheme.colors.onSurface.copy(alpha = 0.08f),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .clickable(onClick = onClick)
+            .padding(8.dp)
+    ) {
+        Text(
+            text = replyNode,
+            style = MaterialTheme.typography.caption,
+            color = MaterialTheme.colors.primary
+        )
+        Text(
+            text = message.text,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.body2
+        )
     }
 }
 

@@ -46,6 +46,7 @@ data class PacketEntity(
             routingError = routingError,
             packetId = packetId,
             emojis = reactions.toReaction(getNode),
+            replyId = data.replyId
         )
     }
 }

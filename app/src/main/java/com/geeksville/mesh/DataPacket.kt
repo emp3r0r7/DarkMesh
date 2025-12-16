@@ -61,7 +61,8 @@ data class DataPacket(
     var hopLimit: Int = 0,
     var channel: Int = 0, // channel index
     var relayNode: Int? = null,
-    ) : Parcelable {
+    var replyId: Int? = null, // If this is a reply to a previous message, this is the ID of that message
+) : Parcelable {
 
     /**
      * If there was an error with this message, this string describes what was wrong.
@@ -71,11 +72,16 @@ data class DataPacket(
     /**
      * Syntactic sugar to make it easy to create text messages
      */
-    constructor(to: String?, channel: Int, text: String) : this(
+    constructor(to: String?,
+                channel: Int,
+                text: String,
+                replyId: Int? = null
+    ) : this (
         to = to,
         bytes = text.encodeToByteArray(),
         dataType = Portnums.PortNum.TEXT_MESSAGE_APP_VALUE,
-        channel = channel
+        channel = channel,
+        replyId = replyId ?: 0,
     )
 
     /**
@@ -132,7 +138,7 @@ data class DataPacket(
         if (status != other.status) return false
         if (hopLimit != other.hopLimit) return false
         if (relayNode != other.relayNode) return false
-
+        if (replyId != other.replyId) return false
 
         return true
     }
@@ -148,6 +154,7 @@ data class DataPacket(
         result = 31 * result + hopLimit
         result = 31 * result + channel
         result = 31 * result + relayNode.hashCode()
+        result = 31 * result + replyId.hashCode()
         return result
     }
 
@@ -162,6 +169,7 @@ data class DataPacket(
         parcel.writeInt(hopLimit)
         parcel.writeInt(channel)
         parcel.writeInt(relayNode ?: -1)
+        parcel.writeInt(replyId ?: 0)
     }
 
     override fun describeContents(): Int {
@@ -180,6 +188,7 @@ data class DataPacket(
         hopLimit = parcel.readInt()
         channel = parcel.readInt()
         relayNode = parcel.readInt().let { if (it == -1) null else it }
+        replyId = parcel.readInt().let { if (it == 0) null else it }
     }
 
     companion object CREATOR : Parcelable.Creator<DataPacket> {

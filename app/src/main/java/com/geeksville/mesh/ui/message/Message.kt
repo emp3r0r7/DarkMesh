@@ -53,8 +53,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -66,6 +68,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
@@ -94,6 +97,7 @@ import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.DataPacket
 import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.database.entity.QuickChatAction
+import com.geeksville.mesh.model.Message
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.model.getChannel
@@ -106,6 +110,7 @@ import com.geeksville.mesh.ui.message.components.MessageList
 import com.geeksville.mesh.ui.navigateToNavGraph
 import com.geeksville.mesh.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 internal fun FragmentManager.navigateToMessages(contactKey: String, message: String = "") {
@@ -166,6 +171,7 @@ sealed class MessageMenuAction {
     data object Delete : MessageMenuAction()
     data object Dismiss : MessageMenuAction()
     data object SelectAll : MessageMenuAction()
+    data object Resend : MessageMenuAction()
 }
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
@@ -181,6 +187,10 @@ internal fun MessageScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
+
+    val replyTo by viewModel.replyTo.collectAsStateWithLifecycle()
+    val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
+    val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
 
     val channelIndex = contactKey[0].digitToIntOrNull()
     val nodeId = contactKey.substring(1)
@@ -203,6 +213,15 @@ internal fun MessageScreen(
     val quickChat by viewModel.quickChatActions.collectAsStateWithLifecycle()
     val messages by viewModel.getMessagesFrom(contactKey).collectAsStateWithLifecycle(listOf())
 
+    val canResend by remember {
+        derivedStateOf {
+            selectedIds.value.isNotEmpty() &&
+                    messages
+                        .filter { it.uuid in selectedIds.value }
+                        .all { it.node.user.id == DataPacket.ID_LOCAL }
+        }
+    }
+
     val messageInput = rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(message))
     }
@@ -220,11 +239,34 @@ internal fun MessageScreen(
         )
     }
 
+    LaunchedEffect(contactKey) {
+        viewModel.clearReply()
+    }
+
     Scaffold(
         topBar = {
             if (inSelectionMode) {
-                ActionModeTopBar(selectedIds.value) { action ->
+                ActionModeTopBar(
+                    selectedIds.value,
+                    canResend = canResend,
+                ) { action ->
                     when (action) {
+
+                        MessageMenuAction.Resend -> {
+                            val messagesToResend = messages
+                                .filter { it.uuid in selectedIds.value }
+
+                            messagesToResend.forEach { msg ->
+                                viewModel.sendMessage(
+                                    msg.text,
+                                    contactKey,
+                                    msg.replyId.takeIf { it != 0 }
+                                )
+                            }
+
+                            selectedIds.value = emptySet()
+                        }
+
                         MessageMenuAction.ClipboardCopy -> coroutineScope.launch {
                             val copiedText = messages
                                 .filter { it.uuid in selectedIds.value }
@@ -254,6 +296,7 @@ internal fun MessageScreen(
         },
         bottomBar = {
             val isConnected = connState.isConnected()
+
             Column(
                 modifier = Modifier
                     .background(MaterialTheme.colors.background)
@@ -273,15 +316,30 @@ internal fun MessageScreen(
                         viewModel.sendMessage(action.message, contactKey)
                     }
                 }
-                TextInput(isConnected, messageInput) {
-                    viewModel.sendMessage(it, contactKey)
+
+                replyTo?.let { replied ->
+                    ReplyPreview(
+                        message = replied,
+                        onCancel = { viewModel.clearReply() }
+                    )
                 }
+
+                TextInput(
+                    isConnected,
+                    messageInput,
+                    modifier = Modifier.focusRequester(focusRequester)
+                ) {
+                    viewModel.sendMessage(it, contactKey, replyTo?.packetId)
+                    viewModel.clearReply()
+                }
+
             }
         }
     ) { innerPadding ->
         if (messages.isNotEmpty()) {
             MessageList(
                 messages = messages,
+                viewModel = viewModel,
                 selectedIds = selectedIds,
                 onUnreadChanged = { viewModel.clearUnreadCount(contactKey, it) },
                 contentPadding = innerPadding,
@@ -299,7 +357,54 @@ internal fun MessageScreen(
             }
         }
     }
+
+    LaunchedEffect(replyTo) {
+        if (replyTo != null) {
+            delay(50)
+            focusRequester.requestFocus()
+            keyboardController?.show()
+        } else {
+            keyboardController?.hide()
+        }
+    }
 }
+
+@Composable
+fun ReplyPreview(
+    message: Message,
+    onCancel: () -> Unit
+) {
+
+    var replyNode = message.node.user.longName
+
+    if(message.node.user.id == DataPacket.ID_LOCAL){
+        replyNode = "You"
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colors.surface)
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+
+                text = replyNode,
+                style = MaterialTheme.typography.caption
+            )
+            Text(
+                text = message.text,
+                maxLines = 1
+            )
+        }
+        IconButton(onClick = onCancel) {
+            Icon(Icons.Default.Delete, contentDescription = null)
+        }
+    }
+}
+
 
 @Composable
 private fun DeleteMessageDialog(
@@ -336,6 +441,7 @@ private fun DeleteMessageDialog(
 @Composable
 private fun ActionModeTopBar(
     selectedList: Set<Long>,
+    canResend: Boolean,
     onAction: (MessageMenuAction) -> Unit,
 ) = TopAppBar(
     title = { Text(text = selectedList.size.toString()) },
@@ -348,6 +454,16 @@ private fun ActionModeTopBar(
         }
     },
     actions = {
+
+        if (canResend) {
+            IconButton(onClick = { onAction(MessageMenuAction.Resend) }) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = stringResource(id = R.string.resend)
+                )
+            }
+        }
+
         IconButton(onClick = { onAction(MessageMenuAction.ClipboardCopy) }) {
             Icon(
                 imageVector = Icons.Default.ContentCopy,

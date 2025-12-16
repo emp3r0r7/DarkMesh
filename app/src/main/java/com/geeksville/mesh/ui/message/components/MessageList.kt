@@ -20,11 +20,19 @@ package com.geeksville.mesh.ui.message.components
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Reply
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -32,32 +40,45 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.geeksville.mesh.DataPacket
 import com.geeksville.mesh.database.entity.Reaction
 import com.geeksville.mesh.model.Message
+import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.ui.components.NodeMenu
 import com.geeksville.mesh.ui.components.NodeMenuAction
 import com.geeksville.mesh.ui.components.SimpleAlertDialog
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
 
 @Suppress("LongMethod")
 @Composable
 internal fun MessageList(
     messages: List<Message>,
+    viewModel: UIViewModel = hiltViewModel(),
     selectedIds: MutableState<Set<Long>>,
     onUnreadChanged: (Long) -> Unit,
     contentPadding: PaddingValues,
     onSendReaction: (String, Int) -> Unit,
-    onNodeMenuAction: (NodeMenuAction) -> Unit = {}
+    onNodeMenuAction: (NodeMenuAction) -> Unit = {},
 ) {
+
+    val coroutineScope = rememberCoroutineScope()
+    var highlightedMessageId by remember { mutableStateOf<Long?>(null) }
+
     val haptics = LocalHapticFeedback.current
     val inSelectionMode by remember { derivedStateOf { selectedIds.value.isNotEmpty() } }
     val listState = rememberLazyListState(
@@ -71,6 +92,15 @@ internal fun MessageList(
         val msg = showStatusDialog ?: return
         val (title, text) = msg.getStatusStringRes()
         SimpleAlertDialog(title = title, text = text) { showStatusDialog = null }
+    }
+
+    fun highlightMessage(target: Message) {
+        highlightedMessageId = target.uuid
+
+        coroutineScope.launch {
+            delay(1200)
+            highlightedMessageId = null
+        }
     }
 
     var showReactionDialog by remember { mutableStateOf<List<Reaction>?>(null) }
@@ -92,42 +122,117 @@ internal fun MessageList(
         contentPadding = contentPadding
     ) {
         items(messages, key = { it.uuid }) { msg ->
+
             val fromLocal = msg.node.user.id == DataPacket.ID_LOCAL
             val selected by remember { derivedStateOf { selectedIds.value.contains(msg.uuid) } }
+            val isHighlighted = msg.uuid == highlightedMessageId
 
             ReactionRow(fromLocal, msg.emojis) { showReactionDialog = msg.emojis }
+
             Box(Modifier.wrapContentSize(Alignment.TopStart)) {
                 var expandedNodeMenu by remember { mutableStateOf(false) }
-                MessageItem(
-                    node = msg.node,
-                    messageText = msg.text,
-                    messageTime = msg.time,
-                    messageStatus = msg.status,
-                    selected = selected,
-                    onClick = { if (inSelectionMode) selectedIds.toggle(msg.uuid) },
-                    onLongClick = {
-                        selectedIds.toggle(msg.uuid)
-                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    },
-                    onChipClick = {
-                        if (msg.node.num != 0) {
-                            expandedNodeMenu = true
+
+                val repliedMessage = remember(msg.replyId, messages) {
+                    msg.replyId?.let { replyId ->
+                        messages.firstOrNull {
+                            it.packetId == replyId &&
+                                    it.uuid != msg.uuid
                         }
-                    },
-                    onStatusClick = { showStatusDialog = msg },
-                    onSendReaction = { onSendReaction(it, msg.packetId) },
-                )
+                    }
+                }
+
+                SwipeReplyMessage(
+                    enabled = !inSelectionMode,
+                    onReply = {
+                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        viewModel.startReply(msg)
+                    }
+                ) {
+                    MessageItem(
+                        node = msg.node,
+                        messageText = msg.text,
+                        messageTime = msg.time,
+                        messageStatus = msg.status,
+                        selected = selected,
+                        highlighted = isHighlighted,
+                        repliedMessage = repliedMessage,
+                        onClick = {
+                            if (inSelectionMode) selectedIds.toggle(msg.uuid)
+                        },
+                        onLongClick = {
+                            selectedIds.toggle(msg.uuid)
+                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        },
+                        onChipClick = {
+                            if (msg.node.num != 0) {
+                                expandedNodeMenu = true
+                            }
+                        },
+                        onStatusClick = { showStatusDialog = msg },
+                        onSendReaction = { onSendReaction(it, msg.packetId) },
+                        onQuotedClick = { quoted -> highlightMessage(quoted) },
+                    )
+                }
+
                 NodeMenu(
                     node = msg.node,
                     showFullMenu = true,
-                    onDismissRequest = { expandedNodeMenu = false },
                     expanded = expandedNodeMenu,
+                    onDismissRequest = { expandedNodeMenu = false },
                     onAction = onNodeMenuAction
                 )
             }
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SwipeReplyMessage(
+    enabled: Boolean,
+    onReply: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.StartToEnd) {
+                onReply()
+                false
+            } else false
+        }
+    )
+
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromStartToEnd = enabled,
+        enableDismissFromEndToStart = false,
+        backgroundContent = {
+            ReplySwipeBackground(progress = dismissState.progress)
+        }
+    ) {
+        content()
+    }
+}
+
+@Composable
+fun ReplySwipeBackground(progress: Float) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(start = 20.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.Reply,
+            contentDescription = "Reply",
+            modifier = Modifier
+                .scale(0.9f + progress * 0.3f)
+                .alpha(progress.coerceIn(0.3f, 1f))
+        )
+    }
+}
+
+
 
 @Composable
 private fun <T> AutoScrollToBottom(

@@ -400,7 +400,7 @@ public class PlanMsgService extends Service {
             dest = contactKey;
         }
 
-        DataPacket p = new DataPacket(dest, (channel != null) ? channel : 0, str);
+        DataPacket p = new DataPacket(dest, (channel != null) ? channel : 0, str, 0);
 
         if (GlobalRadioMesh.getRadio() != null) {
             GlobalRadioMesh.getRadio().send(p);
