@@ -348,14 +348,14 @@ class UIViewModel @Inject constructor(
             .onEach { relayEvent ->
 
                 val nodes = nodeDB.nodeDBbyNum.value.values.toList()
-                val ourNodeId = ourNodeInfo.value?.num
+                val ourNodeNum = ourNodeInfo.value?.num
 
                 if (relayEvent.relayNodeLastByte > 0){
 
                     val relayNodeEntity = Packet.getRelayNode(
                         relayEvent.relayNodeLastByte,
                         nodes,
-                        ourNodeId
+                        ourNodeNum
                     )
 
                     relayNodeEntity?.let {
