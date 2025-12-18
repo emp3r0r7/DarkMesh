@@ -346,6 +346,7 @@ class BluetoothInterface @AssistedInject constructor(
                             service.onConnect()
 
                             // Immediately broadcast any queued packets sitting on the device
+                            delay(1000) // Workaround to avoid two connections in a row
                             doReadFromRadio(true)
                         } catch (ex: BLEException) {
                             scheduleReconnect(
