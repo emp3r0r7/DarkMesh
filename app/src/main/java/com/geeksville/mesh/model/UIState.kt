@@ -346,11 +346,18 @@ class UIViewModel @Inject constructor(
 
         radioConfigRepository.relayEvents
             .onEach { relayEvent ->
+
                 val nodes = nodeDB.nodeDBbyNum.value.values.toList()
+                val ourNodeId = ourNodeInfo.value?.num
 
                 if (relayEvent.relayNodeLastByte > 0){
 
-                    val relayNodeEntity = Packet.getRelayNode(relayEvent.relayNodeLastByte, nodes)
+                    val relayNodeEntity = Packet.getRelayNode(
+                        relayEvent.relayNodeLastByte,
+                        nodes,
+                        ourNodeId
+                    )
+
                     relayNodeEntity?.let {
 
                         relayEvent.nodeLongName = relayNodeEntity.user.longName

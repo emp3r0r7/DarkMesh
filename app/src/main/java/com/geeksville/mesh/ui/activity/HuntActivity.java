@@ -25,6 +25,9 @@ import java.util.List;
 
 public class HuntActivity extends Activity {
 
+    private static final String DEFAULT_DOMAIN = "https://maps.loracity.it";
+    private static final String DEFAULT_PUBLIC_API_TOKEN = "ioL4ath3";
+
     private static final List<String> scanModes = Arrays.asList(
             UserPrefs.Hunting.BACKGROUND_MODE_FAST,
             UserPrefs.Hunting.BACKGROUND_MODE_MEDIUM,
@@ -74,8 +77,8 @@ public class HuntActivity extends Activity {
         tokenInput.setEnabled(isHuntingEnabled);
         validateButton.setEnabled(isHuntingEnabled);
 
-        domainInput.setText(prefs.getString(UserPrefs.Hunting.HUNT_DOMAIN, ""));
-        tokenInput.setText(prefs.getString(UserPrefs.Hunting.HUNT_TOKEN, ""));
+        domainInput.setText(prefs.getString(UserPrefs.Hunting.HUNT_DOMAIN, DEFAULT_DOMAIN));
+        tokenInput.setText(prefs.getString(UserPrefs.Hunting.HUNT_TOKEN, DEFAULT_PUBLIC_API_TOKEN));
 
         huntingSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
 
@@ -96,9 +99,9 @@ public class HuntActivity extends Activity {
 
         validateButton.setOnClickListener(v -> {
 
-            String domain = String.valueOf(domainInput.getText());
-            String token = String.valueOf(tokenInput.getText());
-            String selectedBackgroundMode = modeSpinner.getSelectedItem().toString();
+            final String domain = String.valueOf(domainInput.getText());
+            final String token = String.valueOf(tokenInput.getText());
+            final String selectedBackgroundMode = modeSpinner.getSelectedItem().toString();
 
             editor.putString(UserPrefs.Hunting.BACKGROUND_HUNT_MODE, selectedBackgroundMode).apply();
 
