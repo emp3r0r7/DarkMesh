@@ -1199,10 +1199,13 @@ class MeshService : Service(), Logging {
                             } else {
                                 mainLooperToast("Message to ${getUserName(hexIdToNodeNum(it))} traveling...", Toast.LENGTH_SHORT)
                             }
-
-                        } ?: mainLooperToast("Message traveling...", Toast.LENGTH_SHORT)
+                        } ?: run {
+                            mainLooperToast("Message traveling...", Toast.LENGTH_SHORT)
+                        }
                     } catch(e :Exception){
-                        debug("An error occurred while reading packet: ${packet.toPIIString()}")
+                        debug("An error occurred while reading packet: " +
+                                "${packet.toPIIString()} err ${e.message}"
+                        )
                     }
 
                     MessageStatus.DELIVERED
