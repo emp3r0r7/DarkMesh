@@ -366,7 +366,7 @@ class UIViewModel @Inject constructor(
                     }
 
                 } else if (relayEvent.relayNodeIdentifier != 0){
-                    nodes.first { it.num == relayEvent.relayNodeIdentifier }.let {
+                    nodes.firstOrNull { it.num == relayEvent.relayNodeIdentifier }?.let {
                      matchingNode ->
 
                         relayEvent.nodeLongName = matchingNode.user.longName
