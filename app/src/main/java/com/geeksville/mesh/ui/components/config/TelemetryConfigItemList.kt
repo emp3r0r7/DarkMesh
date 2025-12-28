@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.geeksville.mesh.model.DeviceVersion
 import com.geeksville.mesh.model.RadioConfigViewModel
 import com.geeksville.mesh.ui.components.EditTextPreference
 import com.geeksville.mesh.ui.components.PreferenceCategory
@@ -39,6 +40,8 @@ import com.geeksville.mesh.ui.components.SwitchPreference
 import org.meshtastic.proto.ModuleConfigProtos.ModuleConfig.TelemetryConfig
 import org.meshtastic.proto.copy
 import org.meshtastic.proto.moduleConfig
+
+private const val MIN_FW_FOR_TELEMETRY_TOGGLE = "2.7.12"
 
 @Composable
 fun TelemetryConfigScreen(
@@ -54,6 +57,7 @@ fun TelemetryConfigScreen(
     }
 
     TelemetryConfigItemList(
+        viewModel = viewModel,
         telemetryConfig = state.moduleConfig.telemetry,
         enabled = state.connected,
         onSaveClicked = { telemetryInput ->
@@ -65,17 +69,36 @@ fun TelemetryConfigScreen(
 
 @Composable
 fun TelemetryConfigItemList(
+    viewModel: RadioConfigViewModel = hiltViewModel(),
     telemetryConfig: TelemetryConfig,
     enabled: Boolean,
     onSaveClicked: (TelemetryConfig) -> Unit,
 ) {
+    val state by viewModel.radioConfigState.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
     var telemetryInput by rememberSaveable { mutableStateOf(telemetryConfig) }
+    val firmwareVersion = state.metadata?.firmwareVersion ?: "1"
 
     LazyColumn(
         modifier = Modifier.fillMaxSize()
     ) {
         item { PreferenceCategory(text = "Telemetry Config") }
+
+        if (DeviceVersion(firmwareVersion) >= DeviceVersion(MIN_FW_FOR_TELEMETRY_TOGGLE)) {
+            item {
+                SwitchPreference(
+                    title = "Send Device Telemetry",
+                    summary = "Enable/Disable the device telemetry module to send metrics to the mesh. " +
+                            "This flag is mandatory for FW version above $MIN_FW_FOR_TELEMETRY_TOGGLE " +
+                            "otherwise no voltage or telemetry will be sent over the mesh!",
+                    checked = telemetryInput.deviceTelemetryEnabled,
+                    enabled = state.connected,
+                    onCheckedChange = {
+                        telemetryInput = telemetryInput.copy { deviceTelemetryEnabled = it }
+                    }
+                )
+            }
+        }
 
         item {
             EditTextPreference(title = "Device metrics update interval (seconds)",
