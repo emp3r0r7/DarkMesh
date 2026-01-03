@@ -24,12 +24,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -57,6 +59,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -113,6 +116,11 @@ import org.osmdroid.views.overlay.infowindow.InfoWindow
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.io.File
 import java.text.DateFormat
+import kotlin.math.asin
+import kotlin.math.cos
+import kotlin.math.pow
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 private const val TRACE_COLOR_FORWARD = android.graphics.Color.BLUE
 private const val TRACE_COLOR_BACK = android.graphics.Color.RED
@@ -286,6 +294,30 @@ fun MapView.drawTraceroute(trace: TraceRouteMap) {
 }
 
 
+fun totalDistanceKm(nodes: List<Node>): Double {
+    fun haversine(a: GeoPoint, b: GeoPoint): Double {
+        val r = 6371.0 // km
+        val dLat = Math.toRadians(b.latitude - a.latitude)
+        val dLon = Math.toRadians(b.longitude - a.longitude)
+
+        val lat1 = Math.toRadians(a.latitude)
+        val lat2 = Math.toRadians(b.latitude)
+
+        val h = sin(dLat / 2).pow(2) +
+                cos(lat1) * cos(lat2) *
+                sin(dLon / 2).pow(2)
+
+        return 2 * r * asin(sqrt(h))
+    }
+
+    return nodes
+        .mapNotNull { node ->
+            node.validPosition?.let { GeoPoint(node.latitude, node.longitude) } }
+        .zipWithNext()
+        .sumOf { (a, b) -> haversine(a, b) }
+}
+
+
 fun buildSegments(
     nodes: List<Node>,
     color: Int,
@@ -362,6 +394,14 @@ fun MapView(
     model: UIViewModel = viewModel(),
 ) {
     val mapMode by model.mapMode.collectAsStateWithLifecycle()
+
+    val totalKm: Double? = when (val mode = mapMode) {
+        is MapMode.Traceroute -> {
+            totalDistanceKm(mode.trace.traceForwardList) +
+                    totalDistanceKm(mode.trace.traceBackList)
+        }
+        else -> null
+    }
 
     // UI Elements
     var cacheEstimate by remember { mutableStateOf("") }
@@ -800,8 +840,9 @@ fun MapView(
                 update = { map -> map.drawOverlays() },
             )
 
-            if (mapMode is MapMode.Traceroute) {
+            if (mapMode is MapMode.Traceroute && totalKm != null) {
                 TracerouteLegend(
+                    totalKm = totalKm,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(end = 16.dp, bottom = 16.dp)
@@ -861,12 +902,15 @@ fun MapView(
                         onClick = {
 
                             val coloredResponse = colorizeTracerouteResponse(trace)
-                            MaterialAlertDialogBuilder(context)
+                            val dialog = MaterialAlertDialogBuilder(context)
                                 .setCancelable(false)
                                 .setTitle(R.string.traceroute)
                                 .setMessage(coloredResponse)
                                 .setPositiveButton(R.string.okay) { _, _ -> }
                                 .show()
+
+                            dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                                ?.setTextColor(ContextCompat.getColor(context, R.color.colorAnnotation))
 
                             model.clearTracerouteResponse()
                         },
@@ -905,6 +949,7 @@ fun MapView(
 
 @Composable
 fun TracerouteLegend(
+    totalKm: Double,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -924,8 +969,17 @@ fun TracerouteLegend(
             color = androidx.compose.ui.graphics.Color(TRACE_COLOR_BACK),
             label = "Backward"
         )
+
+        Spacer(modifier = Modifier.padding(top = 4.dp))
+
+        androidx.compose.material.Text(
+            text = "Total: %.1f km".format(totalKm),
+            color = androidx.compose.ui.graphics.Color.White,
+            style = androidx.compose.material.MaterialTheme.typography.caption
+        )
     }
 }
+
 
 @Composable
 private fun LegendRow(

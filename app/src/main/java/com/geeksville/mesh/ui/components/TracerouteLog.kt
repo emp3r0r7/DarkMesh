@@ -56,6 +56,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -120,7 +121,10 @@ fun TracerouteLogScreen(
                         uiViewModel.clearTracerouteResponse()
                     }
                 ) {
-                    Text(stringResource(R.string.close))
+                    Text(
+                        text = "Close",
+                        color = colorResource(id = R.color.colorAnnotation)
+                    )
                 }
             },
             dismissButton = {
@@ -143,7 +147,10 @@ fun TracerouteLogScreen(
                             }
                     }
                 ) {
-                    Text("View on Map")
+                    Text(
+                        text = "View on Map",
+                        color = colorResource(id = R.color.colorAnnotation)
+                    )
                 }
             }
         )

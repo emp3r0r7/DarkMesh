@@ -44,6 +44,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.Toolbar
@@ -72,7 +73,6 @@ import com.geeksville.mesh.android.getBluetoothPermissions
 import com.geeksville.mesh.android.getNotificationPermissions
 import com.geeksville.mesh.android.hasBluetoothPermission
 import com.geeksville.mesh.android.hasNotificationPermission
-import com.geeksville.mesh.android.mainLooperToast
 import com.geeksville.mesh.android.permissionMissing
 import com.geeksville.mesh.android.rationaleDialog
 import com.geeksville.mesh.android.shouldShowRequestPermissionRationale
@@ -656,7 +656,7 @@ class MainActivity : AppCompatActivity(), Logging {
             val coloredResponse = colorizeTracerouteResponse(response)
             val storedResponse = response
 
-            MaterialAlertDialogBuilder(this)
+            val dialog = MaterialAlertDialogBuilder(this)
                 .setCancelable(false)
                 .setTitle(R.string.traceroute)
                 .setMessage(coloredResponse)
@@ -672,6 +672,12 @@ class MainActivity : AppCompatActivity(), Logging {
                 }
                 .setPositiveButton(R.string.okay) { _, _ -> }
                 .show()
+
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
+                ?.setTextColor(ContextCompat.getColor(this, R.color.colorAnnotation))
+
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                ?.setTextColor(ContextCompat.getColor(this, R.color.colorAnnotation))
 
             model.clearTracerouteResponse()
         }
@@ -1081,9 +1087,9 @@ class MainActivity : AppCompatActivity(), Logging {
             prefs.edit { putInt("theme", selectedTheme) }
             AppCompatDelegate.setDefaultNightMode(selectedTheme)
             dialog.dismiss()
-            if (selectedTheme == AppCompatDelegate.MODE_NIGHT_NO) {
-                mainLooperToast("Tema light? Su DarkMesh?", Toast.LENGTH_LONG)
-            }
+//            if (selectedTheme == AppCompatDelegate.MODE_NIGHT_NO) {
+//                mainLooperToast("Tema light? Su DarkMesh?", Toast.LENGTH_LONG)
+//            }
         }
 
         val dialog = builder.create()
