@@ -251,7 +251,7 @@ fun GeoPoint.offsetMeters(
     )
 }
 
-
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 fun bearing(from: GeoPoint, to: GeoPoint): Double {
     val lat1 = Math.toRadians(from.latitude)
     val lat2 = Math.toRadians(to.latitude)
@@ -344,7 +344,6 @@ fun buildSegments(
             lineColor = color
         )
     }
-
 
 
 fun GeoPoint.offset(latOffset: Double, lonOffset: Double) =
@@ -550,9 +549,9 @@ fun MapView(
         }
         val dialog = builder.show()
         for (button in setOf(
-            androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL,
-            androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE,
-            androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE
+            AlertDialog.BUTTON_NEUTRAL,
+            AlertDialog.BUTTON_NEGATIVE,
+            AlertDialog.BUTTON_POSITIVE
         )) with(dialog.getButton(button)) { textSize = 12F; isAllCaps = false }
     }
 
@@ -654,7 +653,6 @@ fun MapView(
             }
         }
     }
-
 
     val mapEventsReceiver = object : MapEventsReceiver {
         override fun singleTapConfirmedHelper(p: GeoPoint): Boolean {

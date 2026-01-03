@@ -257,6 +257,9 @@
         <activity
             android:name="com.geeksville.mesh.AppIntroduction"/>
 
+        <activity
+            android:name="com.geeksville.mesh.AdvancedSettings"/>
+
         <!-- allow for plugin discovery -->
         <activity
             android:name="com.atakmap.app.component"

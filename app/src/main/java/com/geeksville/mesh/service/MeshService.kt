@@ -39,9 +39,11 @@ import com.geeksville.mesh.MessageStatus
 import com.geeksville.mesh.MyNodeInfo
 import com.geeksville.mesh.NodeInfo
 import com.geeksville.mesh.Position
+import com.geeksville.mesh.TRACE_MAX_PRIORITY_PREF
 import com.geeksville.mesh.analytics.DataPair
 import com.geeksville.mesh.android.GeeksvilleApplication
 import com.geeksville.mesh.android.Logging
+import com.geeksville.mesh.android.advancedPrefs
 import com.geeksville.mesh.android.hasLocationPermission
 import com.geeksville.mesh.android.mainLooperToast
 import com.geeksville.mesh.concurrent.handledLaunch
@@ -2226,11 +2228,19 @@ class MeshService : Service(), Logging {
         }
 
         override fun requestTraceroute(requestId: Int, destNum: Int) = toRemoteExceptions {
+
+            var priority = MeshPacket.Priority.UNSET
+
+            advancedPrefs.getBoolean(TRACE_MAX_PRIORITY_PREF, false).let{
+                if(it) priority = MeshPacket.Priority.MAX
+            }
+
             tracerouteStartTimes[requestId] = System.currentTimeMillis()
             sendToRadio(newMeshPacketTo(destNum).buildMeshPacket(
                 wantAck = true,
                 id = requestId,
                 channel = nodeDBbyNodeNum[destNum]?.channel ?: 0,
+                priority = priority
             ) {
                 portnumValue = Portnums.PortNum.TRACEROUTE_APP_VALUE
                 wantResponse = true

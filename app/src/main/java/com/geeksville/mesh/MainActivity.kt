@@ -911,8 +911,8 @@ class MainActivity : AppCompatActivity(), Logging {
                 return true
             }
 
-            R.id.show_intro -> {
-                startActivity(Intent(this, AppIntroduction::class.java))
+            R.id.advanced_settings -> {
+                startActivity(Intent(this, AdvancedSettings::class.java))
                 return true
             }
 

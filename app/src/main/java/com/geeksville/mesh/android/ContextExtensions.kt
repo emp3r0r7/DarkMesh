@@ -19,10 +19,12 @@ package com.geeksville.mesh.android
 
 import android.app.Activity
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Handler
 import android.os.Looper
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import com.geeksville.mesh.ADV_SETTINGS_PREFS
 
 
 /// show a toast
@@ -44,3 +46,6 @@ fun Activity.hideKeyboard() {
         imm?.hideSoftInputFromWindow(v.windowToken, 0)
     }
 }
+
+val Context.advancedPrefs: SharedPreferences
+    get() = getSharedPreferences(ADV_SETTINGS_PREFS, Context.MODE_PRIVATE)
