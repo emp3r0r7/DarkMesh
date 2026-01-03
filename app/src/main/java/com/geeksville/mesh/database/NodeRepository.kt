@@ -94,6 +94,9 @@ class NodeRepository @Inject constructor(
                 .setHwModel(MeshProtos.HardwareModel.UNSET)
                 .build()
 
+    fun getUserLongNameContains(longName: String): Node? =
+        nodeDBbyNum.value.values.find {longName.contains(it.user.longName)}
+
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getNodes(
         sort: NodeSortOption = NodeSortOption.LAST_HEARD,

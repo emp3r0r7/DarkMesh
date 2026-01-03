@@ -17,6 +17,9 @@
 
 package com.geeksville.mesh.ui.components
 
+import android.text.method.LinkMovementMethod
+import android.widget.TextView
+import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
@@ -31,12 +34,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.Card
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Group
@@ -50,14 +55,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.model.MetricsViewModel
+import com.geeksville.mesh.model.UIViewModel
+import com.geeksville.mesh.model.colorizeTracerouteResponse
 import com.geeksville.mesh.model.fullRouteDiscovery
 import com.geeksville.mesh.model.getTracerouteResponse
 import com.geeksville.mesh.ui.theme.AppTheme
@@ -67,13 +76,17 @@ import java.text.DateFormat
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TracerouteLogScreen(
+    uiViewModel: UIViewModel = hiltViewModel(),
     viewModel: MetricsViewModel = hiltViewModel(),
     modifier: Modifier = Modifier,
+    onClose: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val dateFormat = remember {
         DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM)
     }
+
+    val context = LocalContext.current
 
     fun getUsername(nodeNum: Int): String =
         with(viewModel.getUser(nodeNum)) { "$longName ($shortName)" }
@@ -82,14 +95,57 @@ fun TracerouteLogScreen(
 
     if (showDialog != null) {
         val message = showDialog ?: return
-        SimpleAlertDialog(
-            title = R.string.traceroute,
+        val colorizedTrace = colorizeTracerouteResponse(message)
+
+        AlertDialog(
+            onDismissRequest = {
+                showDialog = null
+                uiViewModel.clearTracerouteResponse()
+            },
+            title = {
+                Text(stringResource(R.string.traceroute))
+            },
             text = {
                 SelectionContainer {
-                    Text(text = message)
+                    SpannableText(
+                        spannable = colorizedTrace,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             },
-            onDismiss = { showDialog = null }
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDialog = null
+                        uiViewModel.clearTracerouteResponse()
+                    }
+                ) {
+                    Text(stringResource(R.string.close))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showDialog = null
+                        uiViewModel.tracerouteMapAvailability(message)
+                            ?.let {
+                                onClose()
+                                uiViewModel.showTracerouteMap(it)
+                            }
+                            ?: run {
+                                Toast
+                                    .makeText(
+                                        context,
+                                        "Cannot draw Traceroute Map!",
+                                        Toast.LENGTH_LONG
+                                    )
+                                    .show()
+                            }
+                    }
+                ) {
+                    Text("View on Map")
+                }
+            }
         )
     }
 
@@ -179,6 +235,27 @@ private fun TracerouteItem(
         }
     }
 }
+
+@Composable
+fun SpannableText(
+    spannable: CharSequence,
+    modifier: Modifier = Modifier
+) {
+    AndroidView(
+        modifier = modifier,
+        factory = { context ->
+            TextView(context).apply {
+                text = spannable
+                setTextIsSelectable(true)
+                movementMethod = LinkMovementMethod.getInstance()
+            }
+        },
+        update = { textView ->
+            textView.text = spannable
+        }
+    )
+}
+
 
 @Composable
 private fun MeshProtos.RouteDiscovery?.getTextAndIcon(): Pair<String, ImageVector> = when {

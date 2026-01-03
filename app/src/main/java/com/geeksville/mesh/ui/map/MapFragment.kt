@@ -25,14 +25,19 @@ import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.LocationDisabled
+import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.MyLocation
 import androidx.compose.runtime.Composable
@@ -64,8 +69,11 @@ import com.geeksville.mesh.android.gpsDisabled
 import com.geeksville.mesh.android.hasGps
 import com.geeksville.mesh.android.hasLocationPermission
 import com.geeksville.mesh.database.entity.Packet
+import com.geeksville.mesh.model.MapMode
 import com.geeksville.mesh.model.Node
+import com.geeksville.mesh.model.TraceRouteMap
 import com.geeksville.mesh.model.UIViewModel
+import com.geeksville.mesh.model.colorizeTracerouteResponse
 import com.geeksville.mesh.model.map.CustomTileSource
 import com.geeksville.mesh.model.map.MarkerWithLabel
 import com.geeksville.mesh.model.map.clustering.RadiusMarkerClusterer
@@ -100,10 +108,15 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polygon
+import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.infowindow.InfoWindow
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.io.File
 import java.text.DateFormat
+
+private const val TRACE_COLOR_FORWARD = android.graphics.Color.BLUE
+private const val TRACE_COLOR_BACK = android.graphics.Color.RED
+private const val DEFAULT_SPACING_POLYLINE_TRACE = 100.0
 
 @AndroidEntryPoint
 class MapFragment : ScreenFragment("Map Fragment"), Logging {
@@ -187,6 +200,125 @@ private fun cacheManagerCallback(
     }
 }
 
+data class MapSegment(
+    val from: GeoPoint,
+    val to: GeoPoint,
+    val lineColor: Int
+)
+
+@Suppress("DEPRECATION", "UsePropertyAccessSyntax")
+fun MapSegment.toPolyline(): Polyline =
+    Polyline().apply {
+        setPoints(listOf(from, to))
+        setColor(lineColor)
+        width = 6f
+        isGeodesic = true
+    }
+
+
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+fun GeoPoint.offsetMeters(
+    meters: Double,
+    bearingDegrees: Double
+): GeoPoint {
+    val earthRadius = 6_378_137.0 // metri
+    val bearingRad = Math.toRadians(bearingDegrees)
+
+    val latRad = Math.toRadians(latitude)
+    val lonRad = Math.toRadians(longitude)
+
+    val newLat = Math.asin(
+        Math.sin(latRad) * Math.cos(meters / earthRadius) +
+                Math.cos(latRad) * Math.sin(meters / earthRadius) * Math.cos(bearingRad)
+    )
+
+    val newLon = lonRad + Math.atan2(
+        Math.sin(bearingRad) * Math.sin(meters / earthRadius) * Math.cos(latRad),
+        Math.cos(meters / earthRadius) - Math.sin(latRad) * Math.sin(newLat)
+    )
+
+    return GeoPoint(
+        Math.toDegrees(newLat),
+        Math.toDegrees(newLon)
+    )
+}
+
+
+fun bearing(from: GeoPoint, to: GeoPoint): Double {
+    val lat1 = Math.toRadians(from.latitude)
+    val lat2 = Math.toRadians(to.latitude)
+    val dLon = Math.toRadians(to.longitude - from.longitude)
+
+    val y = Math.sin(dLon) * Math.cos(lat2)
+    val x = Math.cos(lat1) * Math.sin(lat2) -
+            Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon)
+
+    return (Math.toDegrees(Math.atan2(y, x)) + 360) % 360
+}
+
+
+
+fun MapView.drawTraceroute(trace: TraceRouteMap) {
+    overlays.removeAll { it is Polyline || it is Marker }
+
+    val forwardSegments =
+        buildSegments(
+            trace.traceForwardList,
+            TRACE_COLOR_FORWARD,
+            offsetMeters = DEFAULT_SPACING_POLYLINE_TRACE,
+            side = +1
+        )
+
+    val backSegments =
+        buildSegments(
+            trace.traceBackList,
+            TRACE_COLOR_BACK,
+            offsetMeters = DEFAULT_SPACING_POLYLINE_TRACE,
+            side = -1
+        )
+
+
+    (forwardSegments + backSegments).forEach {
+        overlays.add(it.toPolyline())
+    }
+
+    invalidate()
+}
+
+
+fun buildSegments(
+    nodes: List<Node>,
+    color: Int,
+    offsetMeters: Double,
+    side: Int
+): List<MapSegment> =
+    nodes.zipWithNext().mapNotNull { (a, b) ->
+        if (a.validPosition == null || b.validPosition == null) return@mapNotNull null
+
+        val rawFrom = GeoPoint(a.latitude, a.longitude)
+        val rawTo = GeoPoint(b.latitude, b.longitude)
+
+        // normalizza: sempre da sud a nord (o qualsiasi criterio stabile)
+        val (from, to) =
+            if (rawFrom.latitude < rawTo.latitude) rawFrom to rawTo
+            else rawTo to rawFrom
+
+        val brg = bearing(from, to)
+        val perpendicular = brg + (90 * side)
+
+        MapSegment(
+            from = rawFrom.offsetMeters(offsetMeters, perpendicular),
+            to = rawTo.offsetMeters(offsetMeters, perpendicular),
+            lineColor = color
+        )
+    }
+
+
+
+fun GeoPoint.offset(latOffset: Double, lonOffset: Double) =
+    GeoPoint(latitude + latOffset, longitude + lonOffset)
+
+
 private fun Context.purgeTileSource(onResult: (String) -> Unit) {
     val cache = SqlTileWriterExt()
     val builder = MaterialAlertDialogBuilder(this)
@@ -229,6 +361,8 @@ private fun Context.purgeTileSource(onResult: (String) -> Unit) {
 fun MapView(
     model: UIViewModel = viewModel(),
 ) {
+    val mapMode by model.mapMode.collectAsStateWithLifecycle()
+
     // UI Elements
     var cacheEstimate by remember { mutableStateOf("") }
 
@@ -306,6 +440,15 @@ fun MapView(
         }
 
     val nodes by model.nodeList.collectAsStateWithLifecycle()
+
+    val visibleNodes: Collection<Node> = when (val mode = mapMode) {
+        is MapMode.Normal -> nodes
+        is MapMode.Traceroute -> {
+            (mode.trace.traceForwardList + mode.trace.traceBackList)
+                .distinctBy { it.num }
+        }
+    }
+
     val waypoints by model.waypoints.collectAsStateWithLifecycle(emptyMap())
 
     val markerIcon = remember {
@@ -436,6 +579,43 @@ fun MapView(
             .show()
     }
 
+    LaunchedEffect(mapMode) {
+        when (val mode = mapMode) {
+            is MapMode.Traceroute -> {
+                map.drawTraceroute(mode.trace)
+
+                val points =
+                    buildSegments(
+                        mode.trace.traceForwardList,
+                        TRACE_COLOR_FORWARD,
+                        DEFAULT_SPACING_POLYLINE_TRACE,
+                        +1
+                    )
+                        .flatMap { listOf(it.from, it.to) } +
+                            buildSegments(
+                                mode.trace.traceBackList,
+                                TRACE_COLOR_BACK,
+                                DEFAULT_SPACING_POLYLINE_TRACE,
+                                -1
+                            )
+                                .flatMap { listOf(it.from, it.to) }
+
+                if (points.isNotEmpty()) {
+                    map.zoomToBoundingBox(
+                        BoundingBox.fromGeoPoints(points),
+                        true
+                    )
+                }
+            }
+
+            MapMode.Normal -> {
+                map.overlays.removeAll { it is Polyline }
+                map.invalidate()
+            }
+        }
+    }
+
+
     val mapEventsReceiver = object : MapEventsReceiver {
         override fun singleTapConfirmedHelper(p: GeoPoint): Boolean {
             InfoWindow.closeAllInfoWindowsOn(map)
@@ -473,7 +653,18 @@ fun MapView(
     }
 
     with(map) {
-        UpdateMarkers(onNodesChanged(nodes), onWaypointChanged(waypoints.values), nodeClusterer)
+
+        var wpts = onWaypointChanged(waypoints.values)
+
+        if(mapMode is MapMode.Traceroute){
+            wpts = emptyList()
+        }
+
+        UpdateMarkers(
+            onNodesChanged(visibleNodes),
+            wpts,
+            nodeClusterer
+        )
     }
 
     /**
@@ -608,6 +799,15 @@ fun MapView(
                 modifier = Modifier.fillMaxSize(),
                 update = { map -> map.drawOverlays() },
             )
+
+            if (mapMode is MapMode.Traceroute) {
+                TracerouteLegend(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 16.dp, bottom = 16.dp)
+                )
+            }
+
             if (downloadRegionBoundingBox != null) CacheLayout(
                 cacheEstimate = cacheEstimate,
                 onExecuteJob = { startDownload() },
@@ -643,6 +843,37 @@ fun MapView(
                         requestPermissionAndToggleLauncher.launch(context.getLocationPermissions())
                     }
                 }
+
+                if(mapMode is MapMode.Traceroute){
+
+                    val trace = (mapMode as MapMode.Traceroute).trace.sourceTrace
+
+                    MapButton(
+                        icon = Icons.Default.Clear,
+                        onClick = {
+                            model.exitTracerouteMode()
+                        },
+                        contentDescription = "Clear Traceroute",
+                    )
+
+                    MapButton(
+                        icon = Icons.Default.Route,
+                        onClick = {
+
+                            val coloredResponse = colorizeTracerouteResponse(trace)
+                            MaterialAlertDialogBuilder(context)
+                                .setCancelable(false)
+                                .setTitle(R.string.traceroute)
+                                .setMessage(coloredResponse)
+                                .setPositiveButton(R.string.okay) { _, _ -> }
+                                .show()
+
+                            model.clearTracerouteResponse()
+                        },
+                        contentDescription = "Show Traceroute",
+                    )
+
+                }
             }
         }
     }
@@ -668,6 +899,52 @@ fun MapView(
                 debug("User clicked cancel marker edit dialog")
                 showEditWaypointDialog = null
             },
+        )
+    }
+}
+
+@Composable
+fun TracerouteLegend(
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .background(
+                color = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.65f),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+            )
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        LegendRow(
+            color = androidx.compose.ui.graphics.Color(TRACE_COLOR_FORWARD),
+            label = "Forward"
+        )
+        LegendRow(
+            color = androidx.compose.ui.graphics.Color(TRACE_COLOR_BACK),
+            label = "Backward"
+        )
+    }
+}
+
+@Composable
+private fun LegendRow(
+    color: androidx.compose.ui.graphics.Color,
+    label: String
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(12.dp)
+                .background(color, shape = androidx.compose.foundation.shape.CircleShape)
+        )
+        androidx.compose.material.Text(
+            text = label,
+            color = androidx.compose.ui.graphics.Color.White,
+            style = androidx.compose.material.MaterialTheme.typography.caption
         )
     }
 }

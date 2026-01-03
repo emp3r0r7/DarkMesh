@@ -256,6 +256,22 @@ class UIViewModel @Inject constructor(
         nodeSortOption.value = sort
     }
 
+    private val _mapMode = MutableStateFlow<MapMode>(MapMode.Normal)
+    val mapMode = _mapMode.asStateFlow()
+
+    fun showTracerouteMap(trace: TraceRouteMap) {
+        _mapMode.value = MapMode.Traceroute(trace)
+        setCurrentTab(2)
+    }
+
+    fun exitTracerouteMode() {
+        _mapMode.value = MapMode.Normal
+    }
+
+    fun tracerouteMapAvailability(traceroute: String?) : TraceRouteMap? {
+        return evaluateTracerouteMapAvailability(traceroute, nodeDB)
+    }
+
     fun filterForNode(node: Node?, longName: String?) {
 
         var name: String

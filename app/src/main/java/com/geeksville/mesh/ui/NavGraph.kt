@@ -65,19 +65,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.model.MetricsViewModel
 import com.geeksville.mesh.model.RadioConfigViewModel
+import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.ui.components.DeviceMetricsScreen
 import com.geeksville.mesh.ui.components.EnvironmentMetricsScreen
 import com.geeksville.mesh.ui.components.NodeMapScreen
@@ -128,6 +128,7 @@ internal fun FragmentManager.navigateToNavGraph(
 class NavGraphFragment : ScreenFragment("NavGraph"), Logging {
 
     private val model: RadioConfigViewModel by viewModels()
+    private val uiModel: UIViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -165,6 +166,8 @@ class NavGraphFragment : ScreenFragment("NavGraph"), Logging {
                             navController = navController,
                             startDestination = startDestination,
                             modifier = Modifier.padding(innerPadding),
+                            uiModel = uiModel,
+                            parentFragmentManager = parentFragmentManager
                         )
                     }
                 }
@@ -438,7 +441,10 @@ fun NavGraph(
     navController: NavHostController = rememberNavController(),
     startDestination: Any,
     modifier: Modifier = Modifier,
+    uiModel:  UIViewModel,
+    parentFragmentManager:  FragmentManager
 ) {
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -469,7 +475,13 @@ fun NavGraph(
         }
         composable<Route.TracerouteLog> {
             val parentEntry = remember { navController.getBackStackEntry<Route.NodeDetail>() }
-            TracerouteLogScreen(hiltViewModel<MetricsViewModel>(parentEntry))
+            TracerouteLogScreen(
+                uiModel,
+                hiltViewModel<MetricsViewModel>(parentEntry),
+                onClose = {
+                    parentFragmentManager.popBackStack()
+                }
+            )
         }
         composable<Route.RadioConfig> {
             RadioConfigScreen { navController.navigate(route = it) }
