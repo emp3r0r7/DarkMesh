@@ -42,6 +42,10 @@ Send **periodic beacons** with customizable text payloads.
 Beacons can be used for **automatic identification**, **status reporting**,  
 or **node discovery** within the network.
 
+### 📡 Traceroute Map visualization
+It is possibile to visualize traceroutes on the application map. Forward route and Backward Route.
+It is also shown the total distance of the roundtrip.
+
 ---
 
 ## 🔍 Extended Verbosity and Transparency
