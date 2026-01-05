@@ -7,14 +7,27 @@
     android:padding="24dp">
 
     <TextView
-        android:id="@+id/huntingTitle"
+        android:id="@+id/advanced_settings"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
         android:text="Advanced Settings"
         android:textSize="20sp"
         android:textStyle="bold"
-        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="HardcodedText" />
+
+    <TextView
+        android:id="@+id/tracemaxDescription"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="20dp"
+        android:text="Sets the Traceroute packet priority to MAX. It can speed-up packet routing across the mesh. Since this is an experimental feature, use it with caution!"
+        android:textSize="13sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/advanced_settings"
         tools:ignore="HardcodedText" />
 
     <androidx.appcompat.widget.SwitchCompat
@@ -22,10 +35,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="4dp"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="4dp"
         android:text="Traceroute Max Priority  "
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/huntingTitle"
+        app:layout_constraintTop_toBottomOf="@+id/tracemaxDescription"
         tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
 
 

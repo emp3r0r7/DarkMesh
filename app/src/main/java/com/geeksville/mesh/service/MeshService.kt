@@ -38,6 +38,7 @@ import com.geeksville.mesh.MeshUser
 import com.geeksville.mesh.MessageStatus
 import com.geeksville.mesh.MyNodeInfo
 import com.geeksville.mesh.NodeInfo
+import com.geeksville.mesh.PREF_STRESSTEST_ENABLED
 import com.geeksville.mesh.Position
 import com.geeksville.mesh.TRACE_MAX_PRIORITY_PREF
 import com.geeksville.mesh.analytics.DataPair
@@ -57,6 +58,7 @@ import com.geeksville.mesh.database.entity.ReactionEntity
 import com.geeksville.mesh.model.DeviceVersion
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.RelayEvent
+import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.model.getTracerouteResponse
 import com.geeksville.mesh.prefs.UserPrefs
 import com.geeksville.mesh.repository.datastore.RadioConfigRepository
@@ -673,11 +675,23 @@ class MeshService : Service(), Logging {
     }
 
     private fun toMeshPacket(p: DataPacket): MeshPacket {
+
+        var priority = MeshPacket.Priority.UNSET
+
+        val beaconing = UIViewModel
+            .getPreferences(this)
+            .getBoolean(PREF_STRESSTEST_ENABLED, false)
+
+        if(beaconing){
+            priority = MeshPacket.Priority.ALERT
+        }
+
         return newMeshPacketTo(p.to!!).buildMeshPacket(
             id = p.id,
             wantAck = true,
             hopLimit = p.hopLimit,
             channel = p.channel,
+            priority = priority
         ) {
             portnumValue = p.dataType
             payload = ByteString.copyFrom(p.bytes)

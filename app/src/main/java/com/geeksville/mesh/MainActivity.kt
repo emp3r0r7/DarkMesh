@@ -70,8 +70,11 @@ import com.geeksville.mesh.android.GeeksvilleApplication
 import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.android.ServiceClient
 import com.geeksville.mesh.android.getBluetoothPermissions
+import com.geeksville.mesh.android.getLocationPermissions
 import com.geeksville.mesh.android.getNotificationPermissions
+import com.geeksville.mesh.android.gpsDisabled
 import com.geeksville.mesh.android.hasBluetoothPermission
+import com.geeksville.mesh.android.hasLocationPermission
 import com.geeksville.mesh.android.hasNotificationPermission
 import com.geeksville.mesh.android.permissionMissing
 import com.geeksville.mesh.android.rationaleDialog
@@ -171,13 +174,14 @@ eventually:
   make a custom theme: https://github.com/material-components/material-components-android/tree/master/material-theme-builder
 */
 
+const val PREF_STRESSTEST_ENABLED = "stress_test_enabled"
+
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity(), Logging {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var huntingPrefs: SharedPreferences
     private lateinit var msgStatusPrefs: SharedPreferences
-    private val prefStressTestEnabled = "stress_test_enabled"
 
     private lateinit var planMsgServiceIntent: Intent
     private lateinit var distressBeaconServiceIntent: Intent
@@ -212,6 +216,17 @@ class MainActivity : AppCompatActivity(), Logging {
                 showSnackbar(getString(R.string.notification_denied), Snackbar.LENGTH_SHORT)
             }
         }
+
+    private val gpsPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+        if (permissions.entries.all { it.value }) {
+            info("GPS permissions granted")
+        } else {
+            debug("User denied location permission")
+            model.showSnackbar("To make Distress Beacon work properly, you need GPS permissions!")
+        }
+        bluetoothViewModel.permissionsUpdated()
+    }
 
     data class TabInfo(val text: String, val icon: Int, val content: Fragment)
 
@@ -752,7 +767,7 @@ class MainActivity : AppCompatActivity(), Logging {
         stressItem.isVisible = true
         stressItem.isChecked = UIViewModel
             .getPreferences(this)
-            .getBoolean(prefStressTestEnabled, false)
+            .getBoolean(PREF_STRESSTEST_ENABLED, false)
 
         menu.findItem(R.id.radio_config).isEnabled = !model.isManaged
         return super.onPrepareOptionsMenu(menu)
@@ -842,7 +857,7 @@ class MainActivity : AppCompatActivity(), Logging {
 
                 item.isChecked = UIViewModel
                     .getPreferences(this)
-                    .getBoolean(prefStressTestEnabled, false)
+                    .getBoolean(PREF_STRESSTEST_ENABLED, false)
 
                 if (!item.isChecked) {
 
@@ -860,7 +875,7 @@ class MainActivity : AppCompatActivity(), Logging {
                         if (broadcastChannels.isEmpty()) {
                             Toast.makeText(
                                 applicationContext,
-                                "Cannot find any suitable channel!", Toast.LENGTH_LONG
+                                "Cannot find any channel, go to chat tab!", Toast.LENGTH_LONG
                             ).show()
                         } else if (defaults.isNotEmpty()) {
                             Toast.makeText(
@@ -876,10 +891,11 @@ class MainActivity : AppCompatActivity(), Logging {
 
                     UIViewModel
                         .getPreferences(this)
-                        .edit { putBoolean(prefStressTestEnabled, false) }
+                        .edit { putBoolean(PREF_STRESSTEST_ENABLED, false) }
 
                     item.isChecked = false
                     stopService(distressBeaconServiceIntent)
+                    model.meshService?.stopProvideLocation()
                     Toast.makeText(this, "Distress Beacon Disabled!", Toast.LENGTH_LONG).show()
                 }
 
@@ -958,6 +974,18 @@ class MainActivity : AppCompatActivity(), Logging {
             setPadding(32, 50, 32, 50)
         }
 
+        val startLivePosition = CheckBox(this).apply {
+            text = "Broadcast GPS"
+            isChecked = false
+            setPadding(32, 50, 32, 50)
+        }
+
+        startLivePosition.setOnCheckedChangeListener { _, checked->
+            if (checked && !hasLocationPermission()) {
+                gpsPermissionLauncher.launch(getLocationPermissions())
+            }
+        }
+
         val spinner = Spinner(this).apply {
             adapter = ArrayAdapter(
                 this@MainActivity,
@@ -987,6 +1015,7 @@ class MainActivity : AppCompatActivity(), Logging {
             setPadding(40, 16, 40, 0)
             addView(spinner)
             addView(includeName)
+            addView(startLivePosition)
             addView(inputField)
             addView(inputSeconds)
         }
@@ -996,15 +1025,10 @@ class MainActivity : AppCompatActivity(), Logging {
             .setView(layout)
             .setPositiveButton("START") { _, _ ->
                 if (selectedChannel != null) {
-                    started = true
-                    UIViewModel.getPreferences(this).edit {
-                        putBoolean(prefStressTestEnabled, true)
-                    }
+
                     val userInput = inputField.text.toString()
                     val interval = inputSeconds.text.toString()
-                    Toast.makeText(this, "Starting Distress Beacon now..", Toast.LENGTH_LONG).show()
 
-                    //todo include GPS!
                     distressBeaconServiceIntent.apply {
                         putExtra("contactKey", selectedChannel!!.contactKey)
                         putExtra("userInput", userInput)
@@ -1014,7 +1038,22 @@ class MainActivity : AppCompatActivity(), Logging {
                     }
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+                        if(startLivePosition.isChecked){
+
+                            if(!checkLocationEnabled()) return@setPositiveButton
+
+                            model.meshService?.startProvideLocation()
+                        }
+
+                        Toast.makeText(this, "Starting Distress Beacon now..", Toast.LENGTH_LONG).show()
                         startForegroundService(distressBeaconServiceIntent)
+
+                        started = true
+                        UIViewModel.getPreferences(this).edit {
+                            putBoolean(PREF_STRESSTEST_ENABLED, true)
+                        }
+
                     } else {
                         Toast.makeText(
                             this, "Cannot start, Android ver. unsupported!",
@@ -1036,6 +1075,17 @@ class MainActivity : AppCompatActivity(), Logging {
         }
 
         dialog.show()
+    }
+
+    private fun checkLocationEnabled(
+        warningReason: String ="GPS is DISABLED, please turn it on and restart beaconing!"
+    ) : Boolean {
+        if (gpsDisabled()) {
+            warn("Telling user we need location access")
+            model.showSnackbar(warningReason)
+            return false
+        }
+        return true
     }
 
     private fun getVersionInfo() {

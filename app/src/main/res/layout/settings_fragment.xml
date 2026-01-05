@@ -111,9 +111,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/scanStatusText">
+            app:layout_constraintTop_toBottomOf="@+id/provideLocationCheckbox">
 
             <RadioButton
                 android:id="@+id/radioButton2"
@@ -139,10 +138,9 @@
                 android:layout_height="wrap_content"
                 android:ems="10"
                 android:hint="@string/ip_address"
-                android:inputType="number|text"
-                android:visibility="visible"
                 android:importantForAutofill="no"
-                />
+                android:inputType="number|text"
+                android:visibility="visible" />
 
         </RadioGroup>
 
@@ -161,25 +159,29 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:text="@string/provide_location_to_mesh"
+            android:text="Pass GPS coords. from Phone to Device"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/deviceRadioGroup" />
+            app:layout_constraintTop_toBottomOf="@+id/scanStatusText"
+            tools:ignore="HardcodedText" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/warningNotPaired"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
             android:layout_marginEnd="16dp"
             android:autoLink="web"
             android:ems="10"
             android:gravity="start|top"
             android:text="@string/warning_not_paired"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/provideLocationCheckbox" />
+            app:layout_constraintTop_toBottomOf="@+id/deviceRadioGroup" />
 
         <CheckBox
+            android:visibility="gone"
             android:id="@+id/analyticsOkayCheckbox"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -196,6 +198,7 @@
             app:layout_constraintVertical_bias="1.0" />
 
         <com.google.android.material.button.MaterialButton
+            android:visibility="gone"
             android:id="@+id/reportBugButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"

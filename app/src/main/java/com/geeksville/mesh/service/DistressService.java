@@ -74,7 +74,7 @@ public class DistressService extends Service {
                     String currentTime = DateFormat.getTimeInstance(DateFormat.MEDIUM)
                             .format(new Date(System.currentTimeMillis()));
 
-                    String str = "[BCN] ";
+                    String str = "[ALERT] ";
                     if (includeName) {
                         str += userInput + " @ " + myName + " " + currentTime;
                     } else {
