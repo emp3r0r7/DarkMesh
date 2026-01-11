@@ -70,7 +70,7 @@
                         android:minHeight="?actionBarSize"
                         android:padding="4dp"
                         android:textSize="22sp"
-                        android:text="DarkMesh™"
+                        android:text="DarkMesh"
                         android:textAppearance="@style/TextAppearance.Widget.AppCompat.Toolbar.Title"
                         tools:ignore="HardcodedText" />
 

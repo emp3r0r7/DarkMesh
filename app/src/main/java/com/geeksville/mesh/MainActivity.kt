@@ -87,6 +87,8 @@ import com.geeksville.mesh.model.RelayEvent
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.model.colorizeTracerouteResponse
 import com.geeksville.mesh.prefs.UserPrefs
+import com.geeksville.mesh.prefs.UserPrefs.Hunting.BACKGROUND_HUNT
+import com.geeksville.mesh.prefs.UserPrefs.Hunting.HUNT_MODE
 import com.geeksville.mesh.service.DistressService
 import com.geeksville.mesh.service.GlobalRadioMesh
 import com.geeksville.mesh.service.HuntScheduleService
@@ -191,6 +193,7 @@ class MainActivity : AppCompatActivity(), Logging {
 
     private val bluetoothViewModel: BluetoothViewModel by viewModels()
     private val model: UIViewModel by viewModels()
+    private var lastWarningStealthHunter = 0L
 
     @Inject
     internal lateinit var serviceRepository: ServiceRepository
@@ -478,9 +481,30 @@ class MainActivity : AppCompatActivity(), Logging {
                 } catch (ex: RemoteException) {
                     warn("Abandoning connect $ex, because we probably just lost device connection")
                 }
+
+                val currentRole = model.deviceRole.value
+
                 // if provideLocation enabled: Start providing location (from phone GPS) to mesh
-                if (model.provideLocation.value == true) {
+                // this does not apply to Sensor / Stealth Mode
+                if (model.provideLocation.value == true &&
+                    currentRole != ConfigProtos.Config.DeviceConfig.Role.SENSOR) {
                     service.startProvideLocation()
+                }
+
+                if(currentRole == ConfigProtos.Config.DeviceConfig.Role.SENSOR){
+                    //disables all previous huntings setups to prevent opsec leaks
+                    huntingPrefs.getBoolean(HUNT_MODE, false).let {
+
+                        if(!it) return@let
+
+                        val nowEpoch = System.currentTimeMillis()
+
+                        if(nowEpoch - lastWarningStealthHunter >= 60_000){
+                            lastWarningStealthHunter = nowEpoch
+                            Toast.makeText(this,
+                                "Careful! You are in Stealth and Hunting",Toast.LENGTH_LONG).show()
+                        }
+                    }
                 }
             }
 
@@ -799,7 +823,7 @@ class MainActivity : AppCompatActivity(), Logging {
 
             R.id.huntStatusImage -> {
 
-                if (huntingPrefs.getBoolean(UserPrefs.Hunting.HUNT_MODE, false)) {
+                if (huntingPrefs.getBoolean(HUNT_MODE, false)) {
                     Toast.makeText(
                         applicationContext,
                         "You are currently Hunting!",
@@ -812,7 +836,7 @@ class MainActivity : AppCompatActivity(), Logging {
 
             R.id.huntBackgroundStatusImage -> {
 
-                if (huntingPrefs.getBoolean(UserPrefs.Hunting.BACKGROUND_HUNT, false)) {
+                if (huntingPrefs.getBoolean(BACKGROUND_HUNT, false)) {
                     Toast.makeText(
                         applicationContext,
                         "You are currently Auto Hunting!",
@@ -1183,8 +1207,8 @@ class MainActivity : AppCompatActivity(), Logging {
 
     private fun checkIfDeviceIsHunting() {
 
-        val huntingMode = huntingPrefs.getBoolean(UserPrefs.Hunting.HUNT_MODE, false)
-        val huntBackgroundMode = huntingPrefs.getBoolean(UserPrefs.Hunting.BACKGROUND_HUNT, false)
+        val huntingMode = huntingPrefs.getBoolean(HUNT_MODE, false)
+        val huntBackgroundMode = huntingPrefs.getBoolean(BACKGROUND_HUNT, false)
 
         val huntModeItem = model.actionBarMenu?.findItem(R.id.huntStatusImage)
         val huntBackgroundItem = model.actionBarMenu?.findItem(R.id.huntBackgroundStatusImage)

@@ -27,7 +27,7 @@
         android:icon="@drawable/probe"
         app:iconTint="@color/toolbarText"
         android:title="Probe Mode"
-        app:showAsAction="ifRoom"
+        app:showAsAction="always"
         tools:ignore="HardcodedText" />
 
     <item
@@ -36,7 +36,7 @@
         android:icon="@drawable/stealth_mode_on"
         app:iconTint="@color/toolbarText"
         android:title="Stealth Mode"
-        app:showAsAction="ifRoom"
+        app:showAsAction="always"
         tools:ignore="HardcodedText" />
 
     <item
@@ -44,7 +44,7 @@
         android:icon="@drawable/hunt_mode_on"
         app:iconTint="@color/toolbarText"
         android:title="Hunting Mode"
-        app:showAsAction="ifRoom"
+        app:showAsAction="always"
         tools:ignore="HardcodedText" />
 
     <item
@@ -52,7 +52,7 @@
         android:icon="@drawable/hunt_back_mode_on"
         app:iconTint="@color/toolbarText"
         android:title="Hunting Mode"
-        app:showAsAction="ifRoom"
+        app:showAsAction="always"
         tools:ignore="HardcodedText" />
 
     <item
@@ -61,7 +61,7 @@
         android:icon="@drawable/cloud_off"
         app:iconTint="@color/toolbarText"
         android:title="@string/disconnected"
-        app:showAsAction="ifRoom"
+        app:showAsAction="always"
         />
 
     <item
