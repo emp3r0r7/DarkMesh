@@ -50,6 +50,7 @@ private val DeviceConfig.Role.stringRes: Int
     get() = when (this) {
         DeviceConfig.Role.CLIENT -> R.string.role_client
         DeviceConfig.Role.CLIENT_MUTE -> R.string.role_client_mute
+        DeviceConfig.Role.CLIENT_BASE -> R.string.role_client_base
         DeviceConfig.Role.ROUTER -> R.string.role_router
         DeviceConfig.Role.ROUTER_CLIENT -> R.string.role_router_client
         DeviceConfig.Role.REPEATER -> R.string.role_repeater

@@ -1,4 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="role_client_base">Treats packets from or to favorited nodes as ROUTER, and all other packets as CLIENT.</string>
     <string name="channel_name">Nome do Canal</string>
     <string name="channel_options">Opções do Canal</string>
     <string name="qr_code">Código QR</string>

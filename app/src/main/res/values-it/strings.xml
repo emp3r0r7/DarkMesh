@@ -31,6 +31,7 @@
     <string name="routing_error_admin_public_key_unauthorized">Chiave Pubblica non autorizzata</string>
     <string name="role_client">App collegata o dispositivo di messaggistica standalone.</string>
     <string name="role_client_mute">Dispositivo che non inoltra pacchetti da altri dispositivi.</string>
+    <string name="role_client_base">Treats packets from or to favorited nodes as ROUTER, and all other packets as CLIENT.</string>
     <string name="role_router">Nodo d\'infrastruttura per estendere la copertura di rete tramite inoltro dei messaggi. Visibile nell\'elenco dei nodi.</string>
     <string name="role_router_client">Combinazione di ROUTER e CLIENT. Non per dispositivi mobili.</string>
     <string name="role_repeater">Nodo d\'infrastruttura per estendere la copertura della rete tramite inoltro dei messaggi con overhead minimo. Non visibile nell\'elenco dei nodi.</string>
