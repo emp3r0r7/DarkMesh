@@ -353,6 +353,7 @@ internal fun MessageScreen(
                     is NodeMenuAction.RequestPosition -> viewModel.requestPosition(action.node.num)
                     is NodeMenuAction.TraceRoute -> viewModel.requestTraceroute(action.node.num)
                     is NodeMenuAction.MoreDetails -> navigateToNodeDetails(action.node.num)
+                    is NodeMenuAction.FavoriteNode -> viewModel.handleFavorite(action.node)
                 }
             }
         }

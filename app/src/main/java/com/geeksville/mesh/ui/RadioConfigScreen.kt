@@ -297,6 +297,16 @@ private fun RadioConfigItemList(
         contentPadding = PaddingValues(horizontal = 16.dp),
     ) {
         item { PreferenceCategory(stringResource(R.string.device_settings)) }
+
+        var nodeVer = "Unknown Ver."
+
+        state.metadata?.firmwareVersion.let {
+            nodeVer = "Ver. $it"
+        }
+
+        item { PreferenceCategory(nodeVer)}
+
+        //Radio config retrieved from protobuf defs
         items(ConfigRoute.filterExcludedFrom(state.metadata)) {
             NavCard(title = it.title, icon = it.icon, enabled = enabled) { onRouteClick(it) }
         }

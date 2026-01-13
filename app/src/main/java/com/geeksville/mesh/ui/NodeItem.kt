@@ -35,10 +35,13 @@ import androidx.compose.material.Chip
 import androidx.compose.material.ChipDefaults
 import androidx.compose.material.Divider
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.Icon
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -177,6 +180,16 @@ fun NodeItem(
                         textDecoration = TextDecoration.LineThrough.takeIf { isIgnored },
                         softWrap = true,
                     )
+
+                    if (!isThisNode && thatNode.isFavorite) {
+                        Icon(
+                            modifier = Modifier
+                                .padding(horizontal = 5.dp),
+                            imageVector = Icons.Default.Star,
+                            contentDescription = "Favorite node",
+                            tint = MaterialTheme.colors.primary
+                        )
+                    }
 
                     LastHeardInfo(
                         lastHeard = thatNode.lastHeard,

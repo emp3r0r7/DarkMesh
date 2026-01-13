@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="node_sort_favorite">By Favorite</string>
     <string name="role_client_base">Treats packets from or to favorited nodes as ROUTER, and all other packets as CLIENT.</string>
     <string name="node_filter_placeholder">Filtro</string>
     <string name="desc_node_filter_clear">quitar filtro de nodo</string>

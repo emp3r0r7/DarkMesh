@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="node_sort_favorite">By Favorite</string>
     <string name="node_filter_placeholder">Filtro</string>
     <string name="desc_node_filter_clear">cancella filtro nodi</string>
     <string name="node_filter_include_unknown">Includi sconosciuti</string>

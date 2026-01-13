@@ -118,6 +118,8 @@ import kotlin.math.absoluteValue
 sealed class ServiceAction {
     data class GetDeviceMetadata(val destNum: Int) : ServiceAction()
     data class Ignore(val node: Node) : ServiceAction()
+    data class HandleFavoriteNode(val node: Node) : ServiceAction()
+    data class SetFavoriteNode(val targetNodeNum: Int, val favNodeNum: Int, val toAdd: Boolean) : ServiceAction()
     data class Reaction(val emoji: String, val replyId: Int, val contactKey: String) : ServiceAction()
 }
 
@@ -199,6 +201,10 @@ class MeshService : Service(), Logging {
             "com.emp3r0r7.darkmesh",
             "com.geeksville.mesh.service.MeshService"
         )
+
+        fun hexIdToNodeNum(hexId: String): Int {
+            return hexId.removePrefix("!").toUInt(16).toInt()
+        }
 
         /** The minimum firmware version we know how to talk to. We'll still be able
          * to talk to 2.0 firmwares but only well enough to ask them to firmware update.
@@ -1931,6 +1937,9 @@ class MeshService : Service(), Logging {
             is ServiceAction.GetDeviceMetadata -> getDeviceMetadata(action.destNum)
             is ServiceAction.Ignore -> ignoreNode(action.node)
             is ServiceAction.Reaction -> sendReaction(action)
+            is ServiceAction.HandleFavoriteNode -> handleFavorite(action.node)
+            is ServiceAction.SetFavoriteNode ->
+                setFavorite(action.targetNodeNum, action.favNodeNum, action.toAdd)
         }
     }
 
@@ -1952,6 +1961,32 @@ class MeshService : Service(), Logging {
         })
         updateNodeInfo(node.num) {
             it.isIgnored = !node.isIgnored
+        }
+    }
+
+    fun setFavorite(targetNodeNum: Int, favNodeNum: Int, toAdd: Boolean) = toRemoteExceptions {
+        sendToRadio(newMeshPacketTo(targetNodeNum).buildAdminPacket {
+            debug("setting node $favNodeNum to favorite list")
+            if(toAdd){
+                setFavoriteNode = favNodeNum
+            } else {
+                removeFavoriteNode = favNodeNum
+            }
+        })
+    }
+
+    private fun handleFavorite(node: Node) = toRemoteExceptions {
+        sendToRadio(newMeshPacketTo(myNodeNum).buildAdminPacket {
+            if (node.isFavorite) {
+                debug("removing node ${node.num} from favorite list")
+                removeFavoriteNode = node.num
+            } else {
+                debug("adding node ${node.num} to favorite list")
+                setFavoriteNode = node.num
+            }
+        })
+        updateNodeInfo(node.num) {
+            it.isFavorite = !node.isFavorite
         }
     }
 
@@ -2292,9 +2327,5 @@ class MeshService : Service(), Logging {
 
     fun getMyNodeInfo() : MyNodeEntity? {
         return myNodeInfo
-    }
-
-    private fun hexIdToNodeNum(hexId: String): Int {
-        return hexId.removePrefix("!").toUInt(16).toInt()
     }
 }

@@ -172,6 +172,7 @@ fun NodesScreen(
                         is NodeMenuAction.RequestPosition -> model.requestPosition(node.num)
                         is NodeMenuAction.TraceRoute -> model.requestTraceroute(node.num)
                         is NodeMenuAction.MoreDetails -> navigateToNodeDetails(node.num)
+                        is NodeMenuAction.FavoriteNode -> model.handleFavorite(node)
                     }
                 },
                 expanded = state.showDetails,

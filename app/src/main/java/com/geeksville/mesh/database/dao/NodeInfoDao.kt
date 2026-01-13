@@ -26,8 +26,8 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import com.geeksville.mesh.database.entity.MetadataEntity
 import com.geeksville.mesh.database.entity.MyNodeEntity
-import com.geeksville.mesh.database.entity.NodeWithRelations
 import com.geeksville.mesh.database.entity.NodeEntity
+import com.geeksville.mesh.database.entity.NodeWithRelations
 import kotlinx.coroutines.flow.Flow
 
 @Suppress("TooManyFunctions")
@@ -92,6 +92,8 @@ interface NodeInfoDao {
             END
         WHEN :sort = 'channel' THEN channel
         WHEN :sort = 'via_mqtt' THEN via_mqtt
+        WHEN :sort = 'is_favorite' THEN -is_favorite
+
         ELSE 0
     END ASC,
     last_heard DESC

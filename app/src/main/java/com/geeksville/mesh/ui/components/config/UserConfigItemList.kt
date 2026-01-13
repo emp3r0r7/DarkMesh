@@ -17,25 +17,40 @@
 
 package com.geeksville.mesh.ui.components.config
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.Button
 import androidx.compose.material.Divider
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedTextField
+import androidx.compose.material.Switch
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geeksville.mesh.model.RadioConfigViewModel
+import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.model.getInitials
+import com.geeksville.mesh.service.MeshService
 import com.geeksville.mesh.ui.components.EditTextPreference
 import com.geeksville.mesh.ui.components.PreferenceCategory
 import com.geeksville.mesh.ui.components.PreferenceFooter
@@ -67,12 +82,16 @@ fun UserConfigScreen(
 
 @Composable
 fun UserConfigItemList(
+    uiModel: UIViewModel = hiltViewModel(),
     userConfig: MeshProtos.User,
     enabled: Boolean,
     onSaveClicked: (MeshProtos.User) -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
     var userInput by rememberSaveable { mutableStateOf(userConfig) }
+
+    var nodeIdText by remember { mutableStateOf("") }
+    var addFavourite by remember { mutableStateOf(true) }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize()
@@ -143,6 +162,90 @@ fun UserConfigItemList(
                     onSaveClicked(userInput)
                 }
             )
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        item {
+            Text(
+                text = "Set Favourite Node",
+                style = MaterialTheme.typography.h6
+            )
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        item {
+            OutlinedTextField(
+                value = nodeIdText,
+                onValueChange = { value ->
+                    // accetti solo numeri
+                    if (value.all { it.isDigit() }) {
+                        nodeIdText = value
+                    }
+                },
+                label = { Text("Node ID") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = if (addFavourite) "Add favourite" else "Remove favourite",
+                    style = MaterialTheme.typography.body1
+                )
+
+                Switch(
+                    checked = addFavourite,
+                    onCheckedChange = { addFavourite = it }
+                )
+            }
+        }
+        
+        item {
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                enabled = nodeIdText.isNotEmpty() && nodeIdText.length == 10,
+                onClick = {
+
+                    val nodeId = nodeIdText.toIntOrNull()
+
+                    if(userConfig.id.isNotBlank()){
+
+                        val currentNode = MeshService.hexIdToNodeNum(userConfig.id)
+
+                        if (nodeId != null) {
+                            uiModel.setFavorite(
+                                currentNode,
+                                nodeId,
+                                addFavourite
+                            )
+                            nodeIdText = ""
+                        }
+                    }
+                }
+            ) {
+                Text(
+                    if (addFavourite) "Add Favourite" else "Remove Favourite"
+                )
+            }
         }
     }
 }

@@ -610,6 +610,24 @@ class UIViewModel @Inject constructor(
         }
     }
 
+    fun handleFavorite(node: Node) = viewModelScope.launch  {
+        try {
+            radioConfigRepository.onServiceAction(ServiceAction.HandleFavoriteNode(node))
+        } catch (ex: RemoteException) {
+            errormsg("Favorite node error:", ex)
+        }
+    }
+
+    fun setFavorite(targetNodeNum: Int, favNodeNum: Int, toAdd: Boolean) = viewModelScope.launch {
+        try {
+            radioConfigRepository.onServiceAction(
+                ServiceAction.SetFavoriteNode(targetNodeNum, favNodeNum, toAdd)
+            )
+        } catch (ex: RemoteException) {
+            errormsg("SET Favorite node error:", ex)
+        }
+    }
+
     // managed mode disables all access to configuration
     val isManaged: Boolean get() = config.device.isManaged || config.security.isManaged
 
