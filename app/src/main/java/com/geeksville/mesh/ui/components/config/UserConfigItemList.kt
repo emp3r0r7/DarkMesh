@@ -183,7 +183,7 @@ fun UserConfigItemList(
             OutlinedTextField(
                 value = nodeIdText,
                 onValueChange = { value ->
-                    // accetti solo numeri
+                   
                     if (value.all { it.isDigit() }) {
                         nodeIdText = value
                     }
@@ -222,7 +222,7 @@ fun UserConfigItemList(
         item {
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                enabled = nodeIdText.isNotEmpty() && nodeIdText.length == 10,
+                enabled = nodeIdText.isNotEmpty() && nodeIdText.length >= 5,
                 onClick = {
 
                     val nodeId = nodeIdText.toIntOrNull()
