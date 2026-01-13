@@ -1,9 +1,3 @@
-<p align="center">
-  <a href="">
-    <img width="200" height="200" src="https://dinopixel.com/preload/0920/the-punisher.png">
-  </a>
-</p>
-
 <h1 align="center">DarkMesh-Android</h1>
 
 <p align="center">
