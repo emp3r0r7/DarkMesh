@@ -222,7 +222,11 @@ fun UserConfigItemList(
         item {
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                enabled = nodeIdText.isNotEmpty() && nodeIdText.length >= 5,
+
+                enabled = nodeIdText.isNotEmpty()
+                        && nodeIdText.length >= 5
+                        && nodeIdText.length <= 15,
+
                 onClick = {
 
                     val nodeId = nodeIdText.toIntOrNull()

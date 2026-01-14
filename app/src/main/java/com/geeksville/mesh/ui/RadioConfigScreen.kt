@@ -300,7 +300,7 @@ private fun RadioConfigItemList(
 
         var nodeVer = "Unknown Ver."
 
-        state.metadata?.firmwareVersion.let {
+        state.metadata?.firmwareVersion?.let {
             nodeVer = "Ver. $it"
         }
 
