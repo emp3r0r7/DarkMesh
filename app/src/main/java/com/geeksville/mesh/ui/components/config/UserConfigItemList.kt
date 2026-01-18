@@ -17,6 +17,7 @@
 
 package com.geeksville.mesh.ui.components.config
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -40,6 +41,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -87,6 +89,7 @@ fun UserConfigItemList(
     enabled: Boolean,
     onSaveClicked: (MeshProtos.User) -> Unit,
 ) {
+    val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     var userInput by rememberSaveable { mutableStateOf(userConfig) }
 
@@ -229,20 +232,20 @@ fun UserConfigItemList(
 
                 onClick = {
 
-                    val nodeId = nodeIdText.toIntOrNull()
+                    val nodeId = nodeIdText.toUIntOrNull()
 
-                    if(userConfig.id.isNotBlank()){
+                    if(userConfig.id.isNotBlank() && nodeId != null){
 
                         val currentNode = MeshService.hexIdToNodeNum(userConfig.id)
 
-                        if (nodeId != null) {
-                            uiModel.setFavorite(
-                                currentNode,
-                                nodeId,
-                                addFavourite
-                            )
-                            nodeIdText = ""
-                        }
+                        uiModel.setFavorite(
+                            currentNode,
+                            nodeId.toInt(),
+                            addFavourite
+                        )
+                        nodeIdText = ""
+                    } else {
+                        Toast.makeText(context, "Could not send Favourite Payload!", Toast.LENGTH_SHORT).show()
                     }
                 }
             ) {
