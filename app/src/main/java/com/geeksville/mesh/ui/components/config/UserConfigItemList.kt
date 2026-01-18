@@ -17,6 +17,7 @@
 
 package com.geeksville.mesh.ui.components.config
 
+import android.annotation.SuppressLint
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -174,7 +176,8 @@ fun UserConfigItemList(
         item {
             Text(
                 text = "Set Favourite Node",
-                style = MaterialTheme.typography.h6
+                modifier = properSpacing(),
+                style = MaterialTheme.typography.h6,
             )
         }
 
@@ -212,11 +215,13 @@ fun UserConfigItemList(
             ) {
                 Text(
                     text = if (addFavourite) "Add favourite" else "Remove favourite",
+                    modifier = properSpacing(),
                     style = MaterialTheme.typography.body1
                 )
 
                 Switch(
                     checked = addFavourite,
+                    modifier = properSpacing(),
                     onCheckedChange = { addFavourite = it }
                 )
             }
@@ -255,6 +260,11 @@ fun UserConfigItemList(
             }
         }
     }
+}
+
+@SuppressLint("ModifierFactoryExtensionFunction")
+private fun properSpacing(): Modifier {
+    return Modifier.padding(start = 16.dp, top = 24.dp, bottom = 8.dp, end = 16.dp)
 }
 
 @Preview(showBackground = true)
