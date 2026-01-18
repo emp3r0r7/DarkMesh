@@ -10,6 +10,7 @@ import com.geeksville.mesh.android.advancedPrefs
 
 const val ADV_SETTINGS_PREFS = "darkmesh_advanced_settings"
 const val TRACE_MAX_PRIORITY_PREF = "trace_max_priority"
+const val SKIP_MQTT_ENTIRELY = "skip_mqtt_entirely"
 
 class AdvancedSettings : AppCompatActivity() {
 
@@ -20,15 +21,27 @@ class AdvancedSettings : AppCompatActivity() {
         val tracerouteSwitch =
             findViewById<SwitchCompat>(R.id.tracerouteMaxPriority)
 
-        val traceMax = advancedPrefs.getBoolean(TRACE_MAX_PRIORITY_PREF, false)
-        tracerouteSwitch.isChecked = traceMax
+        val skipMqttSwitch =
+            findViewById<SwitchCompat>(R.id.skipMqttEntirelySwitch)
 
-        tracerouteSwitch.setOnCheckedChangeListener { _, isChecked ->
+        val traceMaxPref = advancedPrefs.getBoolean(TRACE_MAX_PRIORITY_PREF, false)
+        val skipMqttPref = advancedPrefs.getBoolean(SKIP_MQTT_ENTIRELY, false)
+
+        tracerouteSwitch.isChecked = traceMaxPref
+        skipMqttSwitch.isChecked = skipMqttPref
+
+        setSwitchListener(tracerouteSwitch, TRACE_MAX_PRIORITY_PREF)
+        setSwitchListener(skipMqttSwitch, SKIP_MQTT_ENTIRELY)
+
+    }
+
+    private fun setSwitchListener(switchCompat: SwitchCompat, prefsFlag: String){
+        switchCompat.setOnCheckedChangeListener { _, isChecked ->
 
             if(isChecked){
-                advancedPrefs.edit { putBoolean(TRACE_MAX_PRIORITY_PREF, true) }
+                advancedPrefs.edit { putBoolean(prefsFlag, true) }
             } else {
-                advancedPrefs.edit { putBoolean(TRACE_MAX_PRIORITY_PREF, false) }
+                advancedPrefs.edit { putBoolean(prefsFlag, false) }
             }
         }
     }

@@ -40,6 +40,7 @@ import com.geeksville.mesh.MyNodeInfo
 import com.geeksville.mesh.NodeInfo
 import com.geeksville.mesh.PREF_STRESSTEST_ENABLED
 import com.geeksville.mesh.Position
+import com.geeksville.mesh.SKIP_MQTT_ENTIRELY
 import com.geeksville.mesh.TRACE_MAX_PRIORITY_PREF
 import com.geeksville.mesh.analytics.DataPair
 import com.geeksville.mesh.android.GeeksvilleApplication
@@ -1499,7 +1500,21 @@ class MeshService : Service(), Logging {
 
     private fun onReceiveFromRadio(bytes: ByteArray) {
         try {
+
             val proto = MeshProtos.FromRadio.parseFrom(bytes)
+
+            try {
+                //we want to try this and in case of failure, continue
+                if(advancedPrefs.getBoolean(SKIP_MQTT_ENTIRELY, false)
+                    && proto.packet.hasDecoded()
+                    && proto.packet.viaMqtt){
+                    debug("Skipping MQTT packet since $SKIP_MQTT_ENTIRELY prefs are set to true")
+                    return
+                }
+            } catch (ex: Exception){
+                errormsg("Could not evaluate packet for MQTT skipping , len=${bytes.size}", ex)
+            }
+
             // info("Received from radio service: ${proto.toOneLineString()}")
             when (proto.payloadVariantCase.number) {
                 MeshProtos.FromRadio.PACKET_FIELD_NUMBER -> handleReceivedMeshPacket(proto.packet)
