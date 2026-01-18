@@ -74,8 +74,8 @@ fun SignalInfo(
         if (node.snr < MAX_VALID_SNR && node.rssi < MAX_VALID_RSSI) {
             NodeSignalQuality(node.snr, node.rssi)
         } else {
-            //not showing direct for our node!
-            if (isThisNode) return
+            //not showing direct for our node or unknown hops!
+            if (isThisNode || node.hopsAway == -1) return
             Text(
                 modifier = modifier,
                 text = "Direct Node",
