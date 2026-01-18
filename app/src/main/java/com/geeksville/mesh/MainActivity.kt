@@ -16,12 +16,11 @@
  */
 
 package com.geeksville.mesh
-
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
 import android.content.SharedPreferences
-import android.content.pm.PackageInfo
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.hardware.usb.UsbManager
 import android.net.Uri
@@ -113,7 +112,6 @@ import com.geeksville.mesh.ui.navigateToShareMessage
 import com.geeksville.mesh.ui.theme.AppTheme
 import com.geeksville.mesh.util.Exceptions
 import com.geeksville.mesh.util.LanguageUtils
-import com.geeksville.mesh.util.getPackageInfoCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
@@ -1114,9 +1112,14 @@ class MainActivity : AppCompatActivity(), Logging {
 
     private fun getVersionInfo() {
         try {
-            val packageInfo: PackageInfo = packageManager.getPackageInfoCompat(packageName, 0)
-            val versionName = packageInfo.versionName
-            Toast.makeText(this, "$versionName by IU0THF\nProto v2.7.17", Toast.LENGTH_LONG).show()
+            val ai: ApplicationInfo = packageManager
+                .getApplicationInfo(packageName, PackageManager.GET_META_DATA)
+
+            val gitSha: String? = ai.metaData.getString("git_commit")
+
+            //val packageInfo: PackageInfo = packageManager.getPackageInfoCompat(packageName, 0)
+            //val versionName = packageInfo.versionName
+            Toast.makeText(this, "$gitSha\nProto v2.7.17", Toast.LENGTH_LONG).show()
         } catch (e: PackageManager.NameNotFoundException) {
             errormsg("Can not find the version: ${e.message}")
         }

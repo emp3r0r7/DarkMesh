@@ -16,6 +16,8 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
+def gitSha = providers.gradleProperty("GIT_SHA").orElse("latest")
+
 android {
     namespace 'com.emp3r0r7.darkmesh'
 
@@ -38,6 +40,10 @@ android {
 
         // per https://developer.android.com/studio/write/vector-asset-studio
         vectorDrawables.useSupportLibrary = true
+
+        manifestPlaceholders = [
+            gitSha: gitSha.get()
+        ]
     }
     flavorDimensions = ['default']
     productFlavors {
@@ -137,6 +143,12 @@ androidComponents {
             }
         }
     })
+
+    onVariants(selector().all()) { variant ->
+        variant.outputs.forEach { output ->
+            output.outputFileName.set("darkmesh-${gitSha.get()}.apk")
+        }
+    }
 }
 
 dependencies {
