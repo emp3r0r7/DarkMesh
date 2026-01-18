@@ -5,10 +5,14 @@
   Licensed under <b>GPL-3.0</b>.
 </p>
 
-<p align="center">
-The Android application and the Darkmesh firmware are provided without any guarantee of operation or reliability, neither express nor implied. Use takes place under the user’s sole responsibility. The author of the software declines all responsibility for any violations of regulations, as well as for direct, indirect, incidental, or consequential damages arising from the use, misuse, or inability to use the software.
-Use of the software entails the implicit acceptance of the conditions indicated above.
-</p>
+  
+> [!WARNING]
+> **DarkMesh is designed for FULL-OFFGRID usage only.**  
+> If you plan to use MQTT or control your node remotely via Wi-Fi, this project is **not suitable** for your use case.
+
+> [!IMPORTANT]
+>The Android application and the Darkmesh firmware are provided without any guarantee of operation or reliability, neither express nor implied. Use takes place under the user’s sole responsibility. The author of the software declines all responsibility for any violations of regulations, as well as for direct, indirect, incidental, or consequential damages arising from the use, misuse, or inability to use the software.
+> Use of the software entails the implicit acceptance of the conditions indicated above.
 
 ---
 
@@ -21,10 +25,6 @@ Designed for **advanced users** and **field operators**, DarkMesh introduces a r
 new features to enhance decentralized networking and node-to-node interaction  
 in tactical or remote scenarios.
 
-
-> [!WARNING]
-> **DarkMesh is designed for FULL-OFFGRID usage only.**  
-> If you plan to use MQTT or control your node remotely via Wi-Fi, this project is **not suitable** for your use case.
 
 ---
 
