@@ -65,45 +65,6 @@ makes debugging or situational analysis far more intuitive.
 
 ---
 
-## 🧩 Distinctive Firmware & Release Notes
-
-**Release artifacts** will include firmware binaries for HELTECv3 devices (currently distributed as a custom firmware).  
-The firmware used as base is **Meshtastic v2.5.20** and has been modified to implement DarkMesh-specific operational modes and optimizations.
-
-### Firmware variants included in releases
-- **Custom HELTECv3 firmware** (Released on private request).
-- Builds are derived from Meshtastic **2.5.20** with DarkMesh patches applied.
-
-### Sensor Mode — STEALTH / ANONYMOUS operation
-A dedicated runtime mode intended for maximum discretion and minimal airtime. Key behaviors:
-- **Telemetry & node metadata suppressed**: In SENSOR mode the node **does not** transmit node info, telemetry, or any periodic metadata messages.
-- **Traceroute disabled**: The node will **not** respond to traceroute requests nor will it originate traceroute responses.
-- **Message transmit limited to configured channels**: The node can **only** send messages on pre-configured channel(s) (i.e., group topics). This reduces airtime and exposure.
-- **Receive capability preserved**: The node can receive all messages addressed to channels it listens to, allowing silent monitoring while avoiding outbound telemetry.
-- **Ephemeral node ID**: On every reboot the node's **node ID is randomized/changed**, providing a layer of anonymity between sessions.
-- **Behavioral summary**: SENSOR mode = receive-only visibility for telemetry + highly restricted transmit (configured channels only) + no identifying or routing metadata emitted.
-
-> **Intended use:** covert field ops, low-profile monitoring nodes, and scenarios where transmission of identifying metadata must be avoided.
-
-### Client HIDDEN Mode — serial sniffer / passive capture
-A client-side mode designed for serial-connected capture and offline analysis:
-- When configured as **Client HIDDEN**, the node **forwards every received packet** to the serial interface regardless of whether the packet would be processed by a normal client.
-- This mode effectively turns the device into a **passive sniffer** that outputs raw/decoded packets to serial for an attached logger or downstream processor.
-- **Use case:** connect the device via serial to a host (e.g., laptop or embedded logger) to capture all mesh traffic for forensic analysis, long-term logging, or to feed custom decoders.
-
-### Other firmware improvements
-- **Atomic database writes for ESP32-S3**: improved reliability of on-device persistent storage through atomic write semantics, reducing corruption risk on power failure or concurrent access.
-- General robustness and platform-specific semaphore/lock fixes to improve stability on constrained hardware.
-
----
-
-## ⚠️ Operational Notes & Security Considerations
-
-- **Anonymity limitations:** While SENSOR mode reduces exposure (no telemetry, ephemeral node IDs), it does **not** make the node completely anonymous. RF fingerprinting, timing analysis, or gateway correlation can still deanonymize signals in some threat models. Use appropriate OPSEC and understand the local legal/regulatory context.
-- **Testing:** Validate behavior in controlled environments before deploying to production/field. Confirm ephemeral-ID behavior and channel restrictions match your operational needs.
-- **Backup:** Always keep a backup of device configuration and keys before flashing custom firmware.
----
-
 ## 🧩 License
 
 This project is released under the terms of the **GNU General Public License v3.0 (GPL-3.0)**.  
