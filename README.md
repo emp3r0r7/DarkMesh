@@ -21,6 +21,11 @@ Designed for **advanced users** and **field operators**, DarkMesh introduces a r
 new features to enhance decentralized networking and node-to-node interaction  
 in tactical or remote scenarios.
 
+
+> [!WARNING]
+> **DarkMesh is designed for FULL-OFFGRID usage only.**  
+> If you plan to use MQTT or control your node remotely via Wi-Fi, this project is **not suitable** for your use case.
+
 ---
 
 ## ⚙️ Core Features
