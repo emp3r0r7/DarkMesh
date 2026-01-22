@@ -339,14 +339,29 @@ class MetricsViewModel @Inject constructor(
     ): DeviceHardware? {
         if (deviceHardwareList.isEmpty()) {
             try {
-                val json =
-                    app.assets.open("device_hardware.json").bufferedReader().use { it.readText() }
-                deviceHardwareList = Json.decodeFromString<List<DeviceHardwareDto>>(json)
+                val jsonString =
+                    app.assets.open("device_hardware.json")
+                        .bufferedReader()
+                        .use { it.readText() }
+
+                val json = Json {
+                    ignoreUnknownKeys = true
+                }
+
+                deviceHardwareList = json
+                    .decodeFromString<List<DeviceHardwareDto>>(jsonString)
                     .map { it.toDeviceHardware() }
+
             } catch (ex: IOException) {
                 errormsg("Can't read device_hardware.json error: ${ex.message}")
             }
         }
-        return deviceHardwareList.find { it.hwModel == hwModel.number }
+
+        try {
+            return deviceHardwareList.find { it.hwModel == hwModel.number }
+        } catch (e: Exception){
+            errormsg("Can't read device_hardware model: ${e.message}")
+            return null
+        }
     }
 }

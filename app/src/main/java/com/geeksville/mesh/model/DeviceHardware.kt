@@ -46,7 +46,12 @@ data class DeviceHardwareDto(
     val tags: List<String>? = listOf(),
     val images: List<String>? = listOf(),
     val requiresDfu: Boolean? = null,
-) {
+    val hasInkHud: Boolean? = null,
+    val partitionScheme: String? = null,
+    val hasMui: Boolean? = null,
+    val key: String? = null,
+    val variant: String? = null,
+    ) {
     fun toDeviceHardware() = DeviceHardware(
         hwModel = hwModel,
         hwModelSlug = hwModelSlug,
