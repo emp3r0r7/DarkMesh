@@ -1119,7 +1119,7 @@ class MainActivity : AppCompatActivity(), Logging {
 
             //val packageInfo: PackageInfo = packageManager.getPackageInfoCompat(packageName, 0)
             //val versionName = packageInfo.versionName
-            Toast.makeText(this, "$gitSha\nProto v2.7.17", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "$gitSha\nProto v2.7.18", Toast.LENGTH_LONG).show()
         } catch (e: PackageManager.NameNotFoundException) {
             errormsg("Can not find the version: ${e.message}")
         }
