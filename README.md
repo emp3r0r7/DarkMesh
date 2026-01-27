@@ -1,5 +1,7 @@
+<p align="center">
+  <img src="https://darkmesh.neocities.org/images/dmlogo4.png" width="120" alt="DarkMesh Logo">
+</p>
 <h1 align="center">DarkMesh-Android</h1>
-
 <p align="center">
   An independent development from Meshtastic LLC. focused on Privacy and Field Operators.
   Licensed under <b>GPL-3.0</b>.
