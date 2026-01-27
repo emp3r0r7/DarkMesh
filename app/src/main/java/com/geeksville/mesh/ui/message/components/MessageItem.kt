@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
@@ -70,6 +71,7 @@ import com.geeksville.mesh.ui.theme.AppTheme
 @Composable
 internal fun MessageItem(
     node: Node,
+    hopsAway: Int,
     messageText: String?,
     messageTime: String,
     messageStatus: MessageStatus?,
@@ -164,16 +166,30 @@ internal fun MessageItem(
                             color = MaterialTheme.colors.onBackground,
                         ),
                     )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+
+                        if(!fromLocal){
+                            Text(
+                                text = if (hopsAway == 0) "Direct" else "Hops: $hopsAway",
+                                color = MaterialTheme.colors.onSurface,
+                                fontSize = MaterialTheme.typography.caption.fontSize,
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+
                         Text(
                             text = messageTime,
                             color = MaterialTheme.colors.onSurface,
                             fontSize = MaterialTheme.typography.caption.fontSize,
                         )
+
                         AnimatedVisibility(visible = fromLocal) {
                             Icon(
                                 imageVector = when (messageStatus) {
@@ -244,6 +260,7 @@ private fun MessageItemPreview() {
             messageTime = "10:00",
             messageStatus = MessageStatus.DELIVERED,
             selected = false,
+            hopsAway = 1
         )
     }
 }

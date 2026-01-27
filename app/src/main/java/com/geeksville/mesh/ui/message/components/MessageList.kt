@@ -153,6 +153,7 @@ internal fun MessageList(
                         messageText = msg.text,
                         messageTime = msg.time,
                         messageStatus = msg.status,
+                        hopsAway = msg.hopsAway,
                         selected = selected,
                         highlighted = isHighlighted,
                         repliedMessage = repliedMessage,

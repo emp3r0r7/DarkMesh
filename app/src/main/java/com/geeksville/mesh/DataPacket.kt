@@ -58,6 +58,7 @@ data class DataPacket(
     var time: Long = System.currentTimeMillis(), // msecs since 1970
     var id: Int = 0, // 0 means unassigned
     var status: MessageStatus? = MessageStatus.UNKNOWN,
+    var hopStart: Int = 0,
     var hopLimit: Int = 0,
     var channel: Int = 0, // channel index
     var relayNode: Int? = null,
@@ -137,6 +138,7 @@ data class DataPacket(
         if (!bytes!!.contentEquals(other.bytes!!)) return false
         if (status != other.status) return false
         if (hopLimit != other.hopLimit) return false
+        if (hopStart != other.hopStart) return false
         if (relayNode != other.relayNode) return false
         if (replyId != other.replyId) return false
 
@@ -152,6 +154,7 @@ data class DataPacket(
         result = 31 * result + bytes!!.contentHashCode()
         result = 31 * result + status.hashCode()
         result = 31 * result + hopLimit
+        result = 31 * result + hopStart
         result = 31 * result + channel
         result = 31 * result + relayNode.hashCode()
         result = 31 * result + replyId.hashCode()
@@ -167,6 +170,7 @@ data class DataPacket(
         parcel.writeInt(id)
         parcel.writeParcelable(status, flags)
         parcel.writeInt(hopLimit)
+        parcel.writeInt(hopStart)
         parcel.writeInt(channel)
         parcel.writeInt(relayNode ?: -1)
         parcel.writeInt(replyId ?: 0)
@@ -186,6 +190,7 @@ data class DataPacket(
         id = parcel.readInt()
         status = parcel.readParcelableCompat(MessageStatus::class.java.classLoader)
         hopLimit = parcel.readInt()
+        hopStart = parcel.readInt()
         channel = parcel.readInt()
         relayNode = parcel.readInt().let { if (it == -1) null else it }
         replyId = parcel.readInt().let { if (it == 0) null else it }

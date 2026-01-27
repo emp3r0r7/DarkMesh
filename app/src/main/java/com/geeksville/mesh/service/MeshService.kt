@@ -674,6 +674,7 @@ class MeshService : Service(), Logging {
                 dataType = data.portnumValue,
                 bytes = data.payload.toByteArray(),
                 hopLimit = packet.hopLimit,
+                hopStart = packet.hopStart,
                 channel = if (packet.pkiEncrypted) DataPacket.PKC_CHANNEL_INDEX else packet.channel,
                 relayNode = packet.relayNode,
                 replyId = data.replyId
