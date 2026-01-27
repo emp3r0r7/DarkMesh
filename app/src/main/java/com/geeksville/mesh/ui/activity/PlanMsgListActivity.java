@@ -120,7 +120,7 @@ public class PlanMsgListActivity extends AppCompatActivity {
                     label += " " + chanName;
                     int start = label.lastIndexOf(chanName);
                     int end = start + chanName.length();
-                    label += " Regole " + ruleCount;
+                    label += " Rules " + ruleCount;
                     spannable = new SpannableString(label);
 
                     if (start >= 0 && end > start) {
@@ -134,7 +134,7 @@ public class PlanMsgListActivity extends AppCompatActivity {
 
                 } else {
 
-                    String label = "Nodo " + nodeId;
+                    String label = "Node " + nodeId;
 
                     NodeEntity node = nodeDb.get(Integer.parseInt(nodeId));
                     int start = -1, end = -1;
@@ -146,7 +146,7 @@ public class PlanMsgListActivity extends AppCompatActivity {
                         end = start + nodeName.length();
                     }
 
-                    label += " Regole " + ruleCount;
+                    label += " Rules " + ruleCount;
                     spannable = new SpannableString(label);
 
                     if (start >= 0 && end > start) {
@@ -168,7 +168,7 @@ public class PlanMsgListActivity extends AppCompatActivity {
 
         if (nodeEntries.isEmpty()) {
             TextView title = findViewById(R.id.planListTitle);
-            title.setText("Nessuna pianificazione effettuata.");
+            title.setText("No message has been planned.");
         }
 
         ArrayAdapter<SpannableString> adapter = new ArrayAdapter<>(
@@ -199,12 +199,12 @@ public class PlanMsgListActivity extends AppCompatActivity {
 
             if (isChecked) {
                 handler.post(() ->
-                        Toast.makeText(getApplicationContext(), "Pianificatore Messaggi Attivo!", Toast.LENGTH_SHORT).show());
+                        Toast.makeText(getApplicationContext(), "Message Planner Active!", Toast.LENGTH_SHORT).show());
                 Log.d(TAG, "Message Plan Active");
                 startService(planMsgService);
             } else {
                 handler.post(() ->
-                        Toast.makeText(getApplicationContext(), "Pianificatore Messaggi Disattivato!", Toast.LENGTH_SHORT).show());
+                        Toast.makeText(getApplicationContext(), "Message planner Deactivated!", Toast.LENGTH_SHORT).show());
                 Log.d(TAG, "Message Plan deactivated");
                 stopService(planMsgService);
             }

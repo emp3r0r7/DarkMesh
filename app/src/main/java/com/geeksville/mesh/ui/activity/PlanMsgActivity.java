@@ -104,7 +104,7 @@ public class PlanMsgActivity extends AppCompatActivity {
         boolean msgPlanStatus = msgStatusPrefs.getBoolean(UserPrefs.PlannedMessage.PLANMSG_SERVICE_ACTIVE, false);
         TextView statusView = findViewById(R.id.plannerStatus);
 
-        statusView.setText("Stato Pianificazione Globale: " + (msgPlanStatus ? "ON" : "OFF"));
+        statusView.setText("Global Planner Status: " + (msgPlanStatus ? "ON" : "OFF"));
         statusView.setTextColor(getColor(msgPlanStatus ? android.R.color.holo_green_dark : android.R.color.holo_red_dark));
 
         spinnerDay = findViewById(R.id.spinnerDay);
@@ -135,18 +135,18 @@ public class PlanMsgActivity extends AppCompatActivity {
             new TimePickerDialog(this, (view, hourOfDay, minute) -> {
                 selectedHour = hourOfDay;
                 selectedMinute = minute;
-                btnTime.setText(String.format(Locale.getDefault(), "Ora: %02d:%02d", hourOfDay, minute));
+                btnTime.setText(String.format(Locale.getDefault(), "Time: %02d:%02d", hourOfDay, minute));
             }, h, m, true).show();
         });
 
         btnAdd.setOnClickListener(v -> {
             if (selectedHour < 0) {
-                Toast.makeText(this, "Seleziona un'ora", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Select a time", Toast.LENGTH_SHORT).show();
                 return;
             }
             String msg = inputMessage.getText().toString().trim();
             if (msg.isEmpty()) {
-                Toast.makeText(this, "Inserisci un messaggio", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Add a message", Toast.LENGTH_SHORT).show();
                 return;
             }
             String day = DAYS[spinnerDay.getSelectedItemPosition()];
@@ -265,7 +265,7 @@ public class PlanMsgActivity extends AppCompatActivity {
             List<String> displayStrings = new ArrayList<>();
             List<String> messageOnlyList = new ArrayList<>();
 
-            displayStrings.add("Seleziona un comando rapido...");
+            displayStrings.add("Select a quick chat command...");
             messageOnlyList.add("");
 
             for (QuickChatAction action : quickChats) {
@@ -302,9 +302,9 @@ public class PlanMsgActivity extends AppCompatActivity {
                 }
             });
 
-            String chanDesc = "Canale " + currentNodeName;
-            String nodeDesc = "Nodo " + currentNodeName;
-            String description = "Pianificazione " + (broadcastChannel != null ? chanDesc : nodeDesc);
+            String chanDesc = "Chan " + currentNodeName;
+            String nodeDesc = "Node " + currentNodeName;
+            String description = "Planning " + (broadcastChannel != null ? chanDesc : nodeDesc);
 
             ((TextView) findViewById(R.id.txtNodeId)).setText(description);
         }

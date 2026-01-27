@@ -11,13 +11,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         tools:ignore="HardcodedText"
-        android:text="Nodo: -" />
+        android:text="Node: -" />
 
     <TextView
         android:id="@+id/plannerStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Stato Pianificazione Globale: UNKNOWN"
+        android:text="Global Planner Status: UNKNOWN"
         tools:ignore="HardcodedText" />
 
     <Spinner
@@ -32,7 +32,7 @@
         android:textColor="#FFFFFF"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Ora: --:--"
+        android:text="Time: --:--"
         android:layout_marginTop="8dp"
         tools:ignore="HardcodedText" />
 
@@ -48,9 +48,9 @@
         android:id="@+id/inputMessage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Messaggio"
+        android:hint="Message"
         android:layout_marginTop="8dp"
-        tools:ignore="HardcodedText" />
+        tools:ignore="Autofill,HardcodedText,TextFields" />
 
     <Button
         android:backgroundTint="#470202"
@@ -59,7 +59,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         tools:ignore="HardcodedText"
-        android:text="Aggiungi"
+        android:text="Add"
         android:layout_marginTop="8dp" />
 
     <ListView
@@ -76,5 +76,5 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         tools:ignore="HardcodedText"
-        android:text="Salva" />
+        android:text="Save" />
 </LinearLayout>

@@ -180,6 +180,7 @@ public class PlanMsgService extends Service {
     }
 
     public boolean shouldSend(Calendar now, String day, String time) {
+        //FIXME , this method and the whole service should be redone completely it has been cooked badly and too fast
         String today = PlanMsgActivity.DAYS[(now.get(Calendar.DAY_OF_WEEK) + 5) % 7]; // DOM=1 → "DOM"=6
 
         if (!day.equals(today)) return false;
