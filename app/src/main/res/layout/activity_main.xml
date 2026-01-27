@@ -49,13 +49,13 @@
 
                     <ImageView
                         android:id="@+id/appIconImageVIew"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_width="50sp"
+                        android:layout_height="50sp"
                         android:contentDescription="@string/application_icon"
-                        android:scaleType="center"
+                        android:scaleType="centerInside"
                         android:scaleX="0.7"
                         android:scaleY="0.7"
-                        app:srcCompat="@drawable/skull_white_icon"
+                        app:srcCompat="@drawable/dm_logo"
                         tools:layout_editor_absoluteX="16dp"
                         tools:layout_editor_absoluteY="18dp" />
 

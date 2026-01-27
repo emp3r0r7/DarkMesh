@@ -222,7 +222,7 @@ class MeshServiceNotifications(
         } else {
             builder.setSmallIcon(
                 // vector form icons don't work reliably on older androids
-                R.drawable.skull_white_icon
+                R.drawable.skull_icon_ver2
             )
         }
         return builder

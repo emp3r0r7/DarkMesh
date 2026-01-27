@@ -38,7 +38,7 @@ class AppIntroduction : AppIntro() {
             AppIntroFragment.createInstance(
             title = resources.getString(R.string.intro_welcome),
             description = resources.getString(R.string.intro_welcome_text),
-            imageDrawable = R.drawable.skull_splash_white,
+            imageDrawable = R.drawable.dm_splash_white,
             backgroundColorRes = R.color.colourGrey,
             descriptionColorRes = R.color.colorOnPrimary
         ))
