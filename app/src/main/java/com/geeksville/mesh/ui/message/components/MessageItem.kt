@@ -175,7 +175,7 @@ internal fun MessageItem(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
 
-                        if(!fromLocal){
+                        if(!fromLocal && hopsAway >= 0){
                             Text(
                                 text = if (hopsAway == 0) "Direct" else "Hops: $hopsAway",
                                 color = MaterialTheme.colors.onSurface,
