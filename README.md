@@ -21,7 +21,7 @@
 ## 🛰️ Overview
 
 **DarkMesh** is an independent fork and autonomous development of the **Meshtastic** project,  
-focused on **scheduled messaging** and **metadata forwarding** to **online mapping platforms**.
+focused on **scheduled messaging** and **metadata forwarding** to **online mapping platforms** (optional and disabled by default).
 
 Designed for **advanced users** and **field operators**, DarkMesh introduces a range of  
 new features to enhance decentralized networking and node-to-node interaction  
@@ -43,9 +43,9 @@ Plan and schedule **private** or **group** messages to be automatically
 sent at specific times.  
 Useful for automations, time-based alerts, or mission coordination.
 
-### 📡 Beaconing
+### 📡 Distress Beacon
 Send **periodic beacons** with customizable text payloads.  
-Beacons can be used for **automatic identification**, **status reporting**,  
+Beacons can be used for **automatic identification**, **emergency status reporting**,  
 or **node discovery** within the network.
 
 ### 📡 Traceroute Map visualization
