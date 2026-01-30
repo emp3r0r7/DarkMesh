@@ -281,6 +281,9 @@ dependencies {
 
     // detekt ktlint formatting
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.7")
+
+    implementation("com.google.openlocationcode:openlocationcode:1.0.4")
+
 }
 
 ksp {

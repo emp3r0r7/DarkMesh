@@ -7,6 +7,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
 import android.os.Build;
 import android.os.IBinder;
@@ -19,9 +20,13 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import com.emp3r0r7.darkmesh.R;
+import com.geeksville.mesh.model.UIViewModel;
+import com.google.openlocationcode.OpenLocationCode;
 
-import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -30,6 +35,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class DistressService extends Service {
 
     private static final String TAG = DistressService.class.getSimpleName();
+
+    public static final String PREF_STRESSTEST_ENABLED = "stress_test_enabled";
+    public static final String PREF_STRESSTEST_PREFIX = "stress_test_prefix";
+    public static final String PREF_STRESSTEST_DEFAULT_PREFIX = "[SOS]";
+
     private static final String WAKELOCK_TAG = TAG + "::WakeLockTag";
     private static final int NOTIFICATION_ID = 97;
     private static final String CHANNEL_ID = "distress_service_channel";
@@ -37,6 +47,16 @@ public class DistressService extends Service {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private PowerManager.WakeLock wakeLock;
     private CompletableFuture<?> task;
+
+    private static final int DEFAULT_COORDS_PRECISION = 8;
+
+    private static volatile Double latitude = null;
+    private static volatile Double longitude = null;
+    private static volatile Integer altitude = null;
+
+    private static volatile boolean livePosition = false;
+    private static volatile boolean sendPositionToChat = false;
+    private SharedPreferences uiPrefs;
 
     @Nullable
     @Override
@@ -47,44 +67,80 @@ public class DistressService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        uiPrefs = UIViewModel.Companion.getPreferences(this);
     }
 
-    /**
-     * @noinspection BusyWait
-     */
-    public void sendDistress(
+    public record DistressDTO (
             String contactKey,
             String userInput,
             long interval,
             String myName,
-            boolean includeName) {
+            boolean includeName,
+            boolean includeGps,
+            boolean includeTime
+    ){}
+
+    /**
+     * @noinspection BusyWait
+     */
+    public void sendDistress(DistressDTO distressDTO) {
 
         taskRunning.set(true);
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKELOCK_TAG);
 
+        var distressPrefix = uiPrefs.getString(
+            PREF_STRESSTEST_PREFIX,
+            PREF_STRESSTEST_DEFAULT_PREFIX
+        );
+
         task = CompletableFuture.runAsync(() -> {
 
             while (taskRunning.get()) {
-                wakeLock.acquire(interval + 5_000);
+                wakeLock.acquire(distressDTO.interval + 5_000);
 
                 try {
                     debug("Sending distress beacon");
 
-                    String currentTime = DateFormat.getTimeInstance(DateFormat.MEDIUM)
-                            .format(new Date(System.currentTimeMillis()));
+                    StringBuilder sb = new StringBuilder(96);
+                    sb.append(distressPrefix);
 
-                    String str = "[ALERT] ";
-                    if (includeName) {
-                        str += userInput + " @ " + myName + " " + currentTime;
-                    } else {
-                        str += userInput + " @ " + currentTime;
+                    if (distressDTO.includeGps && latitude != null && longitude != null) {
+                        var plus = latLonToPlusCode(
+                                latitude,
+                                longitude,
+                                DEFAULT_COORDS_PRECISION
+                        );
+
+                        if (plus != null) {
+                            sb.append(" ").append(plus);
+
+                            if (altitude != null) {
+                                sb.append(" A").append(altitude.intValue());
+                            }
+                        }
                     }
 
-                    GlobalRadioMesh.sendMessage(str, contactKey, 0);
-                    Thread.sleep(interval);
+                    if (distressDTO.userInput != null && !distressDTO.userInput.isBlank()) {
+                        sb.append(" ").append(distressDTO.userInput);
+                    }
+
+                    if (distressDTO.includeName && distressDTO.myName != null) {
+                        sb.append(" ").append(distressDTO.myName);
+                    }
+
+                    if (distressDTO.includeTime) {
+                        SimpleDateFormat sdf = new SimpleDateFormat("HHmm", Locale.ROOT);
+                        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                        String time = sdf.format(new Date());
+                        sb.append(" Z").append(time);
+                    }
+
+                    GlobalRadioMesh.sendMessage(sb.toString(), distressDTO.contactKey, 0);
+                    Thread.sleep(distressDTO.interval);
+
                 } catch (Exception e) {
-                    debug("An error occurred while distressing: " + e);
+                    debug("SOS send failed: " + e.getMessage());
                 } finally {
                     if (wakeLock.isHeld()) wakeLock.release();
                 }
@@ -129,6 +185,8 @@ public class DistressService extends Service {
         String interval = intent.getStringExtra("interval");
         String myLongName = intent.getStringExtra("myLongName");
         boolean includeName = intent.getBooleanExtra("includeName", false);
+        boolean includeGps = intent.getBooleanExtra("includeGps", false);
+        boolean includeTime = intent.getBooleanExtra("includeTime", false);
 
         long intervalLong = 30L;
 
@@ -142,7 +200,17 @@ public class DistressService extends Service {
                 + contactKey + ", " + userInput + ", interval=" + interval
                 + ", myLongName=" + myLongName + ", includeName=" + includeName);
 
-        sendDistress(contactKey, userInput, intervalLong, myLongName, includeName);
+        var distressDTO = new DistressDTO(
+                contactKey,
+                userInput,
+                intervalLong,
+                myLongName,
+                includeName ,
+                includeGps ,
+                includeTime
+        );
+
+        sendDistress(distressDTO);
 
         return START_STICKY;
     }
@@ -161,5 +229,60 @@ public class DistressService extends Service {
             wakeLock.release();
         }
         stopForeground(true);
+    }
+
+
+    @SuppressWarnings("SameParameterValue")
+    private String latLonToPlusCode(Double lat, Double lon, Integer precision) {
+        return new OpenLocationCode(lat, lon, precision).getCode();
+    }
+
+    public static synchronized void setAltitude(Integer altitude) {
+        DistressService.altitude = altitude;
+    }
+
+    public static synchronized void setLongitude(Double longitude) {
+        DistressService.longitude = longitude;
+    }
+
+    public static synchronized void setLatitude(Double latitude) {
+        DistressService.latitude = latitude;
+    }
+
+    public static synchronized Integer getAltitude() {
+        return altitude;
+    }
+
+    public static synchronized Double getLongitude() {
+        return longitude;
+    }
+
+    public static synchronized Double getLatitude() {
+        return latitude;
+    }
+
+    public static synchronized boolean isLivePosition() {
+        return livePosition;
+    }
+
+    public static synchronized void setLivePosition(boolean passGpsToDevice) {
+        DistressService.livePosition = passGpsToDevice;
+    }
+
+    public static synchronized boolean isSendPositionToChat() {
+        return sendPositionToChat;
+    }
+
+    public static synchronized void setSendPositionToChat(boolean sendPositionToChat) {
+        DistressService.sendPositionToChat = sendPositionToChat;
+    }
+
+    public static synchronized void resetMessagePosition(){
+        DistressService.latitude = null;
+        DistressService.longitude = null;
+        DistressService.altitude = null;
+
+        DistressService.setSendPositionToChat(false);
+        DistressService.setLivePosition(false);
     }
 }

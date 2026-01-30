@@ -85,4 +85,53 @@
         tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
 
 
+    <TextView
+        android:textColor="@color/colorAnnotation"
+        android:id="@+id/beaconPrefix"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="20dp"
+        android:text="DISTRESS BEACON PREFIX"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/skipMqttEntirelySwitch"
+        tools:ignore="HardcodedText"/>
+
+    <TextView
+        android:id="@+id/distressDescription"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="You can choose a distress beacon prefix"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/beaconPrefix"
+        tools:ignore="HardcodedText" />
+
+    <EditText
+        android:id="@+id/distressPrefix"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:autofillHints="dsaasddas"
+        android:hint="PREFIX UNSET"
+        android:inputType="textShortMessage"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/distressDescription"
+        tools:ignore="HardcodedText" />
+
+    <Button
+        android:id="@+id/setBeaconPrefixBtn"
+        android:layout_width="94dp"
+        android:layout_height="45dp"
+        android:layout_marginStart="9dp"
+        android:layout_marginEnd="100dp"
+        android:text="SET"
+        android:backgroundTint="@color/colorAnnotation"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.666"
+        app:layout_constraintStart_toEndOf="@+id/distressPrefix"
+        app:layout_constraintTop_toBottomOf="@+id/distressDescription"
+        tools:ignore="HardcodedText" />
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

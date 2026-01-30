@@ -84,11 +84,14 @@ import com.geeksville.mesh.model.Contact
 import com.geeksville.mesh.model.DeviceVersion
 import com.geeksville.mesh.model.RelayEvent
 import com.geeksville.mesh.model.UIViewModel
+import com.geeksville.mesh.model.UIViewModel.Companion.getPreferences
 import com.geeksville.mesh.model.colorizeTracerouteResponse
 import com.geeksville.mesh.prefs.UserPrefs
 import com.geeksville.mesh.prefs.UserPrefs.Hunting.BACKGROUND_HUNT
 import com.geeksville.mesh.prefs.UserPrefs.Hunting.HUNT_MODE
+import com.geeksville.mesh.repository.location.LocationRepository
 import com.geeksville.mesh.service.DistressService
+import com.geeksville.mesh.service.DistressService.PREF_STRESSTEST_ENABLED
 import com.geeksville.mesh.service.GlobalRadioMesh
 import com.geeksville.mesh.service.HuntScheduleService
 import com.geeksville.mesh.service.MeshService
@@ -174,7 +177,6 @@ eventually:
   make a custom theme: https://github.com/material-components/material-components-android/tree/master/material-theme-builder
 */
 
-const val PREF_STRESSTEST_ENABLED = "stress_test_enabled"
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity(), Logging {
@@ -195,6 +197,9 @@ class MainActivity : AppCompatActivity(), Logging {
 
     @Inject
     internal lateinit var serviceRepository: ServiceRepository
+
+    @Inject
+    lateinit var locationRepository: LocationRepository
 
     private val bluetoothPermissionsLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
@@ -276,7 +281,7 @@ class MainActivity : AppCompatActivity(), Logging {
         distressBeaconServiceIntent = Intent(this, DistressService::class.java)
 
         if (savedInstanceState == null) {
-            val prefs = UIViewModel.getPreferences(this)
+            val prefs = getPreferences(this)
             // First run: migrate in-app language prefs to appcompat
             val lang = prefs.getString("lang", LanguageUtils.SYSTEM_DEFAULT)
             if (lang != LanguageUtils.SYSTEM_MANAGED) LanguageUtils.migrateLanguagePrefs(prefs)
@@ -787,9 +792,8 @@ class MainActivity : AppCompatActivity(), Logging {
         val stressItem = menu.findItem(R.id.stress_test)
 
         stressItem.isVisible = true
-        stressItem.isChecked = UIViewModel
-            .getPreferences(this)
-            .getBoolean(PREF_STRESSTEST_ENABLED, false)
+        stressItem.isChecked = getPreferences(this)
+                               .getBoolean(PREF_STRESSTEST_ENABLED, false)
 
         menu.findItem(R.id.radio_config).isEnabled = !model.isManaged
         return super.onPrepareOptionsMenu(menu)
@@ -877,9 +881,8 @@ class MainActivity : AppCompatActivity(), Logging {
 
             R.id.stress_test -> {
 
-                item.isChecked = UIViewModel
-                    .getPreferences(this)
-                    .getBoolean(PREF_STRESSTEST_ENABLED, false)
+                item.isChecked = getPreferences(this)
+                                 .getBoolean(PREF_STRESSTEST_ENABLED, false)
 
                 if (!item.isChecked) {
 
@@ -911,9 +914,8 @@ class MainActivity : AppCompatActivity(), Logging {
 
                 } else {
 
-                    UIViewModel
-                        .getPreferences(this)
-                        .edit { putBoolean(PREF_STRESSTEST_ENABLED, false) }
+                    getPreferences(this)
+                        .edit { putBoolean(PREF_STRESSTEST_ENABLED, false).commit() }
 
                     item.isChecked = false
                     stopService(distressBeaconServiceIntent)
@@ -1002,9 +1004,27 @@ class MainActivity : AppCompatActivity(), Logging {
             setPadding(32, 50, 32, 50)
         }
 
+        val sendPositionInChat = CheckBox(this).apply {
+            text = "Include GPS in MSG"
+            isChecked = false
+            setPadding(32, 50, 32, 50)
+        }
+
+        val sendTime = CheckBox(this).apply {
+            text = "Include TIME in MSG"
+            isChecked = false
+            setPadding(32, 50, 32, 50)
+        }
+
         startLivePosition.setOnCheckedChangeListener { _, checked->
-            if (checked && !hasLocationPermission()) {
-                gpsPermissionLauncher.launch(getLocationPermissions())
+            if (checked) {
+                maybeAskGpsPermission()
+            }
+        }
+
+        sendPositionInChat.setOnCheckedChangeListener { _, checked->
+            if (checked) {
+                maybeAskGpsPermission()
             }
         }
 
@@ -1036,8 +1056,10 @@ class MainActivity : AppCompatActivity(), Logging {
             orientation = LinearLayout.VERTICAL
             setPadding(40, 16, 40, 0)
             addView(spinner)
-            addView(includeName)
+            //addView(includeName) removed, maybe reactivate in the future
             addView(startLivePosition)
+            addView(sendPositionInChat)
+            addView(sendTime)
             addView(inputField)
             addView(inputSeconds)
         }
@@ -1057,24 +1079,40 @@ class MainActivity : AppCompatActivity(), Logging {
                         putExtra("interval", interval)
                         putExtra("myLongName", myLongName.toString())
                         putExtra("includeName", includeName.isChecked)
+                        putExtra("includeGps", sendPositionInChat.isChecked)
+                        putExtra("includeTime", sendTime.isChecked)
                     }
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 
-                        if(startLivePosition.isChecked){
+                        getPreferences(this).edit {
+                            putBoolean(PREF_STRESSTEST_ENABLED, true).commit()
+                        }
 
-                            if(!checkLocationEnabled()) return@setPositiveButton
+                        val livePos = startLivePosition.isChecked
+                        val posInChat = sendPositionInChat.isChecked
+
+                        DistressService.setLivePosition(livePos)
+                        DistressService.setSendPositionToChat(posInChat)
+
+                        if (livePos || posInChat){
+
+                            if(!checkLocationEnabled()){
+                                getPreferences(this).edit {
+                                    putBoolean(PREF_STRESSTEST_ENABLED, false).commit()
+                                }
+                                return@setPositiveButton
+                            }
 
                             model.meshService?.startProvideLocation()
                         }
 
-                        Toast.makeText(this, "Starting Distress Beacon now..", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, "Starting Distress Beacon now..",
+                            Toast.LENGTH_LONG).show()
+
                         startForegroundService(distressBeaconServiceIntent)
 
                         started = true
-                        UIViewModel.getPreferences(this).edit {
-                            putBoolean(PREF_STRESSTEST_ENABLED, true)
-                        }
 
                     } else {
                         Toast.makeText(
@@ -1097,8 +1135,14 @@ class MainActivity : AppCompatActivity(), Logging {
         }
 
         dialog.show()
-    }
 
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            ?.setTextColor(ContextCompat.getColor(this, R.color.colorAnnotation))
+
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+            ?.setTextColor(ContextCompat.getColor(this, R.color.colorAnnotation))
+    }
+    
     private fun checkLocationEnabled(
         warningReason: String ="GPS is DISABLED, please turn it on and restart beaconing!"
     ) : Boolean {
@@ -1127,7 +1171,7 @@ class MainActivity : AppCompatActivity(), Logging {
 
     // Theme functions
     private fun setDarkThemeFirstTime() {
-        val prefs = UIViewModel.getPreferences(this)
+        val prefs = getPreferences(this)
         val selectedTheme = AppCompatDelegate.MODE_NIGHT_YES
 
         val currentTheme = prefs.getInt("theme", -1)
@@ -1135,6 +1179,12 @@ class MainActivity : AppCompatActivity(), Logging {
             prefs.edit { putInt("theme", selectedTheme) }
             AppCompatDelegate.setDefaultNightMode(selectedTheme)
             debug("Set dark theme as default")
+        }
+    }
+
+    private fun maybeAskGpsPermission(){
+        if (!hasLocationPermission()) {
+            gpsPermissionLauncher.launch(getLocationPermissions())
         }
     }
 
@@ -1151,7 +1201,7 @@ class MainActivity : AppCompatActivity(), Logging {
         )
 
         // Load preferences and its value
-        val prefs = UIViewModel.getPreferences(this)
+        val prefs = getPreferences(this)
         val theme = prefs.getInt("theme", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         debug("Theme from prefs: $theme")
 

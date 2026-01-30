@@ -159,7 +159,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:text="Pass GPS coords. from Phone to Device"
+            android:text="Use Phone GPS for Mesh"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/scanStatusText"
             tools:ignore="HardcodedText" />

@@ -55,7 +55,9 @@ import com.geeksville.mesh.model.BTScanModel
 import com.geeksville.mesh.model.BluetoothViewModel
 import com.geeksville.mesh.model.RegionInfo
 import com.geeksville.mesh.model.UIViewModel
+import com.geeksville.mesh.model.UIViewModel.Companion.getPreferences
 import com.geeksville.mesh.repository.location.LocationRepository
+import com.geeksville.mesh.service.DistressService.PREF_STRESSTEST_ENABLED
 import com.geeksville.mesh.service.MeshService
 import com.geeksville.mesh.util.exceptionToSnackbar
 import com.geeksville.mesh.util.onEditorAction
@@ -499,13 +501,19 @@ class SettingsFragment : ScreenFragment("Settings"), Logging {
     override fun onResume() {
         super.onResume()
 
+        val beaconing = getPreferences(requireContext())
+            .getBoolean(PREF_STRESSTEST_ENABLED, false)
+
+        val locationCheckbox = binding.provideLocationCheckbox
         // Warn user if BLE device is selected but BLE disabled
         if (scanModel.selectedBluetooth) checkBTEnabled()
 
         // Warn user if provide location is selected but location disabled
-        if (binding.provideLocationCheckbox.isChecked) {
+        if (locationCheckbox.isChecked) {
             checkLocationEnabled(getString(R.string.location_disabled))
         }
+
+        locationCheckbox.isEnabled = !beaconing
     }
 
     override fun onDestroyView() {

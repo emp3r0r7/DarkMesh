@@ -28,6 +28,7 @@ import android.os.IBinder
 import android.os.RemoteException
 import android.widget.Toast
 import androidx.core.app.ServiceCompat
+import androidx.core.content.edit
 import androidx.core.location.LocationCompat
 import com.emp3r0r7.darkmesh.BuildConfig
 import com.emp3r0r7.darkmesh.R
@@ -38,7 +39,6 @@ import com.geeksville.mesh.MeshUser
 import com.geeksville.mesh.MessageStatus
 import com.geeksville.mesh.MyNodeInfo
 import com.geeksville.mesh.NodeInfo
-import com.geeksville.mesh.PREF_STRESSTEST_ENABLED
 import com.geeksville.mesh.Position
 import com.geeksville.mesh.SKIP_MQTT_ENTIRELY
 import com.geeksville.mesh.TRACE_MAX_PRIORITY_PREF
@@ -60,6 +60,7 @@ import com.geeksville.mesh.model.DeviceVersion
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.RelayEvent
 import com.geeksville.mesh.model.UIViewModel
+import com.geeksville.mesh.model.UIViewModel.Companion.getPreferences
 import com.geeksville.mesh.model.getTracerouteResponse
 import com.geeksville.mesh.prefs.UserPrefs
 import com.geeksville.mesh.repository.datastore.RadioConfigRepository
@@ -67,6 +68,7 @@ import com.geeksville.mesh.repository.location.LocationRepository
 import com.geeksville.mesh.repository.network.MQTTRepository
 import com.geeksville.mesh.repository.radio.RadioInterfaceService
 import com.geeksville.mesh.repository.radio.RadioServiceConnectionState
+import com.geeksville.mesh.service.DistressService.PREF_STRESSTEST_ENABLED
 import com.geeksville.mesh.util.ApiUtil
 import com.geeksville.mesh.util.anonymize
 import com.geeksville.mesh.util.toOneLineString
@@ -274,20 +276,33 @@ class MeshService : Service(), Logging {
         @SuppressLint("MissingPermission")
         if (hasLocationPermission()) {
             locationFlow = locationRepository.getLocations().onEach { location ->
-                sendPosition(
-                    position {
-                        latitudeI = Position.degI(location.latitude)
-                        longitudeI = Position.degI(location.longitude)
-                        if (LocationCompat.hasMslAltitude(location)) {
-                            altitude = LocationCompat.getMslAltitudeMeters(location).toInt()
+
+                val beaconing = getPreferences(this)
+                    .getBoolean(PREF_STRESSTEST_ENABLED, false)
+
+                if(DistressService.isLivePosition() || !beaconing){
+                    sendPosition(
+                        position {
+                            latitudeI = Position.degI(location.latitude)
+                            longitudeI = Position.degI(location.longitude)
+                            if (LocationCompat.hasMslAltitude(location)) {
+                                altitude = LocationCompat.getMslAltitudeMeters(location).toInt()
+                            }
+                            altitudeHae = location.altitude.toInt()
+                            time = (location.time / 1000).toInt()
+                            groundSpeed = location.speed.toInt()
+                            groundTrack = location.bearing.toInt()
+                            locationSource = MeshProtos.Position.LocSource.LOC_EXTERNAL
                         }
-                        altitudeHae = location.altitude.toInt()
-                        time = (location.time / 1000).toInt()
-                        groundSpeed = location.speed.toInt()
-                        groundTrack = location.bearing.toInt()
-                        locationSource = MeshProtos.Position.LocSource.LOC_EXTERNAL
-                    }
-                )
+                    )
+                }
+
+                if(beaconing && DistressService.isSendPositionToChat()){
+                    DistressService.setLatitude(location.latitude)
+                    DistressService.setLongitude(location.longitude)
+                    DistressService.setAltitude(location.altitude.toInt())
+                }
+
             }.launchIn(serviceScope)
         }
     }
@@ -297,6 +312,43 @@ class MeshService : Service(), Logging {
             info("Stopping location requests")
             locationFlow?.cancel()
             locationFlow = null
+        }
+
+        val beaconing = getPreferences(this)
+            .getBoolean(PREF_STRESSTEST_ENABLED, false)
+
+        if(beaconing){
+            stopService(Intent(this, DistressService::class.java))
+
+            getPreferences(this)
+                .edit { putBoolean(PREF_STRESSTEST_ENABLED, false) }
+        }
+
+        DistressService.resetMessagePosition()
+        removeFixedPositionAndClearDB()
+    }
+
+    private fun removeFixedPositionAndClearDB(){
+
+        try {
+
+            val pos = position {
+                latitudeI = 0
+                longitudeI = 0
+                altitude = 0
+            }
+
+            updateNodeInfo(myNodeNum) {
+                debug("update position: ${it.longName?.toPIIString()} with ${pos.toPIIString()}")
+                it.setPosition(pos, (System.currentTimeMillis() / 1000L).toInt())
+            }
+
+            sendToRadio(newMeshPacketTo(myNodeNum).buildAdminPacket {
+                removeFixedPosition = true
+            })
+
+        } catch (e: Exception){
+            warn("We don't yet have our myNodeInfo $e")
         }
     }
 
