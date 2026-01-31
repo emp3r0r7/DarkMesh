@@ -89,7 +89,6 @@ import com.geeksville.mesh.model.colorizeTracerouteResponse
 import com.geeksville.mesh.prefs.UserPrefs
 import com.geeksville.mesh.prefs.UserPrefs.Hunting.BACKGROUND_HUNT
 import com.geeksville.mesh.prefs.UserPrefs.Hunting.HUNT_MODE
-import com.geeksville.mesh.repository.location.LocationRepository
 import com.geeksville.mesh.service.DistressService
 import com.geeksville.mesh.service.DistressService.PREF_STRESSTEST_ENABLED
 import com.geeksville.mesh.service.GlobalRadioMesh
@@ -197,9 +196,6 @@ class MainActivity : AppCompatActivity(), Logging {
 
     @Inject
     internal lateinit var serviceRepository: ServiceRepository
-
-    @Inject
-    lateinit var locationRepository: LocationRepository
 
     private val bluetoothPermissionsLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
