@@ -52,6 +52,10 @@ or **node discovery** within the network.
 It is possibile to visualize traceroutes on the application map. Forward route and Backward Route.
 It is also shown the total distance of the roundtrip.
 
+### 🌍 Efficient Plus Codes
+You can configure your distress beacon by using short Plus Codes inside text messages, typically encoded in ~8–9 ASCII characters.
+This ensures a significantly smaller payload over the mesh, resulting in less airtime and higher reliability.
+
 ---
 
 ## 🔍 Extended Verbosity and Transparency
