@@ -19,6 +19,8 @@ package com.geeksville.mesh.ui.components
 
 import android.text.Spannable
 import android.text.Spannable.Factory
+import android.text.SpannableString
+import android.text.Spanned
 import android.text.style.URLSpan
 import android.text.util.Linkify
 import androidx.compose.material.Text
@@ -35,7 +37,9 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.text.util.LinkifyCompat
+import com.geeksville.mesh.service.DistressService
 import com.geeksville.mesh.ui.theme.HyperlinkCyan
+import java.net.URLEncoder
 
 private val DefaultTextLinkStyles = TextLinkStyles(
     style = SpanStyle(
@@ -52,7 +56,32 @@ fun AutoLinkText(
     linkStyles: TextLinkStyles = DefaultTextLinkStyles,
 ) {
     val spannable = remember(text) {
-        linkify(text)
+        SpannableString(text).apply {
+
+            Linkify.addLinks(this, Linkify.ALL)
+
+            val match = DistressService.findValidPlusCode(this.toString())
+            if (!match.isNullOrBlank()) {
+                val plusToCenter = DistressService.plusCodeToCenter(match)
+
+                val start = this.toString().indexOf(match)
+                if (start >= 0) {
+                    val end = start + match.length
+
+                    val existing = getSpans(start, end, URLSpan::class.java)
+                    if (existing.isEmpty()) {
+                        setSpan(
+                            URLSpan("geo:0,0?q=${plusToCenter[0]},${plusToCenter[1]}&z=17&label=${
+                                URLEncoder.encode(match, "utf-8")
+                            }"),
+                            start,
+                            end,
+                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                        )
+                    }
+                }
+            }
+        }
     }
     Text(
         text = spannable.toAnnotatedString(linkStyles),
@@ -70,21 +99,36 @@ private fun Spannable.toAnnotatedString(
 ): AnnotatedString = buildAnnotatedString {
     val spannable = this@toAnnotatedString
     var lastEnd = 0
-    spannable.getSpans(0, spannable.length, Any::class.java).forEach { span ->
-        val start = spannable.getSpanStart(span)
-        val end = spannable.getSpanEnd(span)
-        append(spannable.subSequence(lastEnd, start))
-        when (span) {
-            is URLSpan -> withLink(LinkAnnotation.Url(url = span.url, styles = linkStyles)) {
-                append(spannable.subSequence(start, end))
+
+    spannable.getSpans(0, spannable.length, Any::class.java)
+        .sortedBy { spannable.getSpanStart(it) }
+        .forEach { span ->
+
+            val start = spannable.getSpanStart(span)
+            val end = spannable.getSpanEnd(span)
+
+            if (start > lastEnd) {
+                append(spannable.subSequence(lastEnd, start))
             }
 
-            else -> append(spannable.subSequence(start, end))
+            when (span) {
+                is URLSpan -> withLink(
+                    LinkAnnotation.Url(span.url, linkStyles)
+                ) {
+                    append(spannable.subSequence(start, end))
+                }
+
+                else -> append(spannable.subSequence(start, end))
+            }
+
+            lastEnd = end
         }
-        lastEnd = end
+
+    if (lastEnd < spannable.length) {
+        append(spannable.subSequence(lastEnd, spannable.length))
     }
-    append(spannable.subSequence(lastEnd, spannable.length))
 }
+
 
 @Preview(showBackground = true)
 @Composable

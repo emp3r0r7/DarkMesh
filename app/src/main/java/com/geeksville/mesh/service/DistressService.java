@@ -31,6 +31,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
 public class DistressService extends Service {
 
@@ -39,6 +40,10 @@ public class DistressService extends Service {
     public static final String PREF_STRESSTEST_ENABLED = "stress_test_enabled";
     public static final String PREF_STRESSTEST_PREFIX = "stress_test_prefix";
     public static final String PREF_STRESSTEST_DEFAULT_PREFIX = "[SOS]";
+
+    //todo recheck this regex if we change pluscodes bit definition
+    private static final Pattern PLUS_CODE_PATTERN =
+            Pattern.compile("(?:[23456789CFGHJMPQRVWX]{2}){2,4}\\+");
 
     private static final String WAKELOCK_TAG = TAG + "::WakeLockTag";
     private static final int NOTIFICATION_ID = 97;
@@ -106,7 +111,7 @@ public class DistressService extends Service {
                     sb.append(distressPrefix);
 
                     if (distressDTO.includeGps && latitude != null && longitude != null) {
-                        var plus = latLonToPlusCode(
+                        var plus = coordinatesToPlusCode(
                                 latitude,
                                 longitude,
                                 DEFAULT_COORDS_PRECISION
@@ -134,6 +139,10 @@ public class DistressService extends Service {
                         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
                         String time = sdf.format(new Date());
                         sb.append(" Z").append(time);
+                    }
+
+                    if(sb.toString().isBlank()){
+                        sb.append("EMPTY Distress Beacon!");
                     }
 
                     GlobalRadioMesh.sendMessage(sb.toString(), distressDTO.contactKey, 0);
@@ -233,8 +242,33 @@ public class DistressService extends Service {
 
 
     @SuppressWarnings("SameParameterValue")
-    private String latLonToPlusCode(Double lat, Double lon, Integer precision) {
+    public static String coordinatesToPlusCode(Double lat, Double lon, Integer precision) {
         return new OpenLocationCode(lat, lon, precision).getCode();
+    }
+
+    @SuppressWarnings("unused") //maybe to be used in the future..
+    public static OpenLocationCode.CodeArea plusCodeToCoordinates(String code) {
+        return new OpenLocationCode(code).decode();
+    }
+
+    public static double[] plusCodeToCenter(String code) {
+        OpenLocationCode.CodeArea area = new OpenLocationCode(code).decode();
+
+        double lat = (area.getSouthLatitude() + area.getNorthLatitude()) / 2.0;
+        double lon = (area.getWestLongitude() + area.getEastLongitude()) / 2.0;
+
+        return new double[]{lat, lon};
+    }
+
+    public static String findValidPlusCode(String code) {
+        if (TextUtils.isEmpty(code)) {
+            return null;
+        }
+        var match = PLUS_CODE_PATTERN.matcher(code);
+        if(match.find()){
+            return match.group();
+        }
+        return null;
     }
 
     public static synchronized void setAltitude(Integer altitude) {
