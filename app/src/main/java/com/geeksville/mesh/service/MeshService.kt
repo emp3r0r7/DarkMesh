@@ -307,31 +307,30 @@ class MeshService : Service(), Logging {
         }
     }
 
-    private fun stopLocationRequests() {
+    private fun stopLocationRequests(resetPosition: Boolean) {
         if (locationFlow?.isActive == true) {
             info("Stopping location requests")
             locationFlow?.cancel()
             locationFlow = null
         }
 
-        val beaconing = getPreferences(this)
-            .getBoolean(PREF_STRESSTEST_ENABLED, false)
+        if(resetPosition){
 
-        if(beaconing){
-            stopService(Intent(this, DistressService::class.java))
+            DistressService.resetMessagePosition()
+            removeFixedPositionAndClearDB()
 
-            getPreferences(this)
-                .edit { putBoolean(PREF_STRESSTEST_ENABLED, false) }
+            val uiPrefs = getPreferences(this)
+            val beaconing = uiPrefs.getBoolean(PREF_STRESSTEST_ENABLED, false)
+
+            if(beaconing){
+                stopService(Intent(this, DistressService::class.java))
+                uiPrefs.edit { putBoolean(PREF_STRESSTEST_ENABLED, false) }
+            }
         }
-
-        DistressService.resetMessagePosition()
-        removeFixedPositionAndClearDB()
     }
 
     private fun removeFixedPositionAndClearDB(){
-
         try {
-
             val pos = position {
                 latitudeI = 0
                 longitudeI = 0
@@ -1420,7 +1419,7 @@ class MeshService : Service(), Logging {
         // Perform all the steps needed once we start waiting for device sleep to complete
         fun startDeviceSleep() {
             stopPacketQueue()
-            stopLocationRequests()
+            stopLocationRequests(false)
             stopMqttClientProxy()
 
             if (connectTimeMsec != 0L) {
@@ -1454,7 +1453,7 @@ class MeshService : Service(), Logging {
 
         fun startDisconnect() {
             stopPacketQueue()
-            stopLocationRequests()
+            stopLocationRequests(false)
             stopMqttClientProxy()
 
             GeeksvilleApplication.analytics.track(
@@ -2295,7 +2294,7 @@ class MeshService : Service(), Logging {
         }
 
         override fun stopProvideLocation() = toRemoteExceptions {
-            stopLocationRequests()
+            stopLocationRequests(true)
         }
 
         override fun removeByNodenum(requestId: Int, nodeNum: Int) = toRemoteExceptions {
