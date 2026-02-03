@@ -134,4 +134,38 @@
         tools:ignore="HardcodedText" />
 
 
+    <TextView
+        android:id="@+id/overrideTelTextview"
+        android:layout_width="220dp"
+        android:layout_height="22dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="20dp"
+        android:text="OVERRIDE TELEMETRY CHECK"
+        android:textColor="@color/colorAnnotation"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/distressPrefix"
+        tools:ignore="HardcodedText" />
+
+    <TextView
+        android:id="@+id/overrideTelDescription"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="Do not check FW version when browsing telemetry settings"
+        android:textSize="13sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/overrideTelTextview"
+        tools:ignore="HardcodedText" />
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/overrideTelSwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="Override Telemetry FW Check  "
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/overrideTelDescription"
+        tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

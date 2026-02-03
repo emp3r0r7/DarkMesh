@@ -17,6 +17,8 @@ import com.geeksville.mesh.service.DistressService.PREF_STRESSTEST_PREFIX
 const val ADV_SETTINGS_PREFS = "darkmesh_advanced_settings"
 const val TRACE_MAX_PRIORITY_PREF = "trace_max_priority"
 const val SKIP_MQTT_ENTIRELY = "skip_mqtt_entirely"
+const val OVERRIDE_TELEMETRY_ALL_VERSIONS = "override_telemetry_all_versions"
+
 
 class AdvancedSettings : AppCompatActivity() {
 
@@ -38,6 +40,9 @@ class AdvancedSettings : AppCompatActivity() {
         val beaconPrefixBtn =
             findViewById<Button>(R.id.setBeaconPrefixBtn)
 
+        val overrideTelemetrySwitch =
+            findViewById<SwitchCompat>(R.id.overrideTelSwitch)
+
         val traceMaxPref = advancedPrefs.getBoolean(TRACE_MAX_PRIORITY_PREF, false)
         val skipMqttPref = advancedPrefs.getBoolean(SKIP_MQTT_ENTIRELY, false)
 
@@ -53,6 +58,7 @@ class AdvancedSettings : AppCompatActivity() {
 
         setSwitchListener(tracerouteSwitch, TRACE_MAX_PRIORITY_PREF)
         setSwitchListener(skipMqttSwitch, SKIP_MQTT_ENTIRELY)
+        setSwitchListener(overrideTelemetrySwitch, OVERRIDE_TELEMETRY_ALL_VERSIONS)
 
         beaconPrefixBtn.setOnClickListener {
 

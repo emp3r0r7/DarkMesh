@@ -27,10 +27,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.geeksville.mesh.OVERRIDE_TELEMETRY_ALL_VERSIONS
+import com.geeksville.mesh.android.advancedPrefs
 import com.geeksville.mesh.model.DeviceVersion
 import com.geeksville.mesh.model.RadioConfigViewModel
 import com.geeksville.mesh.ui.components.EditTextPreference
@@ -76,6 +79,7 @@ fun TelemetryConfigItemList(
 ) {
     val state by viewModel.radioConfigState.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
     var telemetryInput by rememberSaveable { mutableStateOf(telemetryConfig) }
     val firmwareVersion = state.metadata?.firmwareVersion ?: "1"
 
@@ -84,7 +88,11 @@ fun TelemetryConfigItemList(
     ) {
         item { PreferenceCategory(text = "Telemetry Config") }
 
-        if (DeviceVersion(firmwareVersion) >= DeviceVersion(MIN_FW_FOR_TELEMETRY_TOGGLE)) {
+        val overrideTelemetry = context.advancedPrefs.getBoolean(OVERRIDE_TELEMETRY_ALL_VERSIONS, false)
+        val minFWVersion = DeviceVersion(firmwareVersion) >= DeviceVersion(MIN_FW_FOR_TELEMETRY_TOGGLE)
+
+        if (overrideTelemetry || minFWVersion) {
+
             item {
                 SwitchPreference(
                     title = "Send Device Telemetry",
