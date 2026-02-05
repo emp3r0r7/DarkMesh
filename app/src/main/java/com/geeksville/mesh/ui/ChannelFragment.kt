@@ -104,6 +104,8 @@ import com.geeksville.mesh.ui.components.config.EditChannelDialog
 import com.geeksville.mesh.ui.components.dragContainer
 import com.geeksville.mesh.ui.components.dragDropItemsIndexed
 import com.geeksville.mesh.ui.components.rememberDragDropState
+import com.geeksville.mesh.ui.share.SharedContactViewModel
+import com.geeksville.mesh.ui.share.toSharedContact
 import com.google.accompanist.themeadapter.appcompat.AppCompatTheme
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.journeyapps.barcodescanner.ScanContract
@@ -141,6 +143,7 @@ class ChannelFragment : ScreenFragment("Channel"), Logging {
 @Composable
 fun ChannelScreen(
     viewModel: UIViewModel = hiltViewModel(),
+    sharedContactViewModel: SharedContactViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
@@ -152,6 +155,9 @@ fun ChannelScreen(
     var channelSet by remember(channels) { mutableStateOf(channels) }
     var showChannelEditor by rememberSaveable { mutableStateOf(false) }
     val isEditing = channelSet != channels || showChannelEditor
+
+    var contactString by rememberSaveable { mutableStateOf("") }
+    var addContactError by remember { mutableStateOf(false) }
 
     /* Holds selections made by the user for QR generation. */
     val channelSelections = rememberSaveable(
@@ -314,6 +320,84 @@ fun ChannelScreen(
         state = listState,
         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
     ) {
+
+        item {
+            Text(
+                text = "Add Contact by URL",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 5.dp)
+            )
+        }
+
+        item {
+            OutlinedTextField(
+                value = contactString,
+                onValueChange = {
+                    contactString = it
+                    @Suppress("AssignedValueIsNeverRead")
+                    addContactError = it.isBlank()
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = enabled,
+                isError = addContactError,
+                label = { Text("Contact URL") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { focusManager.clearFocus() }
+                )
+            )
+        }
+
+        item {
+            OutlinedButton(
+                onClick = {
+                    focusManager.clearFocus()
+
+                    if (contactString.isBlank()) {
+                        addContactError = true
+                        return@OutlinedButton
+                    }
+                    try {
+                        val contactProto = contactString.toUri().toSharedContact()
+
+                        if(viewModel.myNodeNum == contactProto.nodeNum){
+                            viewModel.showSnackbar("You can't add yourself!")
+                            return@OutlinedButton
+                        }
+
+                        viewModel.nodeList.value.firstOrNull { it.num == contactProto.nodeNum }.let {
+                            if(it != null){
+                                viewModel.showSnackbar("You already have " + "${contactProto.user.longName}")
+                                return@OutlinedButton
+                            }
+                        }
+
+                        viewModel.showSnackbar("Adding contact ${contactProto.user.longName}")
+                        sharedContactViewModel.addSharedContact(contactProto)
+
+                    } catch (e: Exception){
+                        viewModel.showSnackbar(e.message.toString())
+                    } finally {
+                        contactString = ""
+                    }
+
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, bottom = 16.dp),
+                enabled = enabled && contactString.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(
+                    disabledContentColor = MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.disabled)
+                )
+            ) {
+                Text(text = stringResource(R.string.add))
+            }
+        }
+
         if (!showChannelEditor) {
             item {
                 ChannelListView(

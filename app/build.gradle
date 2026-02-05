@@ -284,6 +284,7 @@ dependencies {
 
     implementation("com.google.openlocationcode:openlocationcode:1.0.4")
 
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
 }
 
 ksp {

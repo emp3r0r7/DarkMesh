@@ -67,6 +67,7 @@ import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Router
 import androidx.compose.material.icons.filled.Scale
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.SignalCellularAlt
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Thermostat
@@ -76,6 +77,9 @@ import androidx.compose.material.icons.filled.Work
 import androidx.compose.material.icons.outlined.Navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -99,6 +103,7 @@ import com.geeksville.mesh.model.MetricsViewModel
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.ui.components.PreferenceCategory
 import com.geeksville.mesh.ui.preview.NodePreviewParameterProvider
+import com.geeksville.mesh.ui.share.SharedContactDialog
 import com.geeksville.mesh.ui.theme.AppTheme
 import com.geeksville.mesh.util.DistanceUnit
 import com.geeksville.mesh.util.formatAgo
@@ -155,6 +160,11 @@ private fun NodeDetailList(
             PreferenceCategory("Details") {
                 NodeDetailsContent(node)
             }
+        }
+
+        item {
+            PreferenceCategory("Share")
+            ShareContactSection(node)
         }
 
         if (node.hasEnvironmentMetrics) {
@@ -609,6 +619,33 @@ private fun PowerMetrics(node: Node) = with(node.powerMetrics) {
         }
     }
 }
+
+@Composable
+private fun ShareContactSection(
+    node: Node,
+) {
+    var showDialog by remember { mutableStateOf(false) }
+
+    NavCard(
+        title = "Share Contact",
+        icon = Icons.Default.Share,
+        enabled = true,
+        onClick = {
+            showDialog = true
+        }
+    )
+
+    if (showDialog) {
+        SharedContactDialog(
+            contact = node,
+            onDismiss = {
+                @Suppress("AssignedValueIsNeverRead")
+                showDialog = false
+            }
+        )
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable
