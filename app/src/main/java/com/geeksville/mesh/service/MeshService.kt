@@ -1055,6 +1055,7 @@ class MeshService : Service(), Logging {
             it.shortName = p.shortName
             it.channel = channel
             if (newNode) {
+                it.isFavorite = false
                 serviceNotifications.showNewNodeSeenNotification(it)
             }
         }
