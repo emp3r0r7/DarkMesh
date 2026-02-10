@@ -1259,12 +1259,15 @@ class MainActivity : AppCompatActivity(), Logging {
 
     override fun onResume() {
         super.onResume()
+        maybePurgeNodes()
+    }
+
+    private fun maybePurgeNodes(){
+
+        val autoDelete = advancedPrefs.getBoolean(AUTO_DELETE_OLD_NODES, false)
+        if(!autoDelete) return
 
         model.connectionState.asLiveData().value?.let {
-
-            val autoDelete = advancedPrefs.getBoolean(AUTO_DELETE_OLD_NODES, false)
-
-            if(!autoDelete) return@let
 
             if(it.isDisconnected()) return@let
 
@@ -1273,15 +1276,22 @@ class MainActivity : AppCompatActivity(), Logging {
             val now = System.currentTimeMillis() / 1000
             val ourNode = model.myNodeNum ?: return@let
 
+            val hours = advancedPrefs.getInt(
+                AUTO_DELETE_TIME_HOURS,
+                AutoDeleteConfig.hoursValues.max()
+            )
+
+            val epochSeconds = hours.toLong() * 60 * 60
+
             model.nodeList.value.toList().filter { n ->
-                (n.num != ourNode && (now - n.lastHeard) >= 54_000) || n.lastHeard == 0
+                (n.num != ourNode && (now - n.lastHeard) >= epochSeconds) || n.lastHeard == 0
             }.forEach { n ->
                 try {
                     radioMeshService.packetId.let { id ->
-                       autoDeleteMap[id] = n.user.longName
-                       radioMeshService.removeByNodenum(id, n.num)
-                       model.deleteNode(n.num)
-                   }
+                        autoDeleteMap[id] = n.user.longName
+                        radioMeshService.removeByNodenum(id, n.num)
+                        model.deleteNode(n.num)
+                    }
 
                 } catch (e: Exception){
                     warn("An error ${e.message} " +
@@ -1289,7 +1299,6 @@ class MainActivity : AppCompatActivity(), Logging {
                 }
             }
         }
-
     }
 
     private fun checkIfDeviceIsHunting() {
