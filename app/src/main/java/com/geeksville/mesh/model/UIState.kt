@@ -515,6 +515,10 @@ class UIViewModel @Inject constructor(
         }
     }
 
+    fun deleteNode(nodeNum: Int) = viewModelScope.launch(Dispatchers.IO) {
+        nodeDB.deleteNode(nodeNum)
+    }
+
     fun requestUserInfo(destNum: Int) {
         info("Requesting UserInfo for '$destNum'")
         try {

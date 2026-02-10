@@ -69,6 +69,7 @@ import com.geeksville.mesh.repository.network.MQTTRepository
 import com.geeksville.mesh.repository.radio.RadioInterfaceService
 import com.geeksville.mesh.repository.radio.RadioServiceConnectionState
 import com.geeksville.mesh.service.DistressService.PREF_STRESSTEST_ENABLED
+import com.geeksville.mesh.service.GlobalRadioMesh.autoDeleteMap
 import com.geeksville.mesh.util.ApiUtil
 import com.geeksville.mesh.util.anonymize
 import com.geeksville.mesh.util.toOneLineString
@@ -1277,6 +1278,17 @@ class MeshService : Service(), Logging {
                                 mainLooperToast("Message to ${getUserName(hexIdToNodeNum(it))} traveling...", Toast.LENGTH_SHORT)
                             }
                         } ?: run {
+
+                            val requestId = packet.decoded.requestId
+                            val deletedNode = autoDeleteMap[requestId]
+
+                            if(deletedNode != null){
+                                mainLooperToast("Purged $deletedNode", Toast.LENGTH_SHORT)
+                                autoDeleteMap.remove(requestId)
+                            } else {
+                                mainLooperToast("Message traveling...", Toast.LENGTH_SHORT)
+                            }
+
                             mainLooperToast("Message traveling...", Toast.LENGTH_SHORT)
                         }
                     } catch(e :Exception){
@@ -2311,9 +2323,12 @@ class MeshService : Service(), Logging {
 
         override fun removeByNodenum(requestId: Int, nodeNum: Int) = toRemoteExceptions {
             nodeDBbyNodeNum.remove(nodeNum)
-            sendToRadio(newMeshPacketTo(myNodeNum).buildAdminPacket {
-                removeByNodenum = nodeNum
-            })
+            sendToRadio(newMeshPacketTo(myNodeNum)
+                .buildAdminPacket(
+                    id = requestId
+                ){
+                    removeByNodenum = nodeNum
+                })
         }
         override fun requestUserInfo(destNum: Int) = toRemoteExceptions {
             if (destNum != myNodeNum) {

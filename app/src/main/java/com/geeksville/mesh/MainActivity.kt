@@ -68,6 +68,7 @@ import com.geeksville.mesh.android.BindFailedException
 import com.geeksville.mesh.android.GeeksvilleApplication
 import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.android.ServiceClient
+import com.geeksville.mesh.android.advancedPrefs
 import com.geeksville.mesh.android.getBluetoothPermissions
 import com.geeksville.mesh.android.getLocationPermissions
 import com.geeksville.mesh.android.getNotificationPermissions
@@ -92,6 +93,8 @@ import com.geeksville.mesh.prefs.UserPrefs.Hunting.HUNT_MODE
 import com.geeksville.mesh.service.DistressService
 import com.geeksville.mesh.service.DistressService.PREF_STRESSTEST_ENABLED
 import com.geeksville.mesh.service.GlobalRadioMesh
+import com.geeksville.mesh.service.GlobalRadioMesh.autoDeleteMap
+import com.geeksville.mesh.service.GlobalRadioMesh.radioMeshService
 import com.geeksville.mesh.service.HuntScheduleService
 import com.geeksville.mesh.service.MeshService
 import com.geeksville.mesh.service.MeshServiceNotifications
@@ -1252,6 +1255,41 @@ class MainActivity : AppCompatActivity(), Logging {
         } else {
             debug("MSG Plan is OFF, doing nothing..")
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        model.connectionState.asLiveData().value?.let {
+
+            val autoDelete = advancedPrefs.getBoolean(AUTO_DELETE_OLD_NODES, false)
+
+            if(!autoDelete) return@let
+
+            if(it.isDisconnected()) return@let
+
+            debug("Checking nodes to purge..")
+
+            val now = System.currentTimeMillis() / 1000
+            val ourNode = model.myNodeNum ?: return@let
+
+            model.nodeList.value.toList().filter { n ->
+                (n.num != ourNode && (now - n.lastHeard) >= 54_000) || n.lastHeard == 0
+            }.forEach { n ->
+                try {
+                    radioMeshService.packetId.let { id ->
+                       autoDeleteMap[id] = n.user.longName
+                       radioMeshService.removeByNodenum(id, n.num)
+                       model.deleteNode(n.num)
+                   }
+
+                } catch (e: Exception){
+                    warn("An error ${e.message} " +
+                            "occurred while deleting node ${n.user.longName}")
+                }
+            }
+        }
+
     }
 
     private fun checkIfDeviceIsHunting() {

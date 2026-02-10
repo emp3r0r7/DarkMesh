@@ -5,6 +5,9 @@ import static ar.com.hjg.pngj.PngHelperInternal.debug;
 import com.geeksville.mesh.DataPacket;
 import com.geeksville.mesh.IMeshService;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class GlobalRadioMesh {
 
     public static volatile IMeshService radioMeshService; //globale per tutte le istanze
@@ -16,6 +19,8 @@ public class GlobalRadioMesh {
     public static synchronized IMeshService getRadio() {
         return radioMeshService;
     }
+
+    public static final Map<Integer, String> autoDeleteMap = new ConcurrentHashMap<>();
 
     public static void sendMessage(String str, String contactKey, Integer replyId) {
 
