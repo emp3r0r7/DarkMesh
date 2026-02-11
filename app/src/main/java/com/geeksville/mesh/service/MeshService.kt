@@ -1288,8 +1288,6 @@ class MeshService : Service(), Logging {
                             } else {
                                 mainLooperToast("Message traveling...", Toast.LENGTH_SHORT)
                             }
-
-                            mainLooperToast("Message traveling...", Toast.LENGTH_SHORT)
                         }
                     } catch(e :Exception){
                         debug("An error occurred while reading packet: " +

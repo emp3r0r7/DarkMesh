@@ -17,6 +17,7 @@
 
 package com.geeksville.mesh.ui.message.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,7 +29,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Reply
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
@@ -49,8 +52,10 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.DataPacket
 import com.geeksville.mesh.database.entity.Reaction
 import com.geeksville.mesh.model.Message
@@ -78,6 +83,7 @@ internal fun MessageList(
 
     val coroutineScope = rememberCoroutineScope()
     var highlightedMessageId by remember { mutableStateOf<Long?>(null) }
+    var swipeLocked by remember { mutableStateOf(false) }
 
     val haptics = LocalHapticFeedback.current
     val inSelectionMode by remember { derivedStateOf { selectedIds.value.isNotEmpty() } }
@@ -115,77 +121,133 @@ internal fun MessageList(
         value += uuid
     }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        state = listState,
-        reverseLayout = true,
-        contentPadding = contentPadding
-    ) {
-        items(messages, key = { it.uuid }) { msg ->
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrollInProgress }
+            .collect { scrolling ->
+                if (scrolling) {
+                    swipeLocked = true
+                } else {
+                    delay(350) //timeout for reply reactivation
+                    swipeLocked = false
+                }
+            }
+    }
 
-            val fromLocal = msg.node.user.id == DataPacket.ID_LOCAL
-            val selected by remember { derivedStateOf { selectedIds.value.contains(msg.uuid) } }
-            val isHighlighted = msg.uuid == highlightedMessageId
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            state = listState,
+            reverseLayout = true,
+            contentPadding = contentPadding
+        ) {
+            items(messages, key = { it.uuid }) { msg ->
 
-            ReactionRow(fromLocal, msg.emojis) { showReactionDialog = msg.emojis }
+                val fromLocal = msg.node.user.id == DataPacket.ID_LOCAL
+                val selected by remember { derivedStateOf { selectedIds.value.contains(msg.uuid) } }
+                val isHighlighted = msg.uuid == highlightedMessageId
 
-            Box(Modifier.wrapContentSize(Alignment.TopStart)) {
-                var expandedNodeMenu by remember { mutableStateOf(false) }
+                ReactionRow(fromLocal, msg.emojis) { showReactionDialog = msg.emojis }
 
-                val repliedMessage = remember(msg.replyId, messages) {
-                    msg.replyId?.let { replyId ->
-                        messages.firstOrNull {
-                            it.packetId == replyId &&
-                                    it.uuid != msg.uuid
+                Box(Modifier.wrapContentSize(Alignment.TopStart)) {
+                    var expandedNodeMenu by remember { mutableStateOf(false) }
+
+                    val repliedMessage = remember(msg.replyId, messages) {
+                        msg.replyId?.let { replyId ->
+                            messages.firstOrNull {
+                                it.packetId == replyId &&
+                                        it.uuid != msg.uuid
+                            }
                         }
                     }
-                }
 
-                SwipeReplyMessage(
-                    enabled = !inSelectionMode,
-                    onReply = {
-                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        viewModel.startReply(msg)
+                    SwipeReplyMessage(
+                        enabled = !inSelectionMode && !swipeLocked,
+                        onReply = {
+                            haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            viewModel.startReply(msg)
+                        }
+                    ) {
+                        MessageItem(
+                            node = msg.node,
+                            messageText = msg.text,
+                            messageTime = msg.time,
+                            messageStatus = msg.status,
+                            hopsAway = msg.hopsAway,
+                            selected = selected,
+                            highlighted = isHighlighted,
+                            repliedMessage = repliedMessage,
+                            onClick = {
+                                if (inSelectionMode) selectedIds.toggle(msg.uuid)
+                            },
+                            onLongClick = {
+                                selectedIds.toggle(msg.uuid)
+                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            },
+                            onChipClick = {
+                                if (msg.node.num != 0) {
+                                    expandedNodeMenu = true
+                                }
+                            },
+                            onStatusClick = { showStatusDialog = msg },
+                            onSendReaction = { onSendReaction(it, msg.packetId) },
+                            onQuotedClick = { quoted -> highlightMessage(quoted) },
+                        )
                     }
-                ) {
-                    MessageItem(
+
+                    NodeMenu(
                         node = msg.node,
-                        messageText = msg.text,
-                        messageTime = msg.time,
-                        messageStatus = msg.status,
-                        hopsAway = msg.hopsAway,
-                        selected = selected,
-                        highlighted = isHighlighted,
-                        repliedMessage = repliedMessage,
-                        onClick = {
-                            if (inSelectionMode) selectedIds.toggle(msg.uuid)
-                        },
-                        onLongClick = {
-                            selectedIds.toggle(msg.uuid)
-                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                        },
-                        onChipClick = {
-                            if (msg.node.num != 0) {
-                                expandedNodeMenu = true
-                            }
-                        },
-                        onStatusClick = { showStatusDialog = msg },
-                        onSendReaction = { onSendReaction(it, msg.packetId) },
-                        onQuotedClick = { quoted -> highlightMessage(quoted) },
+                        showFullMenu = true,
+                        expanded = expandedNodeMenu,
+                        onDismissRequest = { expandedNodeMenu = false },
+                        onAction = onNodeMenuAction
                     )
                 }
-
-                NodeMenu(
-                    node = msg.node,
-                    showFullMenu = true,
-                    expanded = expandedNodeMenu,
-                    onDismissRequest = { expandedNodeMenu = false },
-                    onAction = onNodeMenuAction
-                )
             }
+        }
+        ScrollToBottomButton(
+            listState,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+        )
+    }
+}
+
+@Composable
+private fun ScrollToBottomButton(
+    listState: LazyListState,
+    modifier: Modifier = Modifier
+) {
+    val coroutineScope = rememberCoroutineScope()
+
+    val showButton by remember {
+        derivedStateOf {
+            listState.firstVisibleItemIndex > 2
+        }
+    }
+
+    AnimatedVisibility(
+        visible = showButton,
+        modifier = modifier
+            .padding(16.dp)
+    ) {
+        FloatingActionButton(
+            onClick = {
+                coroutineScope.launch {
+                    listState.animateScrollToItem(0)
+                }
+            },
+            containerColor = colorResource(id = R.color.colorPrimary),
+            contentColor = colorResource(id = R.color.colorPrimary)
+        ) {
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = "Scroll to bottom",
+                tint = colorResource(id = R.color.design_default_color_surface),
+                )
         }
     }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -195,11 +257,14 @@ fun SwipeReplyMessage(
     content: @Composable () -> Unit
 ) {
     val dismissState = rememberSwipeToDismissBoxState(
+        positionalThreshold = { totalDistance ->
+            totalDistance * 0.5f
+        },
         confirmValueChange = { value ->
             if (value == SwipeToDismissBoxValue.StartToEnd) {
                 onReply()
-                false
-            } else false
+            }
+            false
         }
     )
 
@@ -225,6 +290,7 @@ fun ReplySwipeBackground(progress: Float) {
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.Reply,
+            tint = colorResource(id = R.color.colorAnnotation),
             contentDescription = "Reply",
             modifier = Modifier
                 .scale(0.9f + progress * 0.3f)
