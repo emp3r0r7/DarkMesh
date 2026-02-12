@@ -1,217 +1,225 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp">
+    android:fillViewport="true">
 
-    <TextView
-        android:id="@+id/advanced_settings"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="Advanced Settings"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:ignore="HardcodedText" />
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="24dp">
 
-    <TextView
-        android:textColor="@color/colorAnnotation"
-        android:id="@+id/traceMaxLabel"
-        android:layout_width="168dp"
-        android:layout_height="22dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="20dp"
-        android:text="TRACE MAX"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/advanced_settings"
-        tools:ignore="HardcodedText" />
+        <TextView
+            android:id="@+id/advanced_settings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Advanced Settings"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:ignore="HardcodedText" />
 
-    <TextView
-        android:id="@+id/tracemaxDescription"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="Sets the Traceroute packet priority to MAX. It can speed-up packet forwarding locally. Since this is an experimental feature, use it with caution!"
-        android:textSize="13sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/traceMaxLabel"
-        tools:ignore="HardcodedText" />
+        <TextView
+            android:textColor="@color/colorAnnotation"
+            android:id="@+id/traceMaxLabel"
+            android:layout_width="168dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="20dp"
+            android:text="TRACE MAX"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/advanced_settings"
+            tools:ignore="HardcodedText" />
 
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/tracerouteMaxPriority"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="Traceroute Max Priority  "
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tracemaxDescription"
-        tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
+        <TextView
+            android:id="@+id/tracemaxDescription"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Sets the Traceroute packet priority to MAX. It can speed-up packet forwarding locally. Since this is an experimental feature, use it with caution!"
+            android:textSize="13sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/traceMaxLabel"
+            tools:ignore="HardcodedText" />
 
-    <TextView
-        android:textColor="@color/colorAnnotation"
-        android:id="@+id/textView"
-        android:layout_width="168dp"
-        android:layout_height="22dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="20dp"
-        android:text="SKIP MQTT RECEIVED DATA"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tracerouteMaxPriority"
-        tools:ignore="HardcodedText" />
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/tracerouteMaxPriority"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Traceroute Max Priority  "
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tracemaxDescription"
+            tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
 
-    <TextView
-        android:id="@+id/skipMqttEntirely"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="Does not process or show packets coming from MQTT."
-        android:textSize="13sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView"
-        tools:ignore="HardcodedText" />
+        <TextView
+            android:textColor="@color/colorAnnotation"
+            android:id="@+id/textView"
+            android:layout_width="168dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="20dp"
+            android:text="SKIP MQTT RECEIVED DATA"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tracerouteMaxPriority"
+            tools:ignore="HardcodedText" />
 
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/skipMqttEntirelySwitch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="Skip MQTT Entirely  "
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/skipMqttEntirely"
-        tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
+        <TextView
+            android:id="@+id/skipMqttEntirely"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Does not process or show packets coming from MQTT."
+            android:textSize="13sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView"
+            tools:ignore="HardcodedText" />
 
-
-    <TextView
-        android:textColor="@color/colorAnnotation"
-        android:id="@+id/beaconPrefix"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="20dp"
-        android:text="DISTRESS BEACON PREFIX"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/skipMqttEntirelySwitch"
-        tools:ignore="HardcodedText"/>
-
-    <TextView
-        android:id="@+id/distressDescription"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="You can choose a distress beacon prefix."
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/beaconPrefix"
-        tools:ignore="HardcodedText" />
-
-    <EditText
-        android:id="@+id/distressPrefix"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:autofillHints="dsaasddas"
-        android:hint="PREFIX UNSET"
-        android:inputType="textShortMessage"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/distressDescription"
-        tools:ignore="HardcodedText" />
-
-    <Button
-        android:id="@+id/setBeaconPrefixBtn"
-        android:layout_width="94dp"
-        android:layout_height="45dp"
-        android:layout_marginStart="9dp"
-        android:layout_marginEnd="100dp"
-        android:text="SET"
-        android:backgroundTint="@color/colorAnnotation"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.666"
-        app:layout_constraintStart_toEndOf="@+id/distressPrefix"
-        app:layout_constraintTop_toBottomOf="@+id/distressDescription"
-        tools:ignore="HardcodedText" />
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/skipMqttEntirelySwitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Skip MQTT Entirely  "
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/skipMqttEntirely"
+            tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
 
 
-    <TextView
-        android:id="@+id/overrideTelTextview"
-        android:layout_width="220dp"
-        android:layout_height="22dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="20dp"
-        android:text="OVERRIDE TELEMETRY CHECK"
-        android:textColor="@color/colorAnnotation"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/distressPrefix"
-        tools:ignore="HardcodedText" />
+        <TextView
+            android:textColor="@color/colorAnnotation"
+            android:id="@+id/beaconPrefix"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="20dp"
+            android:text="DISTRESS BEACON PREFIX"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/skipMqttEntirelySwitch"
+            tools:ignore="HardcodedText"/>
 
-    <TextView
-        android:id="@+id/overrideTelDescription"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="Do not check FW version when browsing telemetry settings."
-        android:textSize="13sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/overrideTelTextview"
-        tools:ignore="HardcodedText" />
+        <TextView
+            android:id="@+id/distressDescription"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="You can choose a distress beacon prefix."
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/beaconPrefix"
+            tools:ignore="HardcodedText" />
 
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/overrideTelSwitch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="Override Telemetry FW Check  "
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/overrideTelDescription"
-        tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
+        <EditText
+            android:id="@+id/distressPrefix"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:autofillHints="dsaasddas"
+            android:hint="PREFIX UNSET"
+            android:inputType="textShortMessage"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/distressDescription"
+            tools:ignore="HardcodedText" />
 
-
-    <TextView
-        android:id="@+id/deleteOldNodesTW"
-        android:layout_width="220dp"
-        android:layout_height="22dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="20dp"
-
-        android:text="AUTO DELETE OLD NODES"
-        android:textColor="@color/colorAnnotation"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/overrideTelSwitch"
-        tools:ignore="HardcodedText" />
-
-    <TextView
-        android:id="@+id/deleteOldNodesDesc"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="DarkMesh will automatically delete older nodes to prevent gateway detection collisions and to keep the NodeDB clean. You can select the hours threshold."
-
-        android:textSize="13sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/deleteOldNodesTW"
-        tools:ignore="HardcodedText" />
-
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/deleteOldNodesSwitch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Auto Delete Nodes  "
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.043"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/deleteOldNodesDesc"
-        tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
-
-    <Spinner
-        android:id="@+id/autoDeleteTiming"
-        android:layout_width="100dp"
-        android:layout_height="47dp"
-        android:layout_marginEnd="4dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/deleteOldNodesSwitch"
-        app:layout_constraintTop_toBottomOf="@+id/deleteOldNodesDesc" />
+        <Button
+            android:id="@+id/setBeaconPrefixBtn"
+            android:layout_width="94dp"
+            android:layout_height="45dp"
+            android:layout_marginStart="9dp"
+            android:layout_marginEnd="100dp"
+            android:text="SET"
+            android:backgroundTint="@color/colorAnnotation"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.666"
+            app:layout_constraintStart_toEndOf="@+id/distressPrefix"
+            app:layout_constraintTop_toBottomOf="@+id/distressDescription"
+            tools:ignore="HardcodedText" />
 
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <TextView
+            android:id="@+id/overrideTelTextview"
+            android:layout_width="220dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="20dp"
+            android:text="OVERRIDE TELEMETRY CHECK"
+            android:textColor="@color/colorAnnotation"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/distressPrefix"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/overrideTelDescription"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Do not check FW version when browsing telemetry settings."
+            android:textSize="13sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/overrideTelTextview"
+            tools:ignore="HardcodedText" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/overrideTelSwitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Override Telemetry FW Check  "
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/overrideTelDescription"
+            tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
+
+
+        <TextView
+            android:id="@+id/deleteOldNodesTW"
+            android:layout_width="220dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="20dp"
+
+            android:text="AUTO DELETE OLD NODES"
+            android:textColor="@color/colorAnnotation"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/overrideTelSwitch"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/deleteOldNodesDesc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="DarkMesh will automatically delete older nodes to prevent gateway detection collisions and to keep the NodeDB clean. You can select the hours threshold."
+
+            android:textSize="13sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/deleteOldNodesTW"
+            tools:ignore="HardcodedText" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/deleteOldNodesSwitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Auto Delete Nodes  "
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.043"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/deleteOldNodesDesc"
+            tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
+
+        <Spinner
+            android:id="@+id/autoDeleteTiming"
+            android:layout_width="100dp"
+            android:layout_height="47dp"
+            android:layout_marginEnd="4dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/deleteOldNodesSwitch"
+            app:layout_constraintTop_toBottomOf="@+id/deleteOldNodesDesc" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
