@@ -344,6 +344,7 @@ class MainActivity : AppCompatActivity(), Logging {
         // Handle any intent
         checkIfDeviceIsSensor()
         checkIfDeviceIsHidden()
+        observeUnreadState()
         handleIntent(intent)
     }
 
@@ -782,6 +783,16 @@ class MainActivity : AppCompatActivity(), Logging {
                 model.deviceRole.collect { role ->
                     val stealthStatus = model.actionBarMenu?.findItem(R.id.probeStatusMode)
                     stealthStatus?.isVisible = role == ConfigProtos.Config.DeviceConfig.Role.CLIENT_HIDDEN
+                }
+            }
+        }
+    }
+
+    private fun observeUnreadState() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                model.hasUnread.collect { hasUnread ->
+                    updateMessagesTabDot(hasUnread)
                 }
             }
         }
@@ -1325,6 +1336,20 @@ class MainActivity : AppCompatActivity(), Logging {
 
         } else {
             huntModeItem?.isVisible = false
+        }
+    }
+
+    private fun updateMessagesTabDot(hasUnread: Boolean) {
+
+        val messagesTabIndex = 0 //tab messages
+        val tab = binding.tabLayout.getTabAt(messagesTabIndex) ?: return
+
+        if (hasUnread) {
+            val badge = tab.orCreateBadge
+            badge.backgroundColor = ContextCompat.getColor(this, R.color.colorAnnotation)
+            badge.isVisible = true
+        } else {
+            tab.removeBadge()
         }
     }
 }

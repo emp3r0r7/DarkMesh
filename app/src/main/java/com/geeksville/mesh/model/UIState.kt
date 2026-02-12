@@ -445,6 +445,16 @@ class UIViewModel @Inject constructor(
         initialValue = emptyList(),
     )
 
+    val hasUnread = contactList
+        .map { contacts ->
+            contacts.any { it.unreadCount > 0 }
+        }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            false
+        )
+
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getMessagesFrom(contactKey: String) = packetRepository.getMessagesFrom(contactKey)
         .mapLatest { list -> list.map { it.toMessage(::getNode) } }
