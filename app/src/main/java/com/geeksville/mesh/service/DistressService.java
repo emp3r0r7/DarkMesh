@@ -243,7 +243,12 @@ public class DistressService extends Service {
 
     @SuppressWarnings("SameParameterValue")
     public static String coordinatesToPlusCode(Double lat, Double lon, Integer precision) {
-        return new OpenLocationCode(lat, lon, precision).getCode();
+        try {
+            return new OpenLocationCode(lat, lon, precision).getCode();
+        } catch (Exception e){
+            Log.e(TAG, "Could not encode coordinates: " + lat + " | " + lon);
+            return null;
+        }
     }
 
     @SuppressWarnings("unused") //maybe to be used in the future..
@@ -252,12 +257,17 @@ public class DistressService extends Service {
     }
 
     public static double[] plusCodeToCenter(String code) {
-        OpenLocationCode.CodeArea area = new OpenLocationCode(code).decode();
+        try {
+            OpenLocationCode.CodeArea area = new OpenLocationCode(code).decode();
 
-        double lat = (area.getSouthLatitude() + area.getNorthLatitude()) / 2.0;
-        double lon = (area.getWestLongitude() + area.getEastLongitude()) / 2.0;
+            double lat = (area.getSouthLatitude() + area.getNorthLatitude()) / 2.0;
+            double lon = (area.getWestLongitude() + area.getEastLongitude()) / 2.0;
 
-        return new double[]{lat, lon};
+            return new double[]{lat, lon};
+        } catch (Exception e){
+            Log.e(TAG, "Could not decode plus code: " + code);
+            return null;
+        }
     }
 
     public static String findValidPlusCode(String code) {

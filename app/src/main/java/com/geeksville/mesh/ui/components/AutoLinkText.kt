@@ -62,23 +62,23 @@ fun AutoLinkText(
 
             val match = DistressService.findValidPlusCode(this.toString())
             if (!match.isNullOrBlank()) {
-                val plusToCenter = DistressService.plusCodeToCenter(match)
+                DistressService.plusCodeToCenter(match)?.let {
 
-                val start = this.toString().indexOf(match)
-                if (start >= 0) {
+                    val start = this.toString().indexOf(match)
+                    if (start < 0) return@let
+
                     val end = start + match.length
-
                     val existing = getSpans(start, end, URLSpan::class.java)
-                    if (existing.isEmpty()) {
-                        setSpan(
-                            URLSpan("geo:0,0?q=${plusToCenter[0]},${plusToCenter[1]}&z=17&label=${
-                                URLEncoder.encode(match, "utf-8")
-                            }"),
-                            start,
-                            end,
-                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-                        )
-                    }
+
+                    if (!existing.isEmpty()) return@let
+                    setSpan(
+                        URLSpan("geo:0,0?q=${it[0]},${it[1]}&z=17&label=${
+                            URLEncoder.encode(match, "utf-8")
+                        }"),
+                        start,
+                        end,
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
                 }
             }
         }
