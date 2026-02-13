@@ -31,7 +31,7 @@ import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.ui.preview.NodePreviewParameterProvider
 import com.geeksville.mesh.ui.theme.AppTheme
 
-const val MAX_VALID_SNR = 100F
+const val MAX_VALID_SNR = 110F
 const val MAX_VALID_RSSI = 0
 
 @Composable
@@ -70,8 +70,8 @@ fun SignalInfo(
         )
     }
     /* We only know the Signal Quality from direct nodes aka 0 hop. */
-    if (node.hopsAway <= 0) {
-        if (node.snr < MAX_VALID_SNR && node.rssi < MAX_VALID_RSSI) {
+    if (node.hopsAway <= 0){
+        if (!isThisNode && node.snr <= MAX_VALID_SNR && node.rssi <= MAX_VALID_RSSI) {
             NodeSignalQuality(node.snr, node.rssi)
         } else {
             //not showing direct for our node or unknown hops!
