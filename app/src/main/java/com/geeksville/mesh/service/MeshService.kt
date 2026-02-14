@@ -1706,6 +1706,7 @@ class MeshService : Service(), Logging {
             }
             it.isFavorite = info.isFavorite
             it.isIgnored = info.isIgnored
+            it.role = info.user.role.name
         }
     }
 

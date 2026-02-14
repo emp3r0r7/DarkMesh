@@ -58,6 +58,7 @@ data class NodeWithRelations(
             environmentMetrics = environmentTelemetry.environmentMetrics,
             powerMetrics = powerTelemetry.powerMetrics,
             paxcounter = paxcounter,
+            role = role
         )
     }
 
@@ -78,6 +79,7 @@ data class NodeWithRelations(
             environmentTelemetry = environmentTelemetry,
             powerTelemetry = powerTelemetry,
             paxcounter = paxcounter,
+            role = role
         )
     }
 }
@@ -142,6 +144,10 @@ data class NodeEntity(
 
     @ColumnInfo(typeAffinity = ColumnInfo.BLOB)
     var paxcounter: PaxcountProtos.Paxcount = PaxcountProtos.Paxcount.getDefaultInstance(),
+
+    @ColumnInfo(name = "role")
+    var role: String? = null
+
 ) {
     val deviceMetrics: TelemetryProtos.DeviceMetrics
         get() = deviceTelemetry.deviceMetrics

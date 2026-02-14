@@ -25,9 +25,9 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.AutoMigrationSpec
-import com.geeksville.mesh.database.dao.PacketDao
 import com.geeksville.mesh.database.dao.MeshLogDao
 import com.geeksville.mesh.database.dao.NodeInfoDao
+import com.geeksville.mesh.database.dao.PacketDao
 import com.geeksville.mesh.database.dao.QuickChatActionDao
 import com.geeksville.mesh.database.entity.ContactSettings
 import com.geeksville.mesh.database.entity.MeshLog
@@ -64,7 +64,7 @@ import com.geeksville.mesh.database.entity.ReactionEntity
         AutoMigration(from = 14, to = 15),
         AutoMigration(from = 15, to = 16),
     ],
-    version = 16,
+    version = 17,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)

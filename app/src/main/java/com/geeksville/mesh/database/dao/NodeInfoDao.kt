@@ -93,7 +93,12 @@ interface NodeInfoDao {
         WHEN :sort = 'channel' THEN channel
         WHEN :sort = 'via_mqtt' THEN via_mqtt
         WHEN :sort = 'is_favorite' THEN -is_favorite
-
+        WHEN :sort = 'infrastructure' THEN
+            CASE
+                WHEN role IN ('ROUTER', 'ROUTER_LATE', 'CLIENT_BASE', 'REPEATER') THEN 0
+                ELSE 1
+            END
+            
         ELSE 0
     END ASC,
     last_heard DESC

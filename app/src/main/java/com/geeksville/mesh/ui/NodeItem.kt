@@ -41,7 +41,13 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SettingsInputAntenna
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,6 +56,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -68,13 +75,14 @@ import com.geeksville.mesh.ui.compose.ElevationInfo
 import com.geeksville.mesh.ui.compose.SatelliteCountInfo
 import com.geeksville.mesh.ui.preview.NodePreviewParameterProvider
 import com.geeksville.mesh.ui.theme.AppTheme
+import com.geeksville.mesh.util.ApiUtil
 import com.geeksville.mesh.util.toDistanceString
 import org.meshtastic.proto.ConfigProtos.Config.DeviceConfig
 import org.meshtastic.proto.ConfigProtos.Config.DisplayConfig
 import org.meshtastic.proto.MeshProtos
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun NodeItem(
     thisNode: Node?,
@@ -189,6 +197,28 @@ fun NodeItem(
                             contentDescription = "Favorite node",
                             tint = MaterialTheme.colors.primary
                         )
+                    }
+
+                    if (!isThisNode &&
+                        (ApiUtil.isInfrastructure(roleName) || thatNode.user.isUnmessagable)
+                        ) {
+                        TooltipBox(
+                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
+                            tooltip = { PlainTooltip {
+                                androidx.compose.material3.Text(
+                                    "Infrastructure node, may not respond to private messages."
+                                )
+                            } },
+                            state = rememberTooltipState(),
+                        ) {
+                            Icon(
+                                modifier = Modifier
+                                    .padding(horizontal = 5.dp),
+                                imageVector = Icons.Default.SettingsInputAntenna,
+                                contentDescription = "Infrastructure",
+                                tint = colorResource(id = R.color.colorAnnotation),
+                            )
+                        }
                     }
 
                     LastHeardInfo(

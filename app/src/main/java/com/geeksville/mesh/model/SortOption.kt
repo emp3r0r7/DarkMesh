@@ -27,5 +27,6 @@ enum class NodeSortOption(val sqlValue: String, @StringRes val stringRes: Int) {
     HOPS_AWAY("hops_away", R.string.node_sort_hops_away),
     CHANNEL("channel", R.string.node_sort_channel),
     VIA_MQTT("via_mqtt", R.string.node_sort_via_mqtt),
-    FAVORITES("is_favorite", R.string.node_sort_favorite)
+    FAVORITES("is_favorite", R.string.node_sort_favorite),
+    INFRASTRUCTURE("infrastructure", R.string.node_sort_infrastructure)
 }

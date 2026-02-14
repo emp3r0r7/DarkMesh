@@ -8,6 +8,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.protobuf.util.JsonFormat
+import org.meshtastic.proto.ConfigProtos
 import org.meshtastic.proto.ConfigProtos.Config.DisplayConfig.DeprecatedGpsCoordinateFormat
 import org.meshtastic.proto.MeshProtos.MeshPacket
 import org.meshtastic.proto.Portnums
@@ -19,6 +20,13 @@ object ApiUtil {
             DeprecatedGpsCoordinateFormat.UNUSED.getNumber()
 
         else gps.getNumber()
+    }
+
+    fun isInfrastructure(role: String) : Boolean {
+        return ConfigProtos.Config.DeviceConfig.Role.ROUTER.name == role  ||
+               ConfigProtos.Config.DeviceConfig.Role.ROUTER_LATE.name == role ||
+               ConfigProtos.Config.DeviceConfig.Role.CLIENT_BASE.name == role ||
+               ConfigProtos.Config.DeviceConfig.Role.REPEATER.name == role
     }
 
     fun mergePacketAndPayload(myNodeID: String,
