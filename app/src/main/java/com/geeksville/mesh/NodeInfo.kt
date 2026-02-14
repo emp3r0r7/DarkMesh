@@ -43,6 +43,7 @@ data class MeshUser(
     val shortName: String,
     val hwModel: MeshProtos.HardwareModel,
     val isLicensed: Boolean = false,
+    val isUnmessagable: Boolean = false,
     val role: Int = 0,
 ) : Parcelable {
 
@@ -52,6 +53,7 @@ data class MeshUser(
             "shortName=${shortName.anonymize}, " +
             "hwModel=$hwModelString, " +
             "isLicensed=$isLicensed, " +
+            "isUnmessagable=$isUnmessagable, " +
             "role=$role)"
     }
 
@@ -63,6 +65,7 @@ data class MeshUser(
         p.shortName,
         p.hwModel,
         p.isLicensed,
+        p.isUnmessagable,
         p.roleValue
     )
 

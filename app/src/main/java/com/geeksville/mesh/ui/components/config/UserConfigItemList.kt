@@ -45,12 +45,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.model.RadioConfigViewModel
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.model.getInitials
@@ -60,6 +62,8 @@ import com.geeksville.mesh.ui.components.PreferenceCategory
 import com.geeksville.mesh.ui.components.PreferenceFooter
 import com.geeksville.mesh.ui.components.RegularPreference
 import com.geeksville.mesh.ui.components.SwitchPreference
+import com.geeksville.mesh.util.ApiUtil
+import com.geeksville.mesh.util.Capabilities
 import org.meshtastic.proto.MeshProtos
 import org.meshtastic.proto.copy
 import org.meshtastic.proto.user
@@ -69,6 +73,8 @@ fun UserConfigScreen(
     viewModel: RadioConfigViewModel = hiltViewModel(),
 ) {
     val state by viewModel.radioConfigState.collectAsStateWithLifecycle()
+    val firmwareVersion = state.metadata?.firmwareVersion
+    val capabilities = remember(firmwareVersion) { Capabilities(firmwareVersion) }
 
     if (state.responseState.isWaiting()) {
         PacketResponseStateDialog(
@@ -81,6 +87,7 @@ fun UserConfigScreen(
         userConfig = state.userConfig,
         enabled = true,
         onSaveClicked = viewModel::setOwner,
+        capabilities = capabilities
     )
 }
 
@@ -90,6 +97,7 @@ fun UserConfigItemList(
     userConfig: MeshProtos.User,
     enabled: Boolean,
     onSaveClicked: (MeshProtos.User) -> Unit,
+    capabilities: Capabilities
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
@@ -145,6 +153,18 @@ fun UserConfigItemList(
             RegularPreference(title = "Hardware model",
                 subtitle = userInput.hwModel.name,
                 onClick = {})
+        }
+        item { Divider() }
+
+        item {
+            SwitchPreference(
+                title = stringResource(R.string.unmessagable),
+                checked =
+                    userInput.isUnmessagable ||
+                            (!capabilities.canToggleUnmessageable && ApiUtil.isInfrastructure(userInput.role.name)),
+                enabled = capabilities.canToggleUnmessageable,
+                onCheckedChange = { userInput = userInput.copy {isUnmessagable = it}},
+            )
         }
         item { Divider() }
 
@@ -280,5 +300,6 @@ private fun UserConfigPreview() {
         },
         enabled = true,
         onSaveClicked = { },
+        capabilities = Capabilities("2.7.15")
     )
 }

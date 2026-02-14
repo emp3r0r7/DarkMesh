@@ -41,6 +41,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PhonelinkErase
 import androidx.compose.material.icons.filled.SettingsInputAntenna
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -97,6 +98,7 @@ fun NodeItem(
 ) {
     val isIgnored = thatNode.isIgnored
     val longName = thatNode.user.longName.ifEmpty { stringResource(id = R.string.unknown_username) }
+    val unmessagable = thatNode.user.isUnmessagable
 
     val isThisNode = thisNode?.num == thatNode.num
     val system = remember(distanceUnits) { DisplayConfig.DisplayUnits.forNumber(distanceUnits) }
@@ -114,6 +116,8 @@ fun NodeItem(
     } else {
         thatNode.user.role.name
     }
+
+    val infrastructure = ApiUtil.isInfrastructure(roleName)
 
     val style = if (thatNode.isUnknownUser) {
         LocalTextStyle.current.copy(fontStyle = FontStyle.Italic)
@@ -200,13 +204,24 @@ fun NodeItem(
                     }
 
                     if (!isThisNode &&
-                        (ApiUtil.isInfrastructure(roleName) || thatNode.user.isUnmessagable)
+                        (infrastructure || unmessagable)
                         ) {
+
+                        var icon = Icons.Default.SettingsInputAntenna
+                        var description = "Infrastructure node, may not respond to private messages."
+                        var iconColor = R.color.colorAnnotation
+
+                        if(unmessagable && !infrastructure){
+                            icon = Icons.Default.PhonelinkErase
+                            description = "Unmessageable node, may not respond to private messages."
+                            iconColor = R.color.colorPrimaryDark
+                        }
+
                         TooltipBox(
                             positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
                             tooltip = { PlainTooltip {
                                 androidx.compose.material3.Text(
-                                    "Infrastructure node, may not respond to private messages."
+                                    description
                                 )
                             } },
                             state = rememberTooltipState(),
@@ -214,9 +229,9 @@ fun NodeItem(
                             Icon(
                                 modifier = Modifier
                                     .padding(horizontal = 5.dp),
-                                imageVector = Icons.Default.SettingsInputAntenna,
-                                contentDescription = "Infrastructure",
-                                tint = colorResource(id = R.color.colorAnnotation),
+                                imageVector = icon,
+                                contentDescription = "Infrastructure or Unmessagable",
+                                tint = colorResource(id = iconColor),
                             )
                         }
                     }
