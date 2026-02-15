@@ -107,6 +107,13 @@ fun NodeMenu(
             DropdownMenuItem(
                 onClick = {
                     onDismissRequest()
+                    onAction(NodeMenuAction.RequestDeviceMetadata(node))
+                },
+                content = { Text(stringResource(R.string.request_usermetadata)) }
+            )
+            DropdownMenuItem(
+                onClick = {
+                    onDismissRequest()
                     onAction(NodeMenuAction.RequestPosition(node))
                 },
                 content = { Text(stringResource(R.string.request_position)) }
@@ -177,6 +184,7 @@ sealed class NodeMenuAction {
     data class Ignore(val node: Node) : NodeMenuAction()
     data class DirectMessage(val node: Node) : NodeMenuAction()
     data class RequestUserInfo(val node: Node) : NodeMenuAction()
+    data class RequestDeviceMetadata(val node: Node) : NodeMenuAction()
     data class RequestPosition(val node: Node) : NodeMenuAction()
     data class TraceRoute(val node: Node) : NodeMenuAction()
     data class FavoriteNode(val node: Node) : NodeMenuAction()

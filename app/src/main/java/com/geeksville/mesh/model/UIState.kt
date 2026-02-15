@@ -538,6 +538,14 @@ class UIViewModel @Inject constructor(
         }
     }
 
+    fun requestDeviceMetadata(node: Node) = viewModelScope.launch{
+        try {
+            radioConfigRepository.onServiceAction(ServiceAction.GetDeviceMetadata(node.num))
+        } catch (ex: RemoteException) {
+            errormsg("Favorite node error:", ex)
+        }
+    }
+
     fun requestPosition(destNum: Int, position: Position = Position(0.0, 0.0, 0)) {
         info("Requesting position for '$destNum'")
         try {

@@ -173,6 +173,7 @@ fun NodesScreen(
                         is NodeMenuAction.TraceRoute -> model.requestTraceroute(node.num)
                         is NodeMenuAction.MoreDetails -> navigateToNodeDetails(node.num)
                         is NodeMenuAction.FavoriteNode -> model.handleFavorite(node)
+                        is NodeMenuAction.RequestDeviceMetadata -> model.requestDeviceMetadata(node)
                     }
                 },
                 expanded = state.showDetails,
