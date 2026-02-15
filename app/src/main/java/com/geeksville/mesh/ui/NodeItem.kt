@@ -197,7 +197,7 @@ fun NodeItem(
                         modifier = Modifier.size(32.dp)
                     )
 
-                    if(!isThisNode ){
+                    if(!isThisNode && isConnected){
                         TraceIcon(
                             onTrace = {
                                 onAction(NodeMenuAction.TraceRoute(thatNode))
