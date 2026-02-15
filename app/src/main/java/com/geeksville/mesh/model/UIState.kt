@@ -542,7 +542,7 @@ class UIViewModel @Inject constructor(
         try {
             radioConfigRepository.onServiceAction(ServiceAction.GetDeviceMetadata(node.num))
         } catch (ex: RemoteException) {
-            errormsg("Favorite node error:", ex)
+            errormsg("Metadata Request error:", ex)
         }
     }
 

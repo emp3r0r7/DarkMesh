@@ -202,7 +202,7 @@ fun RelayInfoBox(relayNode: RelayEvent, model: UIViewModel) {
                 onClick = {
                     Toast.makeText(
                         context,
-                        "Nearest Gateway: $nodeName",
+                        "Closest Relay: $nodeName",
                         Toast.LENGTH_SHORT
                     ).show()
                 },
