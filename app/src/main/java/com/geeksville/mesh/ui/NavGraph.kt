@@ -177,9 +177,10 @@ class NavGraphFragment : ScreenFragment("NavGraph"), Logging {
 }
 
 enum class AdminRoute(@StringRes val title: Int) {
-    REBOOT(R.string.reboot), SHUTDOWN(R.string.shutdown), FACTORY_RESET(R.string.factory_reset), NODEDB_RESET(
-        R.string.nodedb_reset
-    ),
+    REBOOT(R.string.reboot),
+    SHUTDOWN(R.string.super_deep_sleep),
+    FACTORY_RESET(R.string.factory_reset),
+    NODEDB_RESET(R.string.nodedb_reset),
 }
 
 sealed interface Route {
