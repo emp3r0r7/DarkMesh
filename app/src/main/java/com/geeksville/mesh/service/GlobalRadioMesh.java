@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class GlobalRadioMesh {
 
-    public static volatile IMeshService radioMeshService; //globale per tutte le istanze
+    public static volatile IMeshService radioMeshService; //fixme this is a dirty workaround
 
     public static synchronized void setRadio(IMeshService s) {
         radioMeshService = s;
@@ -21,6 +21,7 @@ public class GlobalRadioMesh {
     }
 
     public static final Map<Integer, String> autoDeleteMap = new ConcurrentHashMap<>();
+    public static final Map<Integer, Integer> ourTracerouteRequests = new ConcurrentHashMap<>();
 
     public static void sendMessage(String str, String contactKey, Integer replyId) {
 

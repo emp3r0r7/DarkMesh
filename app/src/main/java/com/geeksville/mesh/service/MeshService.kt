@@ -70,6 +70,7 @@ import com.geeksville.mesh.repository.radio.RadioInterfaceService
 import com.geeksville.mesh.repository.radio.RadioServiceConnectionState
 import com.geeksville.mesh.service.DistressService.PREF_STRESSTEST_ENABLED
 import com.geeksville.mesh.service.GlobalRadioMesh.autoDeleteMap
+import com.geeksville.mesh.service.GlobalRadioMesh.ourTracerouteRequests
 import com.geeksville.mesh.util.ApiUtil
 import com.geeksville.mesh.util.anonymize
 import com.geeksville.mesh.util.toOneLineString
@@ -88,6 +89,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.meshtastic.proto.AdminProtos
 import org.meshtastic.proto.AppOnlyProtos
@@ -165,6 +167,8 @@ class MeshService : Service(), Logging {
     private lateinit var huntingPrefs: SharedPreferences
 
     private val tracerouteStartTimes = ConcurrentHashMap<Int, Long>()
+
+    private val tracerouteExpirationMs = 90_000L
 
     companion object : Logging {
 
@@ -589,6 +593,9 @@ class MeshService : Service(), Logging {
     private fun getUserName(num: Int): String =
         with(radioConfigRepository.getUser(num)) { "$longName ($shortName)" }
 
+    private fun getUserShortName(num: Int): String =
+        with(radioConfigRepository.getUser(num)) { "$shortName" }
+
     private val numNodes get() = nodeDBbyNodeNum.size
 
     /**
@@ -880,7 +887,7 @@ class MeshService : Service(), Logging {
 
                             val positionPayload = ApiUtil.mergePacketAndPayload(myNodeID, packet)
 
-                            huntHttpService.sendDataJsonAsync(huntingPrefs, positionPayload)
+                            huntHttpService.maybeSendDataJsonAsync(huntingPrefs, positionPayload)
                             handleReceivedPosition(packet.from, u, dataPacket.time)
                         }
                     }
@@ -894,7 +901,7 @@ class MeshService : Service(), Logging {
 
                             val telemetryPayload = ApiUtil.mergePacketAndPayload(myNodeID, packet)
 
-                            huntHttpService.sendDataJsonAsync(huntingPrefs, telemetryPayload)
+                            huntHttpService.maybeSendDataJsonAsync(huntingPrefs, telemetryPayload)
 
                             handleReceivedUser(packet.from, u, packet.channel)
                         }
@@ -907,7 +914,7 @@ class MeshService : Service(), Logging {
                         val telemetryPayload = ApiUtil.mergePacketAndPayload(myNodeID, packet)
 
                         if (!fromUs) {
-                            huntHttpService.sendDataJsonAsync(huntingPrefs, telemetryPayload)
+                            huntHttpService.maybeSendDataJsonAsync(huntingPrefs, telemetryPayload)
                         }
 
                         handleReceivedTelemetry(packet.from, u)
@@ -958,14 +965,12 @@ class MeshService : Service(), Logging {
                     Portnums.PortNum.TRACEROUTE_APP_VALUE -> {
 
                         //val fullTracePayload = packet.buildTracerouteJson(myNodeID) {nodeNum -> getUserName(nodeNum)}
+                        //fixme move this logic in #maybeSendDataJsonAsync
                         val traceroutePayload = ApiUtil.mergePacketAndPayload(myNodeID, packet)
 
-                        huntHttpService.sendDataJsonAsync(huntingPrefs, traceroutePayload)
+                        huntHttpService.maybeSendDataJsonAsync(huntingPrefs, traceroutePayload)
 
-                        if(!fromUs && packet.wantAck){
-                            mainLooperToast("Traceroute detected towards us from " +
-                                    getUserName(packet.from), Toast.LENGTH_SHORT)
-                        }
+                        maybeShowTraceResultToast(fromUs, packet)
 
                         if(!huntingPrefs.getBoolean(UserPrefs.Hunting.BACKGROUND_HUNT, false)){
                             val requestId = packet.decoded.requestId
@@ -1002,6 +1007,21 @@ class MeshService : Service(), Logging {
                     DataPair("type", data.portnumValue)
                 )
             }
+        }
+    }
+
+    private fun maybeShowTraceResultToast(fromUs: Boolean,
+                                          packet: MeshPacket){
+        if (!fromUs && packet.wantAck) {
+            val isOurTrace = ourTracerouteRequests.containsKey(packet.decoded.requestId)
+
+            mainLooperToast(
+                if (isOurTrace)
+                    "Traceroute SUCCESS to ${getUserName(packet.from)}"
+                else
+                    "Traceroute detected towards us from ${getUserName(packet.from)}",
+                Toast.LENGTH_SHORT
+            )
         }
     }
 
@@ -1275,16 +1295,27 @@ class MeshService : Service(), Logging {
                             if(it.contains("all")){
                                 mainLooperToast("Channel message traveling...", Toast.LENGTH_SHORT)
                             } else {
-                                mainLooperToast("Message to ${getUserName(hexIdToNodeNum(it))} traveling...", Toast.LENGTH_SHORT)
+                                mainLooperToast("Message to " +
+                                        "${getUserShortName(hexIdToNodeNum(it))} traveling...",
+                                    Toast.LENGTH_SHORT
+                                )
                             }
                         } ?: run {
 
                             val requestId = packet.decoded.requestId
                             val deletedNode = autoDeleteMap[requestId]
+                            val ourTraceRequest = ourTracerouteRequests[requestId]
 
-                            if(deletedNode != null){
+                            if (deletedNode != null){
                                 mainLooperToast("Purged $deletedNode", Toast.LENGTH_SHORT)
                                 autoDeleteMap.remove(requestId)
+
+                            } else if (ourTraceRequest != null) {
+                                mainLooperToast("Traceroute to " +
+                                        "${getUserShortName(ourTraceRequest)} traveling...",
+                                    Toast.LENGTH_SHORT
+                                )
+
                             } else {
                                 mainLooperToast("Message traveling...", Toast.LENGTH_SHORT)
                             }
@@ -2379,7 +2410,8 @@ class MeshService : Service(), Logging {
             }
 
             tracerouteStartTimes[requestId] = System.currentTimeMillis()
-            sendToRadio(newMeshPacketTo(destNum).buildMeshPacket(
+
+            val tracePacket = newMeshPacketTo(destNum).buildMeshPacket(
                 wantAck = true,
                 id = requestId,
                 channel = nodeDBbyNodeNum[destNum]?.channel ?: 0,
@@ -2387,7 +2419,16 @@ class MeshService : Service(), Logging {
             ) {
                 portnumValue = Portnums.PortNum.TRACEROUTE_APP_VALUE
                 wantResponse = true
-            })
+            }
+
+            ourTracerouteRequests[tracePacket.id] = destNum
+
+            serviceScope.launch {
+                delay(tracerouteExpirationMs)
+                ourTracerouteRequests.remove(tracePacket.id)
+            }
+
+            sendToRadio(tracePacket)
         }
 
         override fun requestShutdown(requestId: Int, destNum: Int) = toRemoteExceptions {

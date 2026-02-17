@@ -71,7 +71,7 @@ public class HuntHttpService {
         });
     }
 
-    public void sendDataJsonAsync(SharedPreferences huntPrefs, String jsonPayload) {
+    public void maybeSendDataJsonAsync(SharedPreferences huntPrefs, String jsonPayload) {
 
         boolean isHuntEnabled = huntPrefs.getBoolean(UserPrefs.Hunting.HUNT_MODE, false);
 
