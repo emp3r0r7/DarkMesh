@@ -941,15 +941,15 @@ class MainActivity : AppCompatActivity(), Logging {
                 return true
             }
 
-            R.id.save_messages_csv -> {
-                val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                    addCategory(Intent.CATEGORY_OPENABLE)
-                    type = "application/csv"
-                    putExtra(Intent.EXTRA_TITLE, "rangetest.csv")
-                }
-                createDocumentLauncher.launch(intent)
-                return true
-            }
+//            R.id.save_messages_csv -> {
+//                val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+//                    addCategory(Intent.CATEGORY_OPENABLE)
+//                    type = "application/csv"
+//                    putExtra(Intent.EXTRA_TITLE, "rangetest.csv")
+//                }
+//                createDocumentLauncher.launch(intent)
+//                return true
+//            }
 
             R.id.theme -> {
                 chooseThemeDialog()

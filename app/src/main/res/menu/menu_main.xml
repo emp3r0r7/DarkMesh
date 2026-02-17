@@ -91,10 +91,10 @@
         app:showAsAction="withText"
         tools:ignore="HardcodedText" />
 
-    <item
-        android:id="@+id/save_messages_csv"
-        app:showAsAction="withText"
-        android:title="@string/save_messages" />
+<!--    <item-->
+<!--        android:id="@+id/save_messages_csv"-->
+<!--        app:showAsAction="withText"-->
+<!--        android:title="@string/save_messages" />-->
     <item
         android:id="@+id/theme"
         android:title="@string/theme"
