@@ -80,10 +80,12 @@ import com.geeksville.mesh.android.permissionMissing
 import com.geeksville.mesh.android.rationaleDialog
 import com.geeksville.mesh.android.shouldShowRequestPermissionRationale
 import com.geeksville.mesh.concurrent.handledLaunch
+import com.geeksville.mesh.database.DbImportState
 import com.geeksville.mesh.model.BluetoothViewModel
 import com.geeksville.mesh.model.Contact
 import com.geeksville.mesh.model.DeviceVersion
 import com.geeksville.mesh.model.Node
+import com.geeksville.mesh.model.RadioConfigViewModel
 import com.geeksville.mesh.model.RelayEvent
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.model.UIViewModel.Companion.getPreferences
@@ -116,6 +118,7 @@ import com.geeksville.mesh.ui.message.navigateToMessages
 import com.geeksville.mesh.ui.navigateToNavGraph
 import com.geeksville.mesh.ui.navigateToShareMessage
 import com.geeksville.mesh.ui.theme.AppTheme
+import com.geeksville.mesh.util.Capabilities
 import com.geeksville.mesh.util.Exceptions
 import com.geeksville.mesh.util.LanguageUtils
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -129,6 +132,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.meshtastic.proto.ConfigProtos
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 
 /*
@@ -196,6 +202,8 @@ class MainActivity : AppCompatActivity(), Logging {
 
     private val bluetoothViewModel: BluetoothViewModel by viewModels()
     private val model: UIViewModel by viewModels()
+    private val radioConfigViewModel: RadioConfigViewModel by viewModels()
+
     private var lastWarningStealthHunter = 0L
 
     @Inject
@@ -426,9 +434,20 @@ class MainActivity : AppCompatActivity(), Logging {
         ActivityResultContracts.StartActivityForResult()
     ) {
         if (it.resultCode == RESULT_OK) {
-            it.data?.data?.let { fileUri -> model.saveMessagesCSV(fileUri) }
+            it.data?.data?.let { fileUri -> model.saveNodeDbURL(fileUri) }
         }
     }
+
+    private val openDocumentLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+
+            if (result.resultCode == RESULT_OK) {
+                result.data?.data?.let { uri ->
+                   model.importNodeDbFile(uri)
+                }
+            }
+        }
+
 
     override fun onDestroy() {
         mainScope.cancel("Activity going away")
@@ -716,11 +735,11 @@ class MainActivity : AppCompatActivity(), Logging {
                 .setPositiveButton(R.string.okay) { _, _ -> }
                 .show()
 
-            dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
-                ?.setTextColor(ContextCompat.getColor(this, R.color.colorAnnotation))
-
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-                ?.setTextColor(ContextCompat.getColor(this, R.color.colorAnnotation))
+            setDialogButtonsColor(
+                dialog,
+                AlertDialog.BUTTON_NEUTRAL,
+                AlertDialog.BUTTON_POSITIVE
+            )
 
             model.clearTracerouteResponse()
         }
@@ -942,15 +961,110 @@ class MainActivity : AppCompatActivity(), Logging {
                 return true
             }
 
-//            R.id.save_messages_csv -> {
-//                val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-//                    addCategory(Intent.CATEGORY_OPENABLE)
-//                    type = "application/csv"
-//                    putExtra(Intent.EXTRA_TITLE, "rangetest.csv")
-//                }
-//                createDocumentLauncher.launch(intent)
-//                return true
-//            }
+            R.id.export_node_db -> {
+
+                val options = arrayOf("Export Node DB", "Import Node DB")
+                var selectedOption = 0
+
+                val warnDialog = MaterialAlertDialogBuilder(this)
+                    .setTitle("Node DB Operations")
+                    .setSingleChoiceItems(options, 0) { _, which ->
+                        selectedOption = which
+                    }
+                    .setPositiveButton("OK") { dialog, _ ->
+
+                        when (selectedOption) {
+
+                            0 -> {
+                                // EXPORT
+                                val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                                    addCategory(Intent.CATEGORY_OPENABLE)
+                                    type = "application/octet-stream"
+                                    val dateFormat = SimpleDateFormat("dd-MM-yyyy-HH:mm", Locale.getDefault())
+                                    val time = dateFormat.format(Date())
+                                    putExtra(Intent.EXTRA_TITLE, "${time}_nodes.dmdb")
+                                }
+                                createDocumentLauncher.launch(intent)
+                            }
+
+                            1 -> {
+                                mainScope.launch (Dispatchers.Main){
+
+                                    if(DbImportState.importInProgress()){
+                                        showSnackbar("Cannot import again, import in progress!")
+                                        return@launch
+                                    }
+
+                                    val state =
+                                        model.connectionState.asLiveData().value ?: return@launch
+
+                                    if(!state.isConnected()){
+                                        showSnackbar("Cannot import DB, radio it not connected!")
+                                        return@launch
+                                    }
+
+                                    val firmwareVersion = radioConfigViewModel.radioConfigState.value.metadata?.firmwareVersion
+                                    val capabilities = Capabilities(firmwareVersion)
+
+                                    if(!capabilities.canSendVerifiedContacts){
+                                        showSnackbar("Cannot use import DB feature, firmware version is too old!")
+                                        return@launch
+                                    }
+
+                                    //if nodedb less than 10 , import directly otherwise, add all
+                                    val nodeDbSize = model.getNodesCount()
+                                    if(nodeDbSize >= 10){
+
+                                        val warnDialog = MaterialAlertDialogBuilder(this@MainActivity)
+                                            .setTitle("Reset Node DB")
+
+                                            .setMessage("Node DB contains more than $nodeDbSize nodes.\n\n" +
+                                                    "DB Reset is needed to import a new one. \n\nProceed?")
+
+                                            .setPositiveButton("YES") { _, _ ->
+
+                                                model.deleteAllLocalNodesExceptOurs()
+                                                radioConfigViewModel.wipeOurNodeDBCompletely()?.let {
+                                                    showSnackbar("Device is rebooting, be patient..")
+                                                } ?: run {
+                                                    showSnackbar("Could not reset NodeDb!")
+                                                }
+                                            }
+                                            .setNegativeButton("NO", null)
+                                            .show()
+
+                                        setDialogButtonsColor(
+                                            warnDialog,  AlertDialog.BUTTON_POSITIVE,
+                                            AlertDialog.BUTTON_NEGATIVE
+                                        )
+
+                                    } else {
+                                        // IMPORT
+                                        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                                            addCategory(Intent.CATEGORY_OPENABLE)
+                                            type = "*/*"
+                                        }
+                                        openDocumentLauncher.launch(intent)
+                                    }
+                                }
+                            }
+                        }
+
+                        dialog.dismiss()
+
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+
+                setDialogButtonsColor(
+                    warnDialog,
+                    AlertDialog.BUTTON_POSITIVE,
+                    AlertDialog.BUTTON_NEGATIVE
+                )
+
+                return true
+            }
+
 
             R.id.theme -> {
                 chooseThemeDialog()
@@ -1145,13 +1259,12 @@ class MainActivity : AppCompatActivity(), Logging {
             if (!started) item.isChecked = false
         }
 
-        dialog.show()
+        setDialogButtonsColor(
+            dialog,
+            AlertDialog.BUTTON_POSITIVE,
+            AlertDialog.BUTTON_NEGATIVE
+        )
 
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-            ?.setTextColor(ContextCompat.getColor(this, R.color.colorAnnotation))
-
-        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-            ?.setTextColor(ContextCompat.getColor(this, R.color.colorAnnotation))
     }
     
     private fun checkLocationEnabled(
@@ -1375,5 +1488,12 @@ class MainActivity : AppCompatActivity(), Logging {
         } else {
             tab.removeBadge()
         }
+    }
+
+    private fun setDialogButtonsColor(dialog: AlertDialog, firstButton: Int, secondButton: Int){
+        dialog.getButton(firstButton)
+            ?.setTextColor(ContextCompat.getColor(this, R.color.colorAnnotation))
+        dialog.getButton(secondButton)
+            ?.setTextColor(ContextCompat.getColor(this, R.color.colorAnnotation))
     }
 }

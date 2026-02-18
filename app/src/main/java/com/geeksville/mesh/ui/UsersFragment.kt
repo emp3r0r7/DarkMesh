@@ -22,28 +22,46 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.activityViewModels
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.DataPacket
 import com.geeksville.mesh.android.Logging
+import com.geeksville.mesh.database.DbImportState
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.RelayEvent
 import com.geeksville.mesh.model.UIViewModel
@@ -85,11 +103,13 @@ class UsersFragment : ScreenFragment("Users"), Logging {
             setContent {
 
                 val relayNode by model.lastRelayNode.collectAsStateWithLifecycle()
+                val contact by DbImportState.importProgress.collectAsStateWithLifecycle()
 
                 AppTheme {
                     NodesScreen(
                         model = model,
                         relayNode = relayNode,
+                        contact = contact,
                         navigateToMessages = ::navigateToMessages,
                         navigateToNodeDetails = ::navigateToNodeDetails,
                     )
@@ -105,6 +125,7 @@ class UsersFragment : ScreenFragment("Users"), Logging {
 fun NodesScreen(
     model: UIViewModel = hiltViewModel(),
     relayNode: RelayEvent?,
+    contact: String?,
     navigateToMessages: (Node) -> Unit,
     navigateToNodeDetails: (Int) -> Unit,
 ) {
@@ -138,6 +159,10 @@ fun NodesScreen(
 
             if (relayNode != null) {
                 RelayInfoBox(relayNode, model)
+            }
+
+            if(DbImportState.importInProgress()){
+                DbImportInfoBox(contact!!)
             }
 
             NodeFilterTextField(
@@ -231,6 +256,50 @@ fun RelayInfoBox(relayNode: RelayEvent, model: UIViewModel) {
                     "$nodeName • $timeLabel",
             modifier = Modifier.padding(12.dp)
         )
+    }
+}
+
+@Composable
+fun DbImportInfoBox(
+    contact: String,
+) {
+    AnimatedVisibility(
+        visible = true,
+        enter = fadeIn() + scaleIn(),
+        exit = fadeOut() + scaleOut()
+    ) {
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(6.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = colorResource(id = R.color.colorAnnotation),
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                CircularProgressIndicator(
+                    strokeWidth = 3.dp,
+                    modifier = Modifier.size(24.dp),
+                    color = Color.White
+                )
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Text(
+                    text = "FW Write: $contact",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color.White
+                )
+            }
+        }
     }
 }
 

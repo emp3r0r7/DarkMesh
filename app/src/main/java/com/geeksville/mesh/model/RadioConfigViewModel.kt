@@ -29,6 +29,7 @@ import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.IMeshService
 import com.geeksville.mesh.Position
 import com.geeksville.mesh.android.Logging
+import com.geeksville.mesh.database.NodeRepository
 import com.geeksville.mesh.database.entity.MyNodeEntity
 import com.geeksville.mesh.repository.datastore.RadioConfigRepository
 import com.geeksville.mesh.service.MeshService.ConnectionState
@@ -42,6 +43,7 @@ import com.google.protobuf.MessageLite
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -88,7 +90,8 @@ class RadioConfigViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val app: Application,
     private val radioConfigRepository: RadioConfigRepository,
-) : ViewModel(), Logging {
+    private val nodeRepository: NodeRepository,
+    ) : ViewModel(), Logging {
     private val meshService: IMeshService? get() = radioConfigRepository.meshService
 
     private val destNum = savedStateHandle.toRoute<Route.RadioConfig>().destNum
@@ -312,9 +315,21 @@ class RadioConfigViewModel @Inject constructor(
         "Request factory reset error"
     )
 
-    private fun requestNodedbReset(destNum: Int) = request(
+    fun wipeOurNodeDBCompletely(): Job? {
+        myNodeNum?.let {
+            return requestNodedbReset(it, false)
+        }
+        return null
+    }
+
+    @Suppress("SameParameterValue")
+    private fun requestNodedbReset(destNum: Int, preserveFavorites: Boolean) = request(
         destNum,
-        { service, packetId, dest -> service.requestNodedbReset(packetId, dest) },
+        { service, packetId, dest -> service.requestNodedbReset(
+            packetId,
+            dest,
+            preserveFavorites
+        ) },
         "Request NodeDB reset error"
     )
 
@@ -333,7 +348,14 @@ class RadioConfigViewModel @Inject constructor(
             }
 
             AdminRoute.FACTORY_RESET.name -> requestFactoryReset(destNum)
-            AdminRoute.NODEDB_RESET.name -> requestNodedbReset(destNum)
+            AdminRoute.NODEDB_RESET.name -> {
+                viewModelScope.launch(Dispatchers.IO) {
+                    myNodeNum?.let {
+                        nodeRepository.clearAllExceptOurs(it)
+                    }
+                }
+                requestNodedbReset(destNum, false)
+            } //todo maybe add to config
         }
     }
 

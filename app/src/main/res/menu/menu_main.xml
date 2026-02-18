@@ -95,6 +95,12 @@
 <!--        android:id="@+id/save_messages_csv"-->
 <!--        app:showAsAction="withText"-->
 <!--        android:title="@string/save_messages" />-->
+
+    <item
+        android:id="@+id/export_node_db"
+        app:showAsAction="withText"
+        android:title="Node DB Operations"
+        tools:ignore="HardcodedText" />
     <item
         android:id="@+id/theme"
         android:title="@string/theme"

@@ -266,7 +266,7 @@ fun UserConfigItemList(
                         uiModel.setFavorite(
                             currentNode,
                             nodeId.toInt(),
-                            addFavourite
+                            addFavourite,
                         )
                         nodeIdText = ""
                     } else {

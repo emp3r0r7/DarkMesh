@@ -119,6 +119,17 @@ interface NodeInfoDao {
 
     @Query("DELETE FROM nodes")
     fun clearNodeInfo()
+    @Query("DELETE FROM nodes WHERE num != :nyNodeNum")
+    fun clearNodeInfoExceptOurs(nyNodeNum: Int)
+
+    @Query("DELETE FROM metadata WHERE num != :myNodeNum")
+    fun clearMetadataExceptOurs(myNodeNum: Int)
+
+    @Transaction
+    fun clearAllExceptOurs(myNodeNum: Int) {
+        clearNodeInfoExceptOurs(myNodeNum)
+        clearMetadataExceptOurs(myNodeNum)
+    }
 
     @Query("DELETE FROM nodes WHERE num=:num")
     fun deleteNode(num: Int)
@@ -128,4 +139,7 @@ interface NodeInfoDao {
 
     @Query("DELETE FROM metadata WHERE num=:num")
     fun deleteMetadata(num: Int)
+
+    @Query("SELECT COUNT(*) FROM nodes")
+    suspend fun countNodes(): Int
 }

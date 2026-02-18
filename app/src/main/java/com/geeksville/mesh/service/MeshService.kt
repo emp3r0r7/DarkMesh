@@ -24,6 +24,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ServiceInfo
 import android.os.Binder
+import android.os.Build
 import android.os.IBinder
 import android.os.RemoteException
 import android.widget.Toast
@@ -49,6 +50,8 @@ import com.geeksville.mesh.android.advancedPrefs
 import com.geeksville.mesh.android.hasLocationPermission
 import com.geeksville.mesh.android.mainLooperToast
 import com.geeksville.mesh.concurrent.handledLaunch
+import com.geeksville.mesh.database.DbImportState
+import com.geeksville.mesh.database.DbImportState.dbImportContactMap
 import com.geeksville.mesh.database.MeshLogRepository
 import com.geeksville.mesh.database.PacketRepository
 import com.geeksville.mesh.database.entity.MeshLog
@@ -59,7 +62,6 @@ import com.geeksville.mesh.database.entity.ReactionEntity
 import com.geeksville.mesh.model.DeviceVersion
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.RelayEvent
-import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.model.UIViewModel.Companion.getPreferences
 import com.geeksville.mesh.model.getTracerouteResponse
 import com.geeksville.mesh.prefs.UserPrefs
@@ -127,7 +129,7 @@ sealed class ServiceAction {
     data class HandleFavoriteNode(val node: Node) : ServiceAction()
     data class SetFavoriteNode(val targetNodeNum: Int, val favNodeNum: Int, val toAdd: Boolean) : ServiceAction()
     data class Reaction(val emoji: String, val replyId: Int, val contactKey: String) : ServiceAction()
-    data class ImportContact(val contact: AdminProtos.SharedContact) : ServiceAction()
+    data class ImportContact(val contact: AdminProtos.SharedContact, val dbImport: Boolean) : ServiceAction()
 }
 
 /**
@@ -459,7 +461,7 @@ class MeshService : Service(), Logging {
                 this,
                 serviceNotifications.notifyId,
                 notification,
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     if (hasLocationPermission()) {
                         ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST
                     } else {
@@ -746,8 +748,7 @@ class MeshService : Service(), Logging {
 
         var priority = MeshPacket.Priority.UNSET
 
-        val beaconing = UIViewModel
-            .getPreferences(this)
+        val beaconing = getPreferences(this)
             .getBoolean(PREF_STRESSTEST_ENABLED, false)
 
         if(beaconing){
@@ -1063,7 +1064,7 @@ class MeshService : Service(), Logging {
     }
 
     // Update our DB of users based on someone sending out a User subpacket
-    private fun handleReceivedUser(fromNum: Int, p: MeshProtos.User, channel: Int = 0) {
+    private fun handleReceivedUser(fromNum: Int, p: MeshProtos.User, channel: Int = 0, dbImport: Boolean = false) {
         updateNodeInfo(fromNum) {
             val newNode = (it.isUnknownUser && p.hwModel != MeshProtos.HardwareModel.UNSET)
 
@@ -1075,8 +1076,12 @@ class MeshService : Service(), Logging {
             it.longName = p.longName
             it.shortName = p.shortName
             it.channel = channel
-            if (newNode) {
+
+            if(dbImport || newNode){
                 it.isFavorite = false
+            }
+
+            if (newNode && !dbImport) {
                 serviceNotifications.showNewNodeSeenNotification(it)
             }
         }
@@ -1302,20 +1307,30 @@ class MeshService : Service(), Logging {
                             }
                         } ?: run {
 
+                            //todo fixme, do it more efficiently
                             val requestId = packet.decoded.requestId
-                            val deletedNode = autoDeleteMap[requestId]
                             val ourTraceRequest = ourTracerouteRequests[requestId]
 
-                            if (deletedNode != null){
+                            val processedContact = dbImportContactMap.remove(requestId)
+                            val deletedNode = autoDeleteMap.remove(requestId)
+
+                            if (DbImportState.importInProgress()){
+
+                                if(processedContact != null){
+                                    DbImportState.emitImportProgress(processedContact)
+                                    //mainLooperToast("Importing $importedContact", Toast.LENGTH_SHORT)
+                                    debug("ACK is related to recent imported node $processedContact")
+                                }
+
+                            } else if (deletedNode != null) {
                                 mainLooperToast("Purged $deletedNode", Toast.LENGTH_SHORT)
-                                autoDeleteMap.remove(requestId)
 
                             } else if (ourTraceRequest != null) {
-                                mainLooperToast("Traceroute to " +
-                                        "${getUserShortName(ourTraceRequest)} traveling...",
+                                mainLooperToast(
+                                    "Traceroute to " +
+                                            "${getUserShortName(ourTraceRequest)} traveling...",
                                     Toast.LENGTH_SHORT
                                 )
-
                             } else {
                                 mainLooperToast("Message traveling...", Toast.LENGTH_SHORT)
                             }
@@ -2051,7 +2066,7 @@ class MeshService : Service(), Logging {
             is ServiceAction.HandleFavoriteNode -> handleFavorite(action.node)
             is ServiceAction.SetFavoriteNode ->
                 setFavorite(action.targetNodeNum, action.favNodeNum, action.toAdd)
-            is ServiceAction.ImportContact -> handleImportContact(action)
+            is ServiceAction.ImportContact -> handleImportContact(action, action.dbImport)
         }
     }
 
@@ -2076,13 +2091,19 @@ class MeshService : Service(), Logging {
         }
     }
 
-    private fun handleImportContact(action: ServiceAction.ImportContact){
+    private fun handleImportContact(action: ServiceAction.ImportContact, dbImport: Boolean){
         val contact = action.contact
-        sendToRadio(newMeshPacketTo(myNodeNum).buildAdminPacket {
+        val packet = newMeshPacketTo(myNodeNum).buildAdminPacket {
             debug("setting sharedcontact to $myNodeNum")
             addContact = contact
-        })
-        handleReceivedUser(contact.nodeNum, contact.user)
+        }
+
+        if(dbImport){
+            dbImportContactMap[packet.id] = contact.user.longName
+        }
+
+        sendToRadio(packet)
+        handleReceivedUser(contact.nodeNum, contact.user, 0, dbImport)
     }
 
     fun setFavorite(targetNodeNum: Int, favNodeNum: Int, toAdd: Boolean) = toRemoteExceptions {
@@ -2449,9 +2470,9 @@ class MeshService : Service(), Logging {
             })
         }
 
-        override fun requestNodedbReset(requestId: Int, destNum: Int) = toRemoteExceptions {
+        override fun requestNodedbReset(requestId: Int, destNum: Int, preserveFavorites: Boolean) = toRemoteExceptions {
             sendToRadio(newMeshPacketTo(destNum).buildAdminPacket(id = requestId) {
-                nodedbReset = true
+                nodedbReset = preserveFavorites
             })
         }
     }

@@ -1,5 +1,9 @@
 package com.geeksville.mesh.util
 
+import android.content.Context
+import com.geeksville.mesh.android.BuildUtils.errormsg
+import com.geeksville.mesh.model.DeviceHardware
+import com.geeksville.mesh.model.DeviceHardwareDto
 import com.geeksville.mesh.model.custom.TracerouteJson
 import com.geeksville.mesh.model.custom.TracerouteNode
 import com.geeksville.mesh.model.custom.TraceroutePath
@@ -8,12 +12,35 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.protobuf.util.JsonFormat
+import kotlinx.serialization.json.Json
 import org.meshtastic.proto.ConfigProtos
 import org.meshtastic.proto.ConfigProtos.Config.DisplayConfig.DeprecatedGpsCoordinateFormat
 import org.meshtastic.proto.MeshProtos.MeshPacket
 import org.meshtastic.proto.Portnums
 
 object ApiUtil {
+
+    private val jsonParser: Json = Json {
+        ignoreUnknownKeys = true
+    }
+
+    fun loadDeviceHardwareList(context: Context): List<DeviceHardware> {
+        return try {
+            val jsonString = context.assets
+                .open("device_hardware.json")
+                .bufferedReader()
+                .use { it.readText() }
+
+            jsonParser
+                .decodeFromString<List<DeviceHardwareDto>>(jsonString)
+                .map { it.toDeviceHardware() }
+
+        } catch (ex: Exception) {
+            errormsg("Error loading device hardware: ${ex.message}")
+            emptyList()
+        }
+    }
+
 
     fun safeGpsFormat(gps: DeprecatedGpsCoordinateFormat): Int {
         return if (gps == DeprecatedGpsCoordinateFormat.UNRECOGNIZED)

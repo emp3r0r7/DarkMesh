@@ -23,6 +23,7 @@ import android.os.RemoteException
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateDpAsState
@@ -90,6 +91,7 @@ import com.geeksville.mesh.android.getCameraPermissions
 import com.geeksville.mesh.android.hasCameraPermission
 import com.geeksville.mesh.model.Channel
 import com.geeksville.mesh.model.ChannelOption
+import com.geeksville.mesh.model.RadioConfigViewModel
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.model.getChannelUrl
 import com.geeksville.mesh.model.qrCode
@@ -104,8 +106,8 @@ import com.geeksville.mesh.ui.components.config.EditChannelDialog
 import com.geeksville.mesh.ui.components.dragContainer
 import com.geeksville.mesh.ui.components.dragDropItemsIndexed
 import com.geeksville.mesh.ui.components.rememberDragDropState
-import com.geeksville.mesh.ui.share.SharedContactViewModel
 import com.geeksville.mesh.ui.share.toSharedContact
+import com.geeksville.mesh.util.Capabilities
 import com.google.accompanist.themeadapter.appcompat.AppCompatTheme
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.journeyapps.barcodescanner.ScanContract
@@ -143,13 +145,17 @@ class ChannelFragment : ScreenFragment("Channel"), Logging {
 @Composable
 fun ChannelScreen(
     viewModel: UIViewModel = hiltViewModel(),
-    sharedContactViewModel: SharedContactViewModel = hiltViewModel(),
-) {
+    radioViewModel: RadioConfigViewModel = hiltViewModel(),
+    ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
 
     val connectionState by viewModel.connectionState.collectAsStateWithLifecycle()
     val enabled = connectionState == MeshService.ConnectionState.CONNECTED && !viewModel.isManaged
+
+    val state by radioViewModel.radioConfigState.collectAsStateWithLifecycle()
+    val firmwareVersion = state.metadata?.firmwareVersion
+    val capabilities = remember(firmwareVersion) { Capabilities(firmwareVersion) }
 
     val channels by viewModel.channels.collectAsStateWithLifecycle()
     var channelSet by remember(channels) { mutableStateOf(channels) }
@@ -362,6 +368,14 @@ fun ChannelScreen(
                         return@OutlinedButton
                     }
                     try {
+
+                        if(!capabilities.canSendVerifiedContacts){
+                            viewModel.showSnackbar(
+                                "Your firmware version does not support adding contacts, please upgrade!"
+                            )
+                            return@OutlinedButton
+                        }
+
                         val contactProto = contactString.toUri().toSharedContact()
 
                         if(viewModel.myNodeNum == contactProto.nodeNum){
@@ -376,8 +390,8 @@ fun ChannelScreen(
                             }
                         }
 
-                        viewModel.showSnackbar("Adding contact ${contactProto.user.longName}")
-                        sharedContactViewModel.addSharedContact(contactProto)
+                        Toast.makeText(context, "Adding contact ${contactProto.user.longName}", Toast.LENGTH_SHORT).show()
+                        viewModel.addSharedContact(contactProto)
 
                     } catch (e: Exception){
                         viewModel.showSnackbar(e.message.toString())

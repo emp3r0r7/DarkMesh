@@ -1,6 +1,5 @@
 package com.geeksville.mesh.util
 
-import com.emp3r0r7.darkmesh.BuildConfig
 import com.geeksville.mesh.model.DeviceVersion
 
 /*
@@ -26,7 +25,7 @@ import com.geeksville.mesh.model.DeviceVersion
  * This class provides a centralized way to check if specific features are supported by the connected node's firmware.
  * Add new features here to ensure consistency across the app.
  */
-data class Capabilities(val firmwareVersion: String?, internal val forceEnableAll: Boolean = BuildConfig.DEBUG) {
+data class Capabilities(val firmwareVersion: String?, internal val forceEnableAll: Boolean = false) { // add BuildConfig.DEBUG to bypass all
     private val version = firmwareVersion?.let { DeviceVersion(it) }
 
     private fun isSupported(minVersion: String): Boolean =
