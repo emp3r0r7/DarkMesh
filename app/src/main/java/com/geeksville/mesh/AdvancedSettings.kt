@@ -25,6 +25,7 @@ const val SKIP_MQTT_ENTIRELY = "skip_mqtt_entirely"
 const val OVERRIDE_TELEMETRY_ALL_VERSIONS = "override_telemetry_all_versions"
 const val AUTO_DELETE_OLD_NODES = "auto_delete_old_nodes"
 const val AUTO_DELETE_TIME_HOURS = "auto_delete_time_hours"
+const val AUTO_DELETE_PRESERVE_FAVOURITES = "auto_delete_preserve_favourites"
 
 object AutoDeleteConfig {
 
@@ -62,6 +63,9 @@ class AdvancedSettings : AppCompatActivity() {
         val autoDeleteNodesSwitch =
             findViewById<SwitchCompat>(R.id.deleteOldNodesSwitch)
 
+        val autoDeletePreserveFav =
+            findViewById<SwitchCompat>(R.id.preserveFavouritesSwitch)
+
         val autoDeleteTimeSpinner = findViewById<Spinner>(R.id.autoDeleteTiming)
 
         val autoDeleteNodesHoursAdapter = ArrayAdapter(
@@ -76,6 +80,7 @@ class AdvancedSettings : AppCompatActivity() {
         val traceMaxPref = advancedPrefs.getBoolean(TRACE_MAX_PRIORITY_PREF, false)
         val skipMqttPref = advancedPrefs.getBoolean(SKIP_MQTT_ENTIRELY, false)
         val autoDeleteNodesPref = advancedPrefs.getBoolean(AUTO_DELETE_OLD_NODES, false)
+        val autoDeletePreserveFavPref = advancedPrefs.getBoolean(AUTO_DELETE_PRESERVE_FAVOURITES, false)
 
         val autoDeleteTimeHours = advancedPrefs.getInt(
             AUTO_DELETE_TIME_HOURS,
@@ -92,6 +97,7 @@ class AdvancedSettings : AppCompatActivity() {
         tracerouteSwitch.isChecked = traceMaxPref
         skipMqttSwitch.isChecked = skipMqttPref
         autoDeleteNodesSwitch.isChecked = autoDeleteNodesPref
+        autoDeletePreserveFav.isChecked = autoDeletePreserveFavPref
 
         val autoDeleteSpinnerIndex = hoursValues
             .indexOf(autoDeleteTimeHours)
@@ -104,6 +110,7 @@ class AdvancedSettings : AppCompatActivity() {
         setSwitchListener(skipMqttSwitch, SKIP_MQTT_ENTIRELY)
         setSwitchListener(overrideTelemetrySwitch, OVERRIDE_TELEMETRY_ALL_VERSIONS)
         setSwitchListener(autoDeleteNodesSwitch, AUTO_DELETE_OLD_NODES)
+        setSwitchListener(autoDeletePreserveFav, AUTO_DELETE_PRESERVE_FAVOURITES)
 
         autoDeleteTimeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(

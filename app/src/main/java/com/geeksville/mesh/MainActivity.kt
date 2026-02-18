@@ -83,6 +83,7 @@ import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.model.BluetoothViewModel
 import com.geeksville.mesh.model.Contact
 import com.geeksville.mesh.model.DeviceVersion
+import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.RelayEvent
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.model.UIViewModel.Companion.getPreferences
@@ -1292,10 +1293,16 @@ class MainActivity : AppCompatActivity(), Logging {
                 AutoDeleteConfig.hoursValues.max()
             )
 
+            val preserveFav = advancedPrefs.getBoolean(
+                AUTO_DELETE_PRESERVE_FAVOURITES,
+                false,
+            )
+
             val epochSeconds = hours.toLong() * 60 * 60
 
             model.nodeList.value.toList().filter { n ->
-                (n.num != ourNode && (now - n.lastHeard) >= epochSeconds) || n.lastHeard == 0
+                n.shouldBeFilteredWhenPurging(ourNode, now, epochSeconds, preserveFav)
+
             }.forEach { n ->
                 try {
                     radioMeshService.packetId.let { id ->
@@ -1310,6 +1317,23 @@ class MainActivity : AppCompatActivity(), Logging {
                 }
             }
         }
+    }
+
+    private fun Node.shouldBeFilteredWhenPurging(
+        ourNode: Int,
+        now: Long,
+        epochSeconds: Long,
+        preserveFav: Boolean
+
+    ): Boolean {
+
+        val expired = (num != ourNode && (now - lastHeard) >= epochSeconds) ||
+                      (num != ourNode && lastHeard == 0)
+
+        val allowedByFavorite =
+            !preserveFav || !isFavorite
+
+        return expired && allowedByFavorite
     }
 
     private fun checkIfDeviceIsHunting() {

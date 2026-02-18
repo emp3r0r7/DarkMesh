@@ -221,5 +221,17 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/deleteOldNodesSwitch"
             app:layout_constraintTop_toBottomOf="@+id/deleteOldNodesDesc" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/preserveFavouritesSwitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Preserve Favourites  "
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.043"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/deleteOldNodesSwitch"
+            tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>
