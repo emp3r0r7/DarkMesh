@@ -86,6 +86,25 @@ the [Meshtastic](https://github.com/meshtastic) community and its contributors.
 
 ---
 
+<section class="intro">
+  
+  <p>
+    DarkMesh has grown over time and is now adopted by a wide range of users.
+    Its evolution requires continuous maintenance, regular updates, and the development of new features (it is developed and maintained solely by me).
+    Voluntary support helps sustain ongoing development and ensures the long-term continuity of the project.
+  </p>
+
+  <p align="center">
+    <a href="https://ko-fi.com/darkmesh" target="_blank" rel="noopener noreferrer">
+      <img src="https://frompage2screen.com/wp-content/uploads/2024/01/buymeakofi.webp"
+           alt="Support DarkMesh via PayPal"
+           width="180">
+    </a>
+  </p>
+
+</section>
+
+
 <p align="center">
   <i>DarkMesh — decentralized communication, refined for the field.</i>
 </p>
