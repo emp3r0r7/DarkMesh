@@ -425,6 +425,7 @@ class UIViewModel @Inject constructor(
                     }
 
                     showSnackbar("Import completed successfully in $formatted")
+                    DbImportState.setImportCompleteNull()
                 }
             }
         }

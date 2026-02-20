@@ -48,6 +48,10 @@ object DbImportState {
         }
     }
 
+    fun setImportCompleteNull(){
+        _importComplete.value = null
+    }
+
     fun importInProgress() : Boolean {
         return _importProgress.value != null && _importProgress.value != ""
     }
