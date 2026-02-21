@@ -39,8 +39,8 @@ import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.database.DbImportState
 import com.geeksville.mesh.database.DbImportState.ARGS_TAG
 import com.geeksville.mesh.database.DbImportState.ARG_FAVORITE_ONLY
+import com.geeksville.mesh.database.DbImportState.DEFAULT_IMPORTED_NODES_PERMITTED
 import com.geeksville.mesh.database.DbImportState.MAX_ALLOWED_DB_SIZE_BYTES
-import com.geeksville.mesh.database.DbImportState.MAX_IMPORTED_NODES_PERMITTED
 import com.geeksville.mesh.database.DbImportState.NODE_EXPORT_DB_VER
 import com.geeksville.mesh.database.DbImportState.NODE_EXPORT_SEPARATOR
 import com.geeksville.mesh.database.MeshLogRepository
@@ -798,7 +798,7 @@ class UIViewModel @Inject constructor(
         val split = content.split(NODE_EXPORT_SEPARATOR)
 
         if (split.size <= 1) {
-            showSnackbar("Imported Node Db file is empty!")
+            showSnackbar("Imported Node Db file is empty nor not valid!")
             return
         }
 
@@ -817,7 +817,7 @@ class UIViewModel @Inject constructor(
 
         var onlyFavDb = false
 
-        detectNodeDMArgs(header)?.let {
+        detectNodeDMDBArgs(header)?.let {
 
             info("Args detected, parsing..")
             val guard = mutableListOf<Char>()
@@ -859,7 +859,7 @@ class UIViewModel @Inject constructor(
             .drop(1) // remove header
             .filter { it.isNotEmpty() }
 
-        var hwLimit = MAX_IMPORTED_NODES_PERMITTED
+        var hwLimit = DEFAULT_IMPORTED_NODES_PERMITTED
 
         ourNodeInfo.value?.user?.hwModel?.let {
             val hwModel = getDeviceHardwareFromHardwareModel(it)
@@ -868,7 +868,7 @@ class UIViewModel @Inject constructor(
                     "esp32" -> 200
                     "esp32s3" -> 250
                     "nrf52840" -> 80
-                    else -> MAX_IMPORTED_NODES_PERMITTED
+                    else -> DEFAULT_IMPORTED_NODES_PERMITTED
                 }
             }
         }
@@ -1008,8 +1008,7 @@ class UIViewModel @Inject constructor(
         return null
     }
 
-
-    fun detectNodeDMArgs(header: String): String?{
+    fun detectNodeDMDBArgs(header: String): String?{
         try {
             header.split(ARGS_TAG).let {
                 if(it.size > 1){

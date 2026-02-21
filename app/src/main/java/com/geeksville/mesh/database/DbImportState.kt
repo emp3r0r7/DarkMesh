@@ -18,7 +18,7 @@ object DbImportState {
 
     const val NODE_EXPORT_SEPARATOR: String = "☠"
     const val NODE_EXPORT_DB_VER: Float = 0.1f
-    const val MAX_IMPORTED_NODES_PERMITTED = 250
+    const val DEFAULT_IMPORTED_NODES_PERMITTED = 80
     const val ARGS_TAG = "ARGS|"
     const val ARG_FAVORITE_ONLY = 1
     const val MAX_ALLOWED_DB_SIZE_BYTES = 1L * 1024L * 1024L // 1 MB
