@@ -40,7 +40,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
-import kotlinx.coroutines.limitedParallelism
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.max
@@ -166,7 +165,7 @@ class LocationRepository @Inject constructor(
         val debouncer = LocationDebouncer(policy)
 
         // Serializza i callback di più provider: evita race sullo stato del debouncer
-        val callbackExecutor = Dispatchers.IO.limitedParallelism(1).asExecutor()
+        val callbackExecutor = Dispatchers.IO.asExecutor()
 
         fun nowElapsedMs(): Long = SystemClock.elapsedRealtime()
 
