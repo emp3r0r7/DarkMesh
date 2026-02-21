@@ -44,13 +44,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.emp3r0r7.darkmesh.R
 
-private const val SNR_GOOD_THRESHOLD = -7f
-private const val SNR_FAIR_THRESHOLD = -15f
+const val SNR_GOOD_THRESHOLD = -7f
+const val SNR_FAIR_THRESHOLD = -15f
 
-private const val RSSI_GOOD_THRESHOLD = -115
-private const val RSSI_FAIR_THRESHOLD = -126
+const val RSSI_GOOD_THRESHOLD = -115
+const val RSSI_FAIR_THRESHOLD = -126
 
-private enum class Quality(
+enum class Quality(
     val nameRes: Int,
     val imageVector: ImageVector,
     val color: Color

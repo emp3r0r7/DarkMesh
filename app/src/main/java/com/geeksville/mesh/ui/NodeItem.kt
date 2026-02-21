@@ -86,7 +86,7 @@ import com.geeksville.mesh.ui.compose.ElevationInfo
 import com.geeksville.mesh.ui.compose.SatelliteCountInfo
 import com.geeksville.mesh.ui.preview.NodePreviewParameterProvider
 import com.geeksville.mesh.ui.theme.AppTheme
-import com.geeksville.mesh.util.ApiUtil
+import com.geeksville.mesh.util.AppUtil
 import com.geeksville.mesh.util.toDistanceString
 import kotlinx.coroutines.delay
 import org.meshtastic.proto.ConfigProtos.Config.DeviceConfig
@@ -128,7 +128,7 @@ fun NodeItem(
         thatNode.user.role.name
     }
 
-    val infrastructure = ApiUtil.isInfrastructure(roleName)
+    val infrastructure = AppUtil.isInfrastructure(roleName)
 
     val style = if (thatNode.isUnknownUser) {
         LocalTextStyle.current.copy(fontStyle = FontStyle.Italic)

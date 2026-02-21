@@ -73,7 +73,7 @@ import com.geeksville.mesh.repository.radio.RadioServiceConnectionState
 import com.geeksville.mesh.service.DistressService.PREF_STRESSTEST_ENABLED
 import com.geeksville.mesh.service.GlobalRadioMesh.autoDeleteMap
 import com.geeksville.mesh.service.GlobalRadioMesh.ourTracerouteRequests
-import com.geeksville.mesh.util.ApiUtil
+import com.geeksville.mesh.util.AppUtil
 import com.geeksville.mesh.util.anonymize
 import com.geeksville.mesh.util.toOneLineString
 import com.geeksville.mesh.util.toPIIString
@@ -814,13 +814,15 @@ class MeshService : Service(), Logging {
         }
     }
 
-    private fun detectRelayNode(relayNodeLastByte: Int?, packet: MeshPacket, fromUs: Boolean) {
+    private fun detectRelayNode(packet: MeshPacket, fromUs: Boolean) {
 
         //We prioritize relaynode from packets and if not found, we fallback to hop evaluation
-        if (relayNodeLastByte != null && relayNodeLastByte != 0) {
+        if (packet.relayNode != 0) {
             radioConfigRepository.emitRelayEvent(
                 RelayEvent(
-                    relayNodeLastByte = relayNodeLastByte
+                    relayNodeLastByte = packet.relayNode,
+                    rxRssi = packet.rxRssi,
+                    rxSnr = packet.rxSnr
                 )
             )
 
@@ -828,7 +830,9 @@ class MeshService : Service(), Logging {
 
             radioConfigRepository.emitRelayEvent(
                 RelayEvent(
-                    relayNodeIdentifier = packet.from
+                    relayNodeNum = packet.from,
+                    rxRssi = packet.rxRssi,
+                    rxSnr = packet.rxSnr
                 )
             )
         }
@@ -841,7 +845,6 @@ class MeshService : Service(), Logging {
             val bytes = data.payload.toByteArray()
             val fromId = toNodeID(packet.from)
             val dataPacket = toDataPacket(packet)
-            val relayNodeLastByte = dataPacket?.relayNode
 
             if (dataPacket != null) {
 
@@ -850,7 +853,7 @@ class MeshService : Service(), Logging {
 
                 debug("Received data from $fromId, portnum=${data.portnum} ${bytes.size} bytes")
 
-                detectRelayNode(relayNodeLastByte, packet, fromUs)
+                detectRelayNode(packet, fromUs)
 
                 dataPacket.status = MessageStatus.RECEIVED
 
@@ -886,7 +889,7 @@ class MeshService : Service(), Logging {
 
                         } else {
 
-                            val positionPayload = ApiUtil.mergePacketAndPayload(myNodeID, packet)
+                            val positionPayload = AppUtil.mergePacketAndPayload(myNodeID, packet)
 
                             huntHttpService.maybeSendDataJsonAsync(huntingPrefs, positionPayload)
                             handleReceivedPosition(packet.from, u, dataPacket.time)
@@ -900,7 +903,7 @@ class MeshService : Service(), Logging {
                                 if (packet.viaMqtt) longName = "$longName (MQTT)"
                             }
 
-                            val telemetryPayload = ApiUtil.mergePacketAndPayload(myNodeID, packet)
+                            val telemetryPayload = AppUtil.mergePacketAndPayload(myNodeID, packet)
 
                             huntHttpService.maybeSendDataJsonAsync(huntingPrefs, telemetryPayload)
 
@@ -912,7 +915,7 @@ class MeshService : Service(), Logging {
                         val u = TelemetryProtos.Telemetry.parseFrom(data.payload)
                             .copy { if (time == 0) time = (dataPacket.time / 1000L).toInt() }
 
-                        val telemetryPayload = ApiUtil.mergePacketAndPayload(myNodeID, packet)
+                        val telemetryPayload = AppUtil.mergePacketAndPayload(myNodeID, packet)
 
                         if (!fromUs) {
                             huntHttpService.maybeSendDataJsonAsync(huntingPrefs, telemetryPayload)
@@ -967,7 +970,7 @@ class MeshService : Service(), Logging {
 
                         //val fullTracePayload = packet.buildTracerouteJson(myNodeID) {nodeNum -> getUserName(nodeNum)}
                         //fixme move this logic in #maybeSendDataJsonAsync
-                        val traceroutePayload = ApiUtil.mergePacketAndPayload(myNodeID, packet)
+                        val traceroutePayload = AppUtil.mergePacketAndPayload(myNodeID, packet)
 
                         huntHttpService.maybeSendDataJsonAsync(huntingPrefs, traceroutePayload)
 

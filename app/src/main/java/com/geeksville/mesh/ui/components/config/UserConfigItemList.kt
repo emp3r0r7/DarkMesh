@@ -62,7 +62,7 @@ import com.geeksville.mesh.ui.components.PreferenceCategory
 import com.geeksville.mesh.ui.components.PreferenceFooter
 import com.geeksville.mesh.ui.components.RegularPreference
 import com.geeksville.mesh.ui.components.SwitchPreference
-import com.geeksville.mesh.util.ApiUtil
+import com.geeksville.mesh.util.AppUtil
 import com.geeksville.mesh.util.Capabilities
 import org.meshtastic.proto.MeshProtos
 import org.meshtastic.proto.copy
@@ -161,7 +161,7 @@ fun UserConfigItemList(
                 title = stringResource(R.string.unmessagable),
                 checked =
                     userInput.isUnmessagable ||
-                            (!capabilities.canToggleUnmessageable && ApiUtil.isInfrastructure(userInput.role.name)),
+                            (!capabilities.canToggleUnmessageable && AppUtil.isInfrastructure(userInput.role.name)),
                 enabled = capabilities.canToggleUnmessageable,
                 onCheckedChange = { userInput = userInput.copy {isUnmessagable = it}},
             )

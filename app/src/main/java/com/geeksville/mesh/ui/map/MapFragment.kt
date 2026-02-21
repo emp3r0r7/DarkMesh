@@ -82,7 +82,7 @@ import com.geeksville.mesh.model.map.MarkerWithLabel
 import com.geeksville.mesh.model.map.clustering.RadiusMarkerClusterer
 import com.geeksville.mesh.ui.ScreenFragment
 import com.geeksville.mesh.ui.theme.AppTheme
-import com.geeksville.mesh.util.ApiUtil
+import com.geeksville.mesh.util.AppUtil
 import com.geeksville.mesh.util.SqlTileWriterExt
 import com.geeksville.mesh.util.addCopyright
 import com.geeksville.mesh.util.addScaleBarOverlay
@@ -498,7 +498,7 @@ fun MapView(
         val nodesWithPosition = nodes.filter { it.validPosition != null }
         val ourNode = model.ourNodeInfo.value
 
-        val gpsFormat = ApiUtil.safeGpsFormat(model.config.display.gpsFormat)
+        val gpsFormat = AppUtil.safeGpsFormat(model.config.display.gpsFormat)
         val displayUnits = model.config.display.units.number
         return nodesWithPosition.map { node ->
             val (p, u) = node.position to node.user

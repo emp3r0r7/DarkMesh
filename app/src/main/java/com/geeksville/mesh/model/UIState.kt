@@ -58,7 +58,7 @@ import com.geeksville.mesh.service.ServiceRepository
 import com.geeksville.mesh.ui.map.MAP_STYLE_ID
 import com.geeksville.mesh.ui.share.getSharedContactUrl
 import com.geeksville.mesh.ui.share.toSharedContact
-import com.geeksville.mesh.util.ApiUtil
+import com.geeksville.mesh.util.AppUtil
 import com.geeksville.mesh.util.getShortDate
 import com.geeksville.mesh.util.positionToMeter
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -155,10 +155,13 @@ internal fun getChannelList(
 }
 
 data class RelayEvent (
-    val relayNodeLastByte: Int = -1,
-    val relayNodeIdentifier: Int = 0,
+    var relayNodeNum: Int = 0,
     var nodeLongName: String? = null,
+    var nodeShortName: String? = null,
+    val relayNodeLastByte: Int = -1,
     val timestamp: Long = System.currentTimeMillis(),
+    val rxRssi: Int = Int.MAX_VALUE,
+    val rxSnr: Float = Float.MAX_VALUE
 )
 
 
@@ -325,7 +328,7 @@ class UIViewModel @Inject constructor(
             sort = sort,
             filter = filter,
             includeUnknown = includeUnknown,
-            gpsFormat = ApiUtil.safeGpsFormat(profile.config.display.gpsFormat),
+            gpsFormat = AppUtil.safeGpsFormat(profile.config.display.gpsFormat),
             distanceUnits = profile.config.display.units.number,
             tempInFahrenheit = profile.moduleConfig.telemetry.environmentDisplayFahrenheit,
             showDetails = showDetails,
@@ -394,15 +397,18 @@ class UIViewModel @Inject constructor(
                     relayNodeEntity?.let {
 
                         relayEvent.nodeLongName = relayNodeEntity.user.longName
+                        relayEvent.nodeShortName = relayNodeEntity.user.shortName
+                        relayEvent.relayNodeNum = relayNodeEntity.num
                         updateLastRelayNode(relayEvent)
                         expireRelayNode()
                     }
 
-                } else if (relayEvent.relayNodeIdentifier != 0){
-                    nodes.firstOrNull { it.num == relayEvent.relayNodeIdentifier }?.let {
+                } else if (relayEvent.relayNodeNum != 0){
+                    nodes.firstOrNull { it.num == relayEvent.relayNodeNum }?.let {
                      matchingNode ->
 
                         relayEvent.nodeLongName = matchingNode.user.longName
+                        relayEvent.nodeShortName = matchingNode.user.shortName
                         updateLastRelayNode(relayEvent)
                         expireRelayNode()
                     }
@@ -1024,7 +1030,7 @@ class UIViewModel @Inject constructor(
 
     private fun getDeviceHardwareFromHardwareModel(hwModel: MeshProtos.HardwareModel): DeviceHardware? {
         return if(deviceHardwareList.isEmpty()){
-            ApiUtil.loadDeviceHardwareList(app)
+            AppUtil.loadDeviceHardwareList(app)
                 .firstOrNull { it.hwModel == hwModel.number }
         } else {
             deviceHardwareList.firstOrNull { it.hwModel == hwModel.number }

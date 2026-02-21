@@ -28,7 +28,11 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -41,6 +45,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
@@ -59,6 +64,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.fragment.app.activityViewModels
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -68,12 +74,18 @@ import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.database.DbImportState
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.RelayEvent
+import com.geeksville.mesh.model.SNR_FAIR_THRESHOLD
+import com.geeksville.mesh.model.SNR_GOOD_THRESHOLD
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.ui.components.NodeFilterTextField
 import com.geeksville.mesh.ui.components.NodeMenuAction
+import com.geeksville.mesh.ui.components.Quality
+import com.geeksville.mesh.ui.components.RSSI_FAIR_THRESHOLD
+import com.geeksville.mesh.ui.components.RSSI_GOOD_THRESHOLD
 import com.geeksville.mesh.ui.components.rememberTimeTickWithLifecycle
 import com.geeksville.mesh.ui.message.navigateToMessages
 import com.geeksville.mesh.ui.theme.AppTheme
+import com.geeksville.mesh.util.AppUtil
 import dagger.hilt.android.AndroidEntryPoint
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -214,12 +226,18 @@ fun NodesScreen(
 }
 
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
 fun RelayInfoBox(relayNode: RelayEvent, model: UIViewModel) {
 
-    val (nodeName, timeLabel) = parseNodeNameAndTimestamp(relayNode)
+    val nodeName = relayNode.nodeLongName ?: "undefined"
+    val shortName = relayNode.nodeShortName ?: "undefined"
+    val nodeNum = relayNode.relayNodeNum
+    val timeLabel = formatRelayTime(relayNode.timestamp)
     val context = LocalContext.current
+    val rxSnr = relayNode.rxSnr
+    val rxRssi = relayNode.rxRssi
+    val (foregroundColor, backgroundColor) = AppUtil.getNodeColorLabel(nodeNum)
 
     androidx.compose.material.Surface(
         elevation = 4.dp,
@@ -236,30 +254,89 @@ fun RelayInfoBox(relayNode: RelayEvent, model: UIViewModel) {
                     ).show()
                 },
                 onLongClick = {
-
-                    var longName = relayNode.nodeLongName
-
-                    //fixme, use a more reliable way to do this
-                    longName?.let {
-                        /* this filter is used when the gateway is obtained from the latest
-                           traceroute done by the user */
-                        if(longName.contains("(") && longName.contains(")")) {
-
-                            longName = relayNode.nodeLongName
-                                ?.substringBefore("(")
-                                ?.trim()
-                        }
-                    }
-
-                    model.filterForNode(null, longName)
+                    model.filterForNode(null, nodeName)
                 }
             )
     )  {
-        Text(
-            text = "⏩ " +
-                    "$nodeName • $timeLabel",
-            modifier = Modifier.padding(12.dp)
-        )
+
+        val snrColor = when {
+            rxSnr >= SNR_GOOD_THRESHOLD -> Quality.GOOD.color
+            rxSnr >= SNR_FAIR_THRESHOLD -> Quality.FAIR.color
+            else -> Quality.BAD.color
+        }
+
+        val rssiColor = when {
+            rxRssi > RSSI_GOOD_THRESHOLD -> Quality.GOOD.color
+            rxRssi > RSSI_FAIR_THRESHOLD -> Quality.FAIR.color
+            else -> Quality.BAD.color
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(7.dp)
+        ) {
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(9.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = Color(backgroundColor),
+                            shape = RoundedCornerShape(50)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                )  {
+                    Text(
+                        color = Color(foregroundColor),
+                        text = shortName,
+                        fontSize = 14.sp
+                    )
+                }
+
+                if (rxSnr != Float.MAX_VALUE) {
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                snrColor,
+                                RoundedCornerShape(6.dp)
+                            )
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = "SNR ${rxSnr}dB",
+                            color = Color.Black,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                }
+
+                if (rxRssi != Int.MAX_VALUE) {
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                rssiColor,
+                                RoundedCornerShape(6.dp)
+                            )
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = "RSSI ${rxRssi}dBm",
+                            color = Color.Black,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                }
+                Text(
+                    text = timeLabel,
+                    fontSize = 14.sp
+                )
+            }
+        }
     }
 }
 
@@ -327,12 +404,55 @@ fun DbImportInfoBox(
     }
 }
 
-private fun parseNodeNameAndTimestamp(relayNode: RelayEvent): Pair<String?, String>{
-    val nodeName = relayNode.nodeLongName ?: "undefined"
-    return nodeName to formatRelayTime(relayNode.timestamp)
-}
-
 private fun formatRelayTime(timestampMillis: Long): String {
     val sdf = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
     return sdf.format(Date(timestampMillis))
 }
+
+/* debug purposes only
+@Preview(
+    name = "RelayInfoBox Light",
+    showBackground = true
+)
+@Composable
+fun PreviewRelayInfoBoxLight() {
+
+    val fakeRelay = RelayEvent(
+        nodeLongName = "Rome Gateway (TR)",
+        nodeShortName = "QQQQ",
+        relayNodeNum = 12345616,
+        rxSnr = 9.5f,
+        rxRssi = -142,
+        timestamp = System.currentTimeMillis()
+    )
+
+    AppTheme {
+        RelayInfoBox(
+            relayNode = fakeRelay,
+        )
+    }
+}
+
+@Preview(
+    name = "RelayInfoBox Dark",
+    showBackground = true
+)
+@Composable
+fun PreviewRelayInfoBoxDark() {
+
+    val fakeRelay = RelayEvent(
+        nodeLongName = "Rome Gateway (TR)",
+        nodeShortName = "QQQQ",
+        rxSnr = 4.2f,
+        rxRssi = -145,
+        timestamp = System.currentTimeMillis()
+    )
+
+    AppTheme(darkTheme = true) {
+        RelayInfoBox(
+            relayNode = fakeRelay,
+        )
+    }
+}
+*/
+

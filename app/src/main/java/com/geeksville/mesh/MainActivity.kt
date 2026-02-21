@@ -87,7 +87,6 @@ import com.geeksville.mesh.model.Contact
 import com.geeksville.mesh.model.DeviceVersion
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.RadioConfigViewModel
-import com.geeksville.mesh.model.RelayEvent
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.model.UIViewModel.Companion.getPreferences
 import com.geeksville.mesh.model.colorizeTracerouteResponse
@@ -651,30 +650,12 @@ class MainActivity : AppCompatActivity(), Logging {
         serviceRepository.setMeshService(null)
     }
 
-    private fun setFirstRespondingNodeForGateway(traceResponse: String?){
-
-        if(traceResponse != null && !traceResponse.isEmpty()){
-            try {
-                val nearestNodeName = traceResponse.split("■")[2].split("\n")[0]
-
-                val relayEvent = RelayEvent(
-                    nodeLongName = nearestNodeName
-                )
-
-                model.updateLastRelayNodeWithTimeout(relayEvent)
-
-            } catch (e: Exception){
-                debug("Could not determine first responding node! ${e.message}")
-            }
-        }
-
-    }
-
     override fun onStop() {
         unbindMeshService()
         super.onStop()
     }
 
+    @Suppress("UnnecessaryVariable")
     override fun onStart() {
         super.onStart()
 
@@ -716,9 +697,8 @@ class MainActivity : AppCompatActivity(), Logging {
 
             if (response == null) return@observe
 
-            setFirstRespondingNodeForGateway(response)
-
             val coloredResponse = colorizeTracerouteResponse(response)
+
             val storedResponse = response
 
             val dialog = MaterialAlertDialogBuilder(this)

@@ -1,6 +1,7 @@
 package com.geeksville.mesh.util
 
 import android.content.Context
+import android.graphics.Color
 import com.geeksville.mesh.android.BuildUtils.errormsg
 import com.geeksville.mesh.model.DeviceHardware
 import com.geeksville.mesh.model.DeviceHardwareDto
@@ -18,7 +19,7 @@ import org.meshtastic.proto.ConfigProtos.Config.DisplayConfig.DeprecatedGpsCoord
 import org.meshtastic.proto.MeshProtos.MeshPacket
 import org.meshtastic.proto.Portnums
 
-object ApiUtil {
+object AppUtil {
 
     private val jsonParser: Json = Json {
         ignoreUnknownKeys = true
@@ -40,7 +41,19 @@ object ApiUtil {
             emptyList()
         }
     }
+    
+    fun getNodeColorLabel(nodeNum: Int): Pair<Int, Int> {
+        val r = (nodeNum and 0xFF0000) shr 16
+        val g = (nodeNum and 0x00FF00) shr 8
+        val b = nodeNum and 0x0000FF
 
+        val brightness = ((r * 0.299) + (g * 0.587) + (b * 0.114)) / 255
+
+        val background = Color.rgb(r, g, b)
+        val foreground = if (brightness > 0.5) Color.BLACK else Color.WHITE
+
+        return foreground to background
+    }
 
     fun safeGpsFormat(gps: DeprecatedGpsCoordinateFormat): Int {
         return if (gps == DeprecatedGpsCoordinateFormat.UNRECOGNIZED)
