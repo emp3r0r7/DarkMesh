@@ -7,7 +7,10 @@
   Licensed under <b>GPL-3.0</b>.
 </p>
 
-  
+<p align="center">
+<a href="https://darkmesh.neocities.org">OFFICIAL WEBSITE</a>
+</p> 
+
 > [!WARNING]
 > **DarkMesh is designed for FULL-OFFGRID usage only.**  
 > If you plan to use MQTT or control your node remotely via Wi-Fi, this project is **not suitable** for your use case.
