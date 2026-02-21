@@ -29,6 +29,7 @@ import android.os.Bundle
 import android.os.RemoteException
 import android.text.InputType
 import android.text.method.LinkMovementMethod
+import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
@@ -205,6 +206,8 @@ class MainActivity : AppCompatActivity(), Logging {
     private val radioConfigViewModel: RadioConfigViewModel by viewModels()
 
     private var lastWarningStealthHunter = 0L
+    private var exportFavOnly: Boolean = false
+    private var skipNodeDbWipe: Boolean = false
 
     @Inject
     internal lateinit var serviceRepository: ServiceRepository
@@ -434,7 +437,7 @@ class MainActivity : AppCompatActivity(), Logging {
         ActivityResultContracts.StartActivityForResult()
     ) {
         if (it.resultCode == RESULT_OK) {
-            it.data?.data?.let { fileUri -> model.saveNodeDbURL(fileUri) }
+            it.data?.data?.let { fileUri -> model.saveNodeDbURL(fileUri,exportFavOnly) }
         }
     }
 
@@ -447,7 +450,6 @@ class MainActivity : AppCompatActivity(), Logging {
                 }
             }
         }
-
 
     override fun onDestroy() {
         mainScope.cancel("Activity going away")
@@ -486,6 +488,7 @@ class MainActivity : AppCompatActivity(), Logging {
                     val info: MyNodeInfo? = service.myNodeInfo // this can be null
 
                     if (info != null) {
+                        //todo maybe remove this
                         val isOld = info.minAppVersion > BuildConfig.VERSION_CODE
                         if (isOld) {
                             showAlert(R.string.app_too_old, R.string.must_update)
@@ -829,6 +832,7 @@ class MainActivity : AppCompatActivity(), Logging {
         return super.onPrepareOptionsMenu(menu)
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
@@ -963,6 +967,24 @@ class MainActivity : AppCompatActivity(), Logging {
 
             R.id.export_node_db -> {
 
+                exportFavOnly = false
+                skipNodeDbWipe = false
+
+                val checkBoxExportFav = createCheckBox("Export favorites only", false)
+                val checkBoxSkipNodeDbWipe = createCheckBox( "Skip NodeDb Wipe", false)
+
+                checkBoxExportFav.visibility = View.VISIBLE
+                checkBoxSkipNodeDbWipe.visibility = View.GONE
+
+                val rootContainer = LinearLayout(this).apply {
+                    orientation = LinearLayout.VERTICAL
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    setPadding(48, 24, 48, 0)
+
+                    addView(checkBoxExportFav)
+                    addView(checkBoxSkipNodeDbWipe)
+                }
+
                 val options = arrayOf("Export Node DB", "Import Node DB")
                 var selectedOption = 0
 
@@ -970,8 +992,14 @@ class MainActivity : AppCompatActivity(), Logging {
                     .setTitle("Node DB Operations")
                     .setSingleChoiceItems(options, 0) { _, which ->
                         selectedOption = which
+                        checkBoxExportFav.visibility = if (which == 0) View.VISIBLE else View.GONE
+                        checkBoxSkipNodeDbWipe.visibility = if (which == 1) View.VISIBLE else View.GONE
                     }
+                    .setView(rootContainer)
                     .setPositiveButton("OK") { dialog, _ ->
+
+                        exportFavOnly = checkBoxExportFav.isChecked
+                        skipNodeDbWipe = checkBoxSkipNodeDbWipe.isChecked
 
                         when (selectedOption) {
 
@@ -982,7 +1010,14 @@ class MainActivity : AppCompatActivity(), Logging {
                                     type = "application/octet-stream"
                                     val dateFormat = SimpleDateFormat("dd-MM-yyyy-HH:mm", Locale.getDefault())
                                     val time = dateFormat.format(Date())
-                                    putExtra(Intent.EXTRA_TITLE, "${time}_nodes.dmdb")
+
+                                    val prefix = if(exportFavOnly){
+                                        "fav"
+                                    } else {
+                                        "full"
+                                    }
+
+                                    putExtra(Intent.EXTRA_TITLE, "${prefix}_${time}.dmdb")
                                 }
                                 createDocumentLauncher.launch(intent)
                             }
@@ -1013,13 +1048,14 @@ class MainActivity : AppCompatActivity(), Logging {
 
                                     //if nodedb less than 10 , import directly otherwise, add all
                                     val nodeDbSize = model.getNodesCount()
-                                    if(nodeDbSize >= 10){
+                                    if(nodeDbSize >= 10 && !skipNodeDbWipe){
 
                                         val warnDialog = MaterialAlertDialogBuilder(this@MainActivity)
                                             .setTitle("Reset Node DB")
 
-                                            .setMessage("Node DB contains more than $nodeDbSize nodes.\n\n" +
-                                                    "DB Reset is needed to import a new one. \n\nProceed?")
+                                            .setMessage("Node DB contains $nodeDbSize or more nodes.\n\n" +
+                                                    "DB Reset is needed to import a new one. " +
+                                                    "\n\nProceed and Reboot?")
 
                                             .setPositiveButton("YES") { _, _ ->
 
@@ -1092,6 +1128,14 @@ class MainActivity : AppCompatActivity(), Logging {
             }
 
             else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    @Suppress("SameParameterValue")
+    private fun createCheckBox(msg: String, checked: Boolean): CheckBox {
+        return CheckBox(this).apply {
+            text = msg
+            isChecked = checked
         }
     }
 

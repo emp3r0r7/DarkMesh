@@ -2117,6 +2117,10 @@ class MeshService : Service(), Logging {
         })
     }
 
+    fun clearQueue(){
+        queuedPackets.clear()
+    }
+
     private fun handleFavorite(node: Node) = toRemoteExceptions {
         sendToRadio(newMeshPacketTo(myNodeNum).buildAdminPacket {
             if (node.isFavorite) {
@@ -2190,6 +2194,10 @@ class MeshService : Service(), Logging {
         override fun getMyId() = toRemoteExceptions { myNodeID }
 
         override fun getPacketId() = toRemoteExceptions { generatePacketId() }
+
+        override fun clearPacketQueue(){
+            clearQueue()
+        }
 
         override fun setOwner(user: MeshUser) = toRemoteExceptions {
             setOwner(generatePacketId(), user {

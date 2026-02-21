@@ -171,4 +171,6 @@ interface IMeshService {
 
     /// Send request for node UserInfo
     void requestUserInfo(in int destNum);
+
+    void clearPacketQueue();
 }

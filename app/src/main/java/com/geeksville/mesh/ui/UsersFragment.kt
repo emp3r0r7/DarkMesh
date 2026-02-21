@@ -41,7 +41,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -162,7 +166,7 @@ fun NodesScreen(
             }
 
             if(DbImportState.importInProgress()){
-                DbImportInfoBox(contact!!)
+                DbImportInfoBox(contact!!, model)
             }
 
             NodeFilterTextField(
@@ -262,6 +266,7 @@ fun RelayInfoBox(relayNode: RelayEvent, model: UIViewModel) {
 @Composable
 fun DbImportInfoBox(
     contact: String,
+    model: UIViewModel
 ) {
     AnimatedVisibility(
         visible = true,
@@ -293,11 +298,30 @@ fun DbImportInfoBox(
 
                 Spacer(modifier = Modifier.width(16.dp))
 
+                val name = if(contact.length > 15){
+                    contact.take(15) + "..."
+                } else {
+                    contact
+                }
+
                 Text(
-                    text = "FW Write: $contact",
+                    text = "FW Sync: $name",
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color.White
                 )
+                Spacer(modifier = Modifier.weight(1f))
+
+                IconButton(onClick = {
+                    model.meshService?.clearPacketQueue()
+                    DbImportState.interruptRunningImport()
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.Cancel,
+                        contentDescription = "Stop import",
+                        tint = Color.Red,
+                        modifier = Modifier.size(35.dp)
+                    )
+                }
             }
         }
     }

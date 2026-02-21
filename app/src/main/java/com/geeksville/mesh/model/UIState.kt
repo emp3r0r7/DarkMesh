@@ -37,6 +37,9 @@ import com.geeksville.mesh.IMeshService
 import com.geeksville.mesh.Position
 import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.database.DbImportState
+import com.geeksville.mesh.database.DbImportState.ARGS_TAG
+import com.geeksville.mesh.database.DbImportState.ARG_FAVORITE_ONLY
+import com.geeksville.mesh.database.DbImportState.MAX_ALLOWED_DB_SIZE_BYTES
 import com.geeksville.mesh.database.DbImportState.MAX_IMPORTED_NODES_PERMITTED
 import com.geeksville.mesh.database.DbImportState.NODE_EXPORT_DB_VER
 import com.geeksville.mesh.database.DbImportState.NODE_EXPORT_SEPARATOR
@@ -418,13 +421,18 @@ class UIViewModel @Inject constructor(
                     val minutes = totalSeconds / 60
                     val seconds = totalSeconds % 60
 
-                    val formatted = if (minutes > 0) {
-                        "${minutes}m ${seconds}s"
+                    if(seconds == 0L){
+                        showSnackbar("Import terminated instantly, " +
+                                "probably all nodes were already present locally")
                     } else {
-                        "${seconds}s"
+                        val formatted = if (minutes > 0) {
+                            "${minutes}m ${seconds}s"
+                        } else {
+                            "${seconds}s"
+                        }
+                        showSnackbar("Import terminated after $formatted")
                     }
 
-                    showSnackbar("Import completed successfully in $formatted")
                     DbImportState.setImportCompleteNull()
                 }
             }
@@ -759,98 +767,172 @@ class UIViewModel @Inject constructor(
 
     fun importNodeDbFile(fileUri: Uri){
 
-        viewModelScope.launch(Dispatchers.Main) {
+        val fileSize = app.contentResolver
+            .openFileDescriptor(fileUri, "r")
+            ?.use { it.statSize } ?: -1L
 
-            val myNum = myNodeNum ?: return@launch
+        if (fileSize <= 0L) {
+            showSnackbar("Cannot determine file size")
+            return
+        }
 
-            app.contentResolver.openInputStream(fileUri)?.use { inputStream ->
+        if (fileSize > MAX_ALLOWED_DB_SIZE_BYTES) {
+            showSnackbar("File too large")
+            return
+        }
 
-                val content = inputStream.bufferedReader(Charsets.UTF_8).use {
-                    it.readText()
+        val myNum = myNodeNum ?: return
+
+        var content: String? = null
+        app.contentResolver.openInputStream(fileUri)?.use { inputStream ->
+            content = inputStream.bufferedReader(Charsets.UTF_8).use {
+                it.readText()
+            }
+        }
+
+        if (content == null || content.isBlank()) {
+            showSnackbar("Imported Node Db is not valid!")
+            return
+        }
+
+        val split = content.split(NODE_EXPORT_SEPARATOR)
+
+        if (split.size <= 1) {
+            showSnackbar("Imported Node Db file is empty!")
+            return
+        }
+
+        val header = split[0]
+        debug("Imported DB Header $header")
+
+        detectNodeDMDBVersion(header)?.let { ver ->
+            Toast.makeText(
+                app, "DarkMesh DB $ver detected, proceeding..",
+                Toast.LENGTH_SHORT
+            ).show()
+        } ?: run {
+            showSnackbar("Invalid DarkMesh DB format!")
+            return
+        }
+
+        var onlyFavDb = false
+
+        detectNodeDMArgs(header)?.let {
+
+            info("Args detected, parsing..")
+            val guard = mutableListOf<Char>()
+
+            if(it.length > 10){
+                showSnackbar("An error occurred while parsing DB args!")
+                return
+            }
+
+            for (c in it) {
+
+                if (guard.contains(c)) {
+                    showSnackbar("Duplicate args detected in header, halting!")
+                    return
                 }
 
-                if(content.isBlank()){
-                    showSnackbar("Imported Node Db is not valid!")
-                    return@launch
-                }
-
-                val split = content.split(NODE_EXPORT_SEPARATOR)
-                val contactListSize = split.size
-
-                if(contactListSize <= 1){
-                    showSnackbar("Imported Node Db file is empty!")
-                    return@launch
-                }
-
-                val header = split[0]
-                debug("Imported DB Header $header")
-
-                detectNodeDMDBVersion(header)?.let { ver ->
-                    Toast.makeText(app, "DarkMesh DB $ver detected, proceeding..",
-                        Toast.LENGTH_SHORT).show()
-                } ?: run {
-                    showSnackbar("Invalid DarkMesh DB format!")
-                    return@launch
-                }
-
-                if(contactListSize >= MAX_IMPORTED_NODES_PERMITTED){
-                    showSnackbar("Your NodeDB is too large, $contactListSize elements!")
-                    return@launch
-                }
-
-                var maxContacts = split.size
-
-                ourNodeInfo.value?.user?.hwModel?.let {
-                    val hwModel = getDeviceHardwareFromHardwareModel(it)
-                    hwModel?.architecture.let {  arch ->
-
-                        when(arch){
-                            "esp32" -> {
-                                maxContacts = 200
-                            }
-                            "esp32s3" -> {
-                                maxContacts = 250
-                            }
-                            "nrf52840" -> {
-                                maxContacts = 80
-                            }
-                            //todo maybe add others
+                try {
+                    when (val arg = c.digitToInt()) {
+                        ARG_FAVORITE_ONLY -> {
+                            onlyFavDb = true
+                            guard.add(c)
+                            //todo add more args
+                        }
+                        else -> {
+                            showSnackbar("Unknown or unhandled DB arg: $arg")
+                            return
                         }
                     }
+                } catch (_: Exception) {
+                    showSnackbar("Invalid args detected, cannot proceed!")
+                    return
                 }
+            }
+        } ?: run {
+            info("NO args detected, continue..")
+        }
 
-                Toast.makeText(app, "Starting import DO NOT DISCONNECT from BT!",
-                    Toast.LENGTH_LONG).show()
+        var contacts = split
+            .drop(1) // remove header
+            .filter { it.isNotEmpty() }
 
-                //do not move this to another place
-                DbImportState.emitFirst()
+        var hwLimit = MAX_IMPORTED_NODES_PERMITTED
 
-                for (i in 1 until maxContacts) {
-                    try {
-                        val nodeURL = split[i]
-                        if (nodeURL.isBlank()) { continue }
+        ourNodeInfo.value?.user?.hwModel?.let {
+            val hwModel = getDeviceHardwareFromHardwareModel(it)
+            hwModel?.architecture?.let { arch ->
+                hwLimit = when (arch) {
+                    "esp32" -> 200
+                    "esp32s3" -> 250
+                    "nrf52840" -> 80
+                    else -> MAX_IMPORTED_NODES_PERMITTED
+                }
+            }
+        }
 
-                        val contactProto = nodeURL.toUri().toSharedContact()
-                        addSharedContact(contactProto, true)
-                        setFavorite(
-                            myNum,
-                            contactProto.nodeNum,
-                            toAdd = false,
+        if (contacts.size > hwLimit) {
+            warn("Imported NodeDB is too large: ${contacts.size} , normalizing for current HW")
+            contacts = contacts.take(hwLimit)
+        }
+
+        if (myNodeNum == null){
+            showSnackbar("Import failed: Cannot retrieve our local node number!")
+            return
+        }
+
+        val currentNodes = nodeDB.nodeDBbyNum.value
+
+        Toast.makeText(
+            app,
+            "Starting import DO NOT DISCONNECT from BT!",
+            Toast.LENGTH_LONG
+        ).show()
+
+        //do not move this to another place!
+        DbImportState.emitFirst()
+
+        viewModelScope.launch (Dispatchers.IO){
+
+            var insert = 0
+
+            for (nodeUrl in contacts) {
+                try {
+                    val contactProto = nodeUrl.toUri().toSharedContact()
+
+                    if(currentNodes.contains(contactProto.nodeNum)){
+                        debug("Skipping db insert of " +
+                                "${contactProto.nodeNum} it is already present"
                         )
-
-                    } catch (e: Exception) {
-                        warn("An error occurred while parsing url! ${e.message}")
+                        continue
                     }
+
+                    addSharedContact(contactProto, true)
+                    setFavorite(
+                        myNum,
+                        contactProto.nodeNum,
+                        toAdd = onlyFavDb,
+                    )
+                    insert++
+                } catch (e: Exception) {
+                    warn("An error occurred while parsing url! ${e.message}")
                 }
+            }
+
+            if(insert == 0){
+                warn("No valid contact has been added, probably all already present!")
+                DbImportState.interruptRunningImport()
             }
         }
     }
 
-    fun saveNodeDbURL(fileUri: Uri) {
+    fun saveNodeDbURL(fileUri: Uri, favoriteOnly: Boolean) {
         viewModelScope.launch(Dispatchers.Main) {
 
             if (myNodeNum == null){
-                showSnackbar("Export failed: Cannot retrive our local node number!")
+                showSnackbar("Export failed: Cannot retrieve our local node number!")
                 return@launch
             }
 
@@ -864,22 +946,40 @@ class UIViewModel @Inject constructor(
             val sb = StringBuilder()
 
             sb.append("DARKMESH_NODEDB_FILE v$NODE_EXPORT_DB_VER GENERATED " +
-                    "BY $myNodeNum at ${System.currentTimeMillis()}")
-              .append(NODE_EXPORT_SEPARATOR)
+                    "BY $myNodeNum at ${System.currentTimeMillis()} $ARGS_TAG")
+
+            if(favoriteOnly) {
+                sb.append(ARG_FAVORITE_ONLY)
+            }
+
+            val filteredNodes = nodes.values
+                .asSequence()
+                .filter { it.num != myNodeNum }
+                .filter { node -> !favoriteOnly || node.isFavorite }
+                .sortedWith(
+                    compareByDescending { it.lastHeard }
+                )
+
+            sb.append(NODE_EXPORT_SEPARATOR)
 
             var exportSize = 0
-            nodes.filter { it.value.num != myNodeNum }.forEach { k ->
-                k.value.let { node ->
-                    val sharedContact = AdminProtos.SharedContact
-                        .newBuilder()
-                        .setUser(node.user)
-                        .setNodeNum(node.num)
-                        .build()
 
-                    val uri = sharedContact.getSharedContactUrl()
-                    exportSize++
-                    sb.append(uri).append(NODE_EXPORT_SEPARATOR)
-                }
+            filteredNodes.forEach { node ->
+                val sharedContact = AdminProtos.SharedContact
+                    .newBuilder()
+                    .setUser(node.user)
+                    .setNodeNum(node.num)
+                    .build()
+
+                val uri = sharedContact.getSharedContactUrl()
+                sb.append(uri).append(NODE_EXPORT_SEPARATOR)
+                exportSize++
+            }
+
+            if (exportSize == 0) {
+                showSnackbar("No nodes available for export " +
+                        "with the current selection or filters.")
+                return@launch
             }
 
             writeToUri(fileUri) { writer ->
@@ -908,6 +1008,21 @@ class UIViewModel @Inject constructor(
         return null
     }
 
+
+    fun detectNodeDMArgs(header: String): String?{
+        try {
+            header.split(ARGS_TAG).let {
+                if(it.size > 1){
+                   return it[1]
+                }
+            }
+        } catch (e: Exception){
+            warn("An error occurred while parsing DMDB version ${e.message}")
+        }
+
+        return null
+    }
+
     private fun getDeviceHardwareFromHardwareModel(hwModel: MeshProtos.HardwareModel): DeviceHardware? {
         return if(deviceHardwareList.isEmpty()){
             ApiUtil.loadDeviceHardwareList(app)
@@ -920,6 +1035,7 @@ class UIViewModel @Inject constructor(
     /**
      * Write the persisted packet data out to a CSV file in the specified location.
      */
+    @Suppress("unused")
     fun saveMessagesCSV(uri: Uri) {
         viewModelScope.launch(Dispatchers.Main) {
             // Extract distances to this device from position messages and put (node,SNR,distance) in
