@@ -866,7 +866,7 @@ class UIViewModel @Inject constructor(
             hwModel?.architecture?.let { arch ->
                 hwLimit = when (arch) {
                     "esp32" -> 200
-                    "esp32s3" -> 250
+                    "esp32-s3" -> 250
                     "nrf52840" -> 80
                     else -> DEFAULT_IMPORTED_NODES_PERMITTED
                 }
