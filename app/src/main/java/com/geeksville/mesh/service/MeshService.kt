@@ -122,6 +122,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import kotlin.math.absoluteValue
+import com.geeksville.mesh.repository.location.LocationEmitPolicy
 
 sealed class ServiceAction {
     data class GetDeviceMetadata(val destNum: Int) : ServiceAction()
@@ -278,42 +279,51 @@ class MeshService : Service(), Logging {
      * start our location requests (if they weren't already running)
      */
     private fun startLocationRequests() {
-        // If we're already observing updates, don't register again
-        if (locationFlow?.isActive == true) return
+    // If we're already observing updates, don't register again
+    if (locationFlow?.isActive == true) return
 
-        @SuppressLint("MissingPermission")
-        if (hasLocationPermission()) {
-            locationFlow = locationRepository.getLocations().onEach { location ->
+    @SuppressLint("MissingPermission")
+    if (hasLocationPermission()) {
 
-                val beaconing = getPreferences(this)
-                    .getBoolean(PREF_STRESSTEST_ENABLED, false)
+        val beaconing = getPreferences(this)
+            .getBoolean(PREF_STRESSTEST_ENABLED, false)
 
-                if(DistressService.isLivePosition() || !beaconing){
-                    sendPosition(
-                        position {
-                            latitudeI = Position.degI(location.latitude)
-                            longitudeI = Position.degI(location.longitude)
-                            if (LocationCompat.hasMslAltitude(location)) {
-                                altitude = LocationCompat.getMslAltitudeMeters(location).toInt()
-                            }
-                            altitudeHae = location.altitude.toInt()
-                            time = (location.time / 1000).toInt()
-                            groundSpeed = location.speed.toInt()
-                            groundTrack = location.bearing.toInt()
-                            locationSource = MeshProtos.Position.LocSource.LOC_EXTERNAL
+        // Distress più live: quando livePosition è attivo (o stiamo componendo posizione per chat distress)
+        val policy =
+            if (DistressService.isLivePosition() || (beaconing && DistressService.isSendPositionToChat())) {
+                LocationEmitPolicy.Live
+            } else {
+                LocationEmitPolicy.Default
+            }
+
+        locationFlow = locationRepository.getLocations(policy).onEach { location ->
+
+            if (DistressService.isLivePosition() || !beaconing) {
+                sendPosition(
+                    position {
+                        latitudeI = Position.degI(location.latitude)
+                        longitudeI = Position.degI(location.longitude)
+                        if (LocationCompat.hasMslAltitude(location)) {
+                            altitude = LocationCompat.getMslAltitudeMeters(location).toInt()
                         }
-                    )
-                }
+                        altitudeHae = location.altitude.toInt()
+                        time = (location.time / 1000).toInt()
+                        groundSpeed = location.speed.toInt()
+                        groundTrack = location.bearing.toInt()
+                        locationSource = MeshProtos.Position.LocSource.LOC_EXTERNAL
+                    }
+                )
+            }
 
-                if(beaconing && DistressService.isSendPositionToChat()){
-                    DistressService.setLatitude(location.latitude)
-                    DistressService.setLongitude(location.longitude)
-                    DistressService.setAltitude(location.altitude.toInt())
-                }
+            if (beaconing && DistressService.isSendPositionToChat()) {
+                DistressService.setLatitude(location.latitude)
+                DistressService.setLongitude(location.longitude)
+                DistressService.setAltitude(location.altitude.toInt())
+            }
 
-            }.launchIn(serviceScope)
-        }
+        }.launchIn(serviceScope)
     }
+}
 
     private fun stopLocationRequests(resetPosition: Boolean) {
         if (locationFlow?.isActive == true) {
