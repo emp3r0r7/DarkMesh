@@ -34,9 +34,16 @@ public class HuntHttpService {
 
     private HuntHttpService(){}
 
-    public static synchronized HuntHttpService getInstance(){
-        if(instance.get() == null)
-            return new HuntHttpService();
+    public static HuntHttpService getInstance(){
+        HuntHttpService currentInstance = instance.get();
+        if (currentInstance != null) {
+            return currentInstance;
+        }
+
+        HuntHttpService newInstance = new HuntHttpService();
+        if (instance.compareAndSet(null, newInstance)) {
+            return newInstance;
+        }
 
         return instance.get();
     }
