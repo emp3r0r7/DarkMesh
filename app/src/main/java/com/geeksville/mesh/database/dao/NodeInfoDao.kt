@@ -67,7 +67,10 @@ interface NodeInfoDao {
     WHERE (:includeUnknown = 1 OR short_name IS NOT NULL)
         AND (:filter = ''
             OR (long_name LIKE '%' || :filter || '%'
-            OR short_name LIKE '%' || :filter || '%'))
+            OR short_name LIKE '%' || :filter || '%'
+            OR CAST(num AS TEXT) LIKE '%' || :filter || '%'
+            OR LOWER(printf('!%08x', num)) LIKE '%' || LOWER(:filter) || '%'
+            OR LOWER(printf('%08x', num)) LIKE '%' || LOWER(REPLACE(:filter, '!', '')) || '%'))
     ORDER BY CASE
         WHEN num = (SELECT myNodeNum FROM my_node LIMIT 1) THEN 0
         ELSE 1
