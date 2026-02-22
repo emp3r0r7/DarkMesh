@@ -62,6 +62,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -110,6 +111,9 @@ fun NodeItem(
     val isIgnored = thatNode.isIgnored
     val longName = thatNode.user.longName.ifEmpty { stringResource(id = R.string.unknown_username) }
     val unmessagable = thatNode.user.isUnmessagable
+
+    val tooltipState = rememberTooltipState()
+    val scope = rememberCoroutineScope()
 
     val isThisNode = thisNode?.num == thatNode.num
     val system = remember(distanceUnits) { DisplayConfig.DisplayUnits.forNumber(distanceUnits) }
@@ -223,9 +227,7 @@ fun NodeItem(
                         )
                     }
 
-                    if (!isThisNode &&
-                        (infrastructure || unmessagable)
-                        ) {
+                    if (infrastructure || unmessagable) {
 
                         var icon = Icons.Default.SettingsInputAntenna
                         var description = "Infrastructure node, may not respond to private messages."
@@ -235,6 +237,10 @@ fun NodeItem(
                             icon = Icons.Default.PhonelinkErase
                             description = "Unmessageable node, may not respond to private messages."
                             iconColor = R.color.colorPrimaryDark
+
+                            if(isThisNode){
+                                description = "Your node is set as unmessageable."
+                            }
                         }
 
                         TooltipBox(
