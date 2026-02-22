@@ -816,21 +816,21 @@ class MeshService : Service(), Logging {
 
     private fun detectRelayNode(packet: MeshPacket, fromUs: Boolean) {
 
-        //We prioritize relaynode from packets and if not found, we fallback to hop evaluation
-        if (packet.relayNode != 0) {
-            radioConfigRepository.emitRelayEvent(
-                RelayEvent(
-                    relayNodeLastByte = packet.relayNode,
-                    rxRssi = packet.rxRssi,
-                    rxSnr = packet.rxSnr
-                )
-            )
-
-        } else if (!fromUs && packet.hopStart - packet.hopLimit <= 0){
+        //We prioritize relaynode from direct packets and if not found, we fallback relayNode field
+        if (!fromUs && packet.hopStart - packet.hopLimit == 0) {
 
             radioConfigRepository.emitRelayEvent(
                 RelayEvent(
                     relayNodeNum = packet.from,
+                    rxRssi = packet.rxRssi,
+                    rxSnr = packet.rxSnr,
+                    confidence = 100 //we set confidence to max for direct packets
+                )
+            )
+        } else if (packet.relayNode != 0) {
+            radioConfigRepository.emitRelayEvent(
+                RelayEvent(
+                    relayNodeLastByte = packet.relayNode,
                     rxRssi = packet.rxRssi,
                     rxSnr = packet.rxSnr
                 )

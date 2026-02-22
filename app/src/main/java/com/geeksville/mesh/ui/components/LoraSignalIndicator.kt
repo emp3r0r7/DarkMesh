@@ -58,6 +58,7 @@ enum class Quality(
     NONE(R.string.none_quality, Icons.Default.SignalCellularAlt1Bar, Color.Red),
     BAD(R.string.bad, Icons.Default.SignalCellularAlt2Bar, Color(red = 247, green = 147, blue = 26)),
     FAIR(R.string.fair, Icons.Default.SignalCellularAlt, Color(red = 255, green = 230, blue = 0)),
+    REALLY_BAD(R.string.really_bad, Icons.Default.SignalCellularAlt, Color(red = 236, green = 55, blue = 0, alpha = 255)),
     GOOD(R.string.good, Icons.Default.SignalCellular4Bar, Color.Green)
 }
 

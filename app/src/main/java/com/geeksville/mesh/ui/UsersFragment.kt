@@ -271,15 +271,51 @@ fun RelayInfoBox(relayNode: RelayEvent, model: UIViewModel) {
             else -> Quality.BAD.color
         }
 
+        val confidenceColor = AppUtil.relayNodePacketLabelColor(relayNode.confidence)
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(7.dp)
+                .padding(7.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(9.dp),
+                horizontalArrangement = Arrangement.spacedBy(
+                    4.dp,
+                    Alignment.CenterHorizontally
+                ),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Text(
+                    text = "Closest Relay Node Info Confidence :",
+                    fontSize = 14.sp
+                )
+
+                Box(
+                    modifier = Modifier
+                        .background(
+                            confidenceColor,
+                            RoundedCornerShape(6.dp)
+                        )
+                        .padding(horizontal = 5.dp, vertical = 0.dp)
+                ) {
+                    Text(
+                        text = "${relayNode.confidence}%",
+                        color = Color.Black,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(
+                    9.dp,
+                    Alignment.CenterHorizontally
+                ),
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
@@ -423,6 +459,7 @@ fun PreviewRelayInfoBoxLight() {
         relayNodeNum = 12345616,
         rxSnr = 9.5f,
         rxRssi = -142,
+        confidence = 80,
         timestamp = System.currentTimeMillis()
     )
 
@@ -445,6 +482,7 @@ fun PreviewRelayInfoBoxDark() {
         nodeShortName = "QQQQ",
         rxSnr = 4.2f,
         rxRssi = -145,
+        confidence = 40,
         timestamp = System.currentTimeMillis()
     )
 

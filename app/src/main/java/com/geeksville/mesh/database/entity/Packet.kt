@@ -76,25 +76,49 @@ data class Packet(
     companion object {
         const val RELAY_NODE_SUFFIX_MASK = 0xFF
 
-        fun getRelayNode(relayNodeId: Int, nodes: List<Node>, ourNodeNum: Int?): Node? {
+        fun getRelayNode(
+            relayNodeId: Int,
+            nodes: List<Node>,
+            ourNodeNum: Int?
+        ): Pair<Node?, Int> {
 
             val relayNodeIdSuffix = relayNodeId and RELAY_NODE_SUFFIX_MASK
 
-            val candidateRelayNodes =
-                nodes.filter {
-                    it.num != ourNodeNum &&
-                            it.lastHeard != 0 &&
-                            (it.num and RELAY_NODE_SUFFIX_MASK) == relayNodeIdSuffix
-                }
+            val candidates = nodes.filter {
+                it.num != ourNodeNum &&
+                        it.lastHeard != 0 &&
+                        (it.num and RELAY_NODE_SUFFIX_MASK) == relayNodeIdSuffix
+            }
 
-            val closestRelayNode =
-                if (candidateRelayNodes.size == 1) {
-                    candidateRelayNodes.first()
-                } else {
-                    candidateRelayNodes.minByOrNull { it.hopsAway }
-                }
+            if (candidates.isEmpty()) return null to 0
 
-            return closestRelayNode
+            val best = candidates.minByOrNull { it.hopsAway } ?: return null to 0
+            var confidence = 50
+
+            val collisionCount = candidates.size
+            val bestHop = best.hopsAway
+            val avgHop = candidates.map { it.hopsAway }.average()
+            val hopGap = avgHop - bestHop
+
+            confidence -= (collisionCount - 1) * 5
+
+            confidence += when {
+                bestHop <= 1 -> 25
+                bestHop == 2 -> 15
+                bestHop <= 4 -> 5
+                else -> -10
+            }
+
+            confidence += when {
+                hopGap >= 3 -> 20
+                hopGap >= 2 -> 15
+                hopGap >= 1 -> 10
+                else -> 0
+            }
+
+            confidence = confidence.coerceIn(0, 100)
+
+            return best to confidence
         }
     }
 }

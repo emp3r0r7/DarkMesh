@@ -9,6 +9,7 @@ import com.geeksville.mesh.model.custom.TracerouteJson
 import com.geeksville.mesh.model.custom.TracerouteNode
 import com.geeksville.mesh.model.custom.TraceroutePath
 import com.geeksville.mesh.model.fullRouteDiscovery
+import com.geeksville.mesh.ui.components.Quality
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
@@ -176,5 +177,14 @@ object AppUtil {
         else -> "unknown_$value"
     }
 
+    fun relayNodePacketLabelColor(confidence: Int): androidx.compose.ui.graphics.Color {
+        val normalized = confidence.coerceIn(0, 100)
 
+        return when (normalized) {
+            in 80..100 -> Quality.GOOD.color
+            in 60..79  -> Quality.FAIR.color
+            in 30..59  -> Quality.BAD.color
+            else       -> Quality.REALLY_BAD.color
+        }
+    }
 }

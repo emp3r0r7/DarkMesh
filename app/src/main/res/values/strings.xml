@@ -296,6 +296,7 @@
     <string name="administration">Administration</string>
     <string name="remote_admin">Remote Administration</string>
     <string name="bad">Bad</string>
+    <string name="really_bad" translatable="false">Really Bad</string>
     <string name="fair">Fair</string>
     <string name="good">Good</string>
     <string name="none_quality">None</string>

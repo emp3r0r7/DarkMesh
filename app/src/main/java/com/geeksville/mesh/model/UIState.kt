@@ -158,6 +158,7 @@ data class RelayEvent (
     var relayNodeNum: Int = 0,
     var nodeLongName: String? = null,
     var nodeShortName: String? = null,
+    var confidence: Int = 0,
     val relayNodeLastByte: Int = -1,
     val timestamp: Long = System.currentTimeMillis(),
     val rxRssi: Int = Int.MAX_VALUE,
@@ -386,9 +387,9 @@ class UIViewModel @Inject constructor(
                 val nodes = nodeDB.nodeDBbyNum.value.values.toList()
                 val ourNodeNum = ourNodeInfo.value?.num
 
-                if (relayEvent.relayNodeLastByte > 0){
+                if (relayEvent.relayNodeLastByte > 0){ //relayed packets
 
-                    val relayNodeEntity = Packet.getRelayNode(
+                    val (relayNodeEntity, confidence) = Packet.getRelayNode(
                         relayEvent.relayNodeLastByte,
                         nodes,
                         ourNodeNum
@@ -399,11 +400,13 @@ class UIViewModel @Inject constructor(
                         relayEvent.nodeLongName = relayNodeEntity.user.longName
                         relayEvent.nodeShortName = relayNodeEntity.user.shortName
                         relayEvent.relayNodeNum = relayNodeEntity.num
+                        relayEvent.confidence = confidence
+
                         updateLastRelayNode(relayEvent)
                         expireRelayNode()
                     }
 
-                } else if (relayEvent.relayNodeNum != 0){
+                } else if (relayEvent.relayNodeNum != 0){ //direct packets
                     nodes.firstOrNull { it.num == relayEvent.relayNodeNum }?.let {
                      matchingNode ->
 
