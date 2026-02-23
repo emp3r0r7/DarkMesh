@@ -1653,9 +1653,9 @@ class MeshService : Service(), Logging {
 
             try {
                 //we want to try this and in case of failure, continue
-                if(advancedPrefs.getBoolean(SKIP_MQTT_ENTIRELY, false)
-                    && proto.packet.hasDecoded()
-                    && proto.packet.viaMqtt){
+                if(advancedPrefs.getBoolean(SKIP_MQTT_ENTIRELY, false) &&
+                    (proto.packet.viaMqtt || proto.packet.transportMechanism == MeshPacket.TransportMechanism.TRANSPORT_MQTT)){
+
                     debug("Skipping MQTT packet since $SKIP_MQTT_ENTIRELY prefs are set to true")
                     return
                 }
