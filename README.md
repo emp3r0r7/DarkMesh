@@ -59,6 +59,11 @@ It is also shown the total distance of the roundtrip.
 You can configure your distress beacon by using short Plus Codes inside text messages, typically encoded in ~8–9 ASCII characters.
 This ensures a significantly smaller payload over the mesh, resulting in less airtime and higher reliability.
 
+### 💾 Database Import/Export
+The database import/export feature has been introduced using a proprietary .dmdb file format.
+You can export the entire database or selectively export only nodes marked as favorites. This can be useful if you want to share your nodes with someone.
+
+
 ---
 
 ## 🔍 Extended Verbosity and Transparency
