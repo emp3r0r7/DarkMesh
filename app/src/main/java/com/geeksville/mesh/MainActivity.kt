@@ -1283,6 +1283,8 @@ class MainActivity : AppCompatActivity(), Logging {
             if (!started) item.isChecked = false
         }
 
+        dialog.show()
+
         setDialogButtonsColor(
             dialog,
             AlertDialog.BUTTON_POSITIVE,
