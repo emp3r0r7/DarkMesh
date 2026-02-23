@@ -814,9 +814,30 @@ class MeshService : Service(), Logging {
         }
     }
 
-    private fun detectRelayNode(packet: MeshPacket, fromUs: Boolean) {
+    private fun detectRelayNode(packet: MeshPacket, fromUs: Boolean, traceResponse:String?) {
 
-        //We prioritize relaynode from direct packets and if not found, we fallback relayNode field
+        //We prioritize relaynode from direct packets and traceroutes and if not found, we fallback relayNode field
+        if(traceResponse != null){
+            parseLastRespondingTracerouteNode(traceResponse)?.let {
+
+                //this condition occurs when a broken longname is written across
+                //the traceroute response, if this happens we use logic below
+                if(!it.contains("ffff (ffff)")){
+                    radioConfigRepository.emitRelayEvent(
+                        RelayEvent(
+                            nodeLongName = it,
+                            rxRssi = packet.rxRssi,
+                            rxSnr = packet.rxSnr,
+                            confidence = 100,
+                            isTraceroute = true
+                        )
+                    )
+                    //in case of parsing success we stop, otherwise we try logic below
+                    return
+                }
+            }
+        }
+
         if (!fromUs && packet.hopStart - packet.hopLimit == 0) {
 
             radioConfigRepository.emitRelayEvent(
@@ -824,6 +845,7 @@ class MeshService : Service(), Logging {
                     relayNodeNum = packet.from,
                     rxRssi = packet.rxRssi,
                     rxSnr = packet.rxSnr,
+                    isDirect = true,
                     confidence = 100 //we set confidence to max for direct packets
                 )
             )
@@ -836,6 +858,18 @@ class MeshService : Service(), Logging {
                 )
             )
         }
+    }
+
+    private fun parseLastRespondingTracerouteNode(traceResponse: String): String?{
+
+        try {
+            val trace = traceResponse.split("■")
+            return trace[trace.size - 2].split("\n")[0]
+        } catch (e: Exception){
+            debug("Could not determine first responding node! ${e.message}")
+        }
+
+        return null
     }
 
     // Update our model and resend as needed for a MeshPacket we just received from the radio
@@ -853,14 +887,13 @@ class MeshService : Service(), Logging {
 
                 debug("Received data from $fromId, portnum=${data.portnum} ${bytes.size} bytes")
 
-                detectRelayNode(packet, fromUs)
-
                 dataPacket.status = MessageStatus.RECEIVED
 
                 // if (p.hasUser()) handleReceivedUser(fromNum, p.user)
 
                 // We tell other apps about most message types, but some may have sensitive data, so that is not shared'
                 var shouldBroadcast = !fromUs
+                var traceRouteResponse: String? = null
 
                 when (data.portnumValue) {
 
@@ -979,21 +1012,23 @@ class MeshService : Service(), Logging {
                         if(!huntingPrefs.getBoolean(UserPrefs.Hunting.BACKGROUND_HUNT, false)){
                             val requestId = packet.decoded.requestId
                             val start = tracerouteStartTimes.remove(requestId)
-                            var response = packet.getTracerouteResponse(::getUserName)
+                            traceRouteResponse = packet.getTracerouteResponse(::getUserName)
 
-                            if (response != null && start != null) {
+                            if (traceRouteResponse != null && start != null) {
                                 val elapsedMs = System.currentTimeMillis() - start.toLong()
                                 val seconds = elapsedMs / 1000.0
 
-                                response += "\n\nDuration: ${"%.1f".format(seconds)} s"
+                                traceRouteResponse += "\n\nDuration: ${"%.1f".format(seconds)} s"
                             }
 
-                            radioConfigRepository.setTracerouteResponse(response)
+                            radioConfigRepository.setTracerouteResponse(traceRouteResponse)
                         }
                     }
 
                     else -> debug("No custom processing needed for ${data.portnumValue}")
                 }
+
+                detectRelayNode(packet, fromUs, traceRouteResponse)
 
                 // We always tell other apps when new data packets arrive
                 if (shouldBroadcast) {

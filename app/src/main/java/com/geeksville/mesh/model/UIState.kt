@@ -162,7 +162,9 @@ data class RelayEvent (
     val relayNodeLastByte: Int = -1,
     val timestamp: Long = System.currentTimeMillis(),
     val rxRssi: Int = Int.MAX_VALUE,
-    val rxSnr: Float = Float.MAX_VALUE
+    val rxSnr: Float = Float.MAX_VALUE,
+    val isTraceroute: Boolean = false,
+    val isDirect: Boolean = false
 )
 
 
@@ -407,6 +409,7 @@ class UIViewModel @Inject constructor(
                     }
 
                 } else if (relayEvent.relayNodeNum != 0){ //direct packets
+
                     nodes.firstOrNull { it.num == relayEvent.relayNodeNum }?.let {
                      matchingNode ->
 
@@ -414,6 +417,24 @@ class UIViewModel @Inject constructor(
                         relayEvent.nodeShortName = matchingNode.user.shortName
                         updateLastRelayNode(relayEvent)
                         expireRelayNode()
+                    }
+
+                } else if (relayEvent.isTraceroute) {
+
+                    relayEvent.nodeLongName?.let { name ->
+
+                        val longName: String = name
+                        nodes.firstOrNull { node ->
+                            longName.contains(node.user.longName)
+                        }?.let { match ->
+
+                            relayEvent.nodeLongName = match.user.longName
+                            relayEvent.nodeShortName = match.user.shortName
+                            relayEvent.relayNodeNum = match.num
+
+                            updateLastRelayNode(relayEvent)
+                            expireRelayNode()
+                        }
                     }
                 }
             }

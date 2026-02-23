@@ -230,14 +230,35 @@ fun NodesScreen(
 @Composable
 fun RelayInfoBox(relayNode: RelayEvent, model: UIViewModel) {
 
+    val context = LocalContext.current
     val nodeName = relayNode.nodeLongName ?: "undefined"
     val shortName = relayNode.nodeShortName ?: "undefined"
     val nodeNum = relayNode.relayNodeNum
     val timeLabel = formatRelayTime(relayNode.timestamp)
-    val context = LocalContext.current
     val rxSnr = relayNode.rxSnr
     val rxRssi = relayNode.rxRssi
     val (foregroundColor, backgroundColor) = AppUtil.getNodeColorLabel(nodeNum)
+
+    val snrColor = when {
+        rxSnr >= SNR_GOOD_THRESHOLD -> Quality.GOOD.color
+        rxSnr >= SNR_FAIR_THRESHOLD -> Quality.FAIR.color
+        else -> Quality.BAD.color
+    }
+
+    val rssiColor = when {
+        rxRssi > RSSI_GOOD_THRESHOLD -> Quality.GOOD.color
+        rxRssi > RSSI_FAIR_THRESHOLD -> Quality.FAIR.color
+        else -> Quality.BAD.color
+    }
+
+    val confidenceColor = AppUtil.relayNodePacketLabelColor(relayNode.confidence)
+    var confidence = relayNode.confidence.toString() + "%"
+
+    if(relayNode.isTraceroute){
+        confidence += " (TRACE)"
+    } else if(relayNode.isDirect){
+        confidence += " (DIRECT)"
+    }
 
     androidx.compose.material.Surface(
         elevation = 4.dp,
@@ -259,20 +280,6 @@ fun RelayInfoBox(relayNode: RelayEvent, model: UIViewModel) {
             )
     )  {
 
-        val snrColor = when {
-            rxSnr >= SNR_GOOD_THRESHOLD -> Quality.GOOD.color
-            rxSnr >= SNR_FAIR_THRESHOLD -> Quality.FAIR.color
-            else -> Quality.BAD.color
-        }
-
-        val rssiColor = when {
-            rxRssi > RSSI_GOOD_THRESHOLD -> Quality.GOOD.color
-            rxRssi > RSSI_FAIR_THRESHOLD -> Quality.FAIR.color
-            else -> Quality.BAD.color
-        }
-
-        val confidenceColor = AppUtil.relayNodePacketLabelColor(relayNode.confidence)
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -290,7 +297,7 @@ fun RelayInfoBox(relayNode: RelayEvent, model: UIViewModel) {
             ) {
 
                 Text(
-                    text = "Closest Relay Node Info Confidence :",
+                    text = "Closest Relay Confidence :",
                     fontSize = 14.sp
                 )
 
@@ -303,7 +310,7 @@ fun RelayInfoBox(relayNode: RelayEvent, model: UIViewModel) {
                         .padding(horizontal = 5.dp, vertical = 0.dp)
                 ) {
                     Text(
-                        text = "${relayNode.confidence}%",
+                        text = confidence,
                         color = Color.Black,
                         style = MaterialTheme.typography.labelSmall
                     )
@@ -459,7 +466,8 @@ fun PreviewRelayInfoBoxLight() {
         relayNodeNum = 12345616,
         rxSnr = 9.5f,
         rxRssi = -142,
-        confidence = 80,
+        confidence = 100,
+        isTraceroute = true,
         timestamp = System.currentTimeMillis()
     )
 
@@ -483,6 +491,7 @@ fun PreviewRelayInfoBoxDark() {
         rxSnr = 4.2f,
         rxRssi = -145,
         confidence = 40,
+        isTraceroute = true,
         timestamp = System.currentTimeMillis()
     )
 
