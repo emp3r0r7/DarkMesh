@@ -26,6 +26,7 @@ import android.content.Intent
 import android.graphics.Color
 import android.media.AudioAttributes
 import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
@@ -46,6 +47,10 @@ class MeshServiceNotifications(
         private const val FIFTEEN_MINUTES_IN_MILLIS = 15L * 60 * 1000
         const val OPEN_MESSAGE_ACTION = "com.geeksville.mesh.OPEN_MESSAGE_ACTION"
         const val OPEN_MESSAGE_EXTRA_CONTACT_KEY = "com.geeksville.mesh.OPEN_MESSAGE_EXTRA_CONTACT_KEY"
+        private const val CONNECTED_BATTERY_ALERT_CHANNEL_ID = "battery_alerts_connected"
+        private const val CONNECTED_CRITICAL_BATTERY_ALERT_CHANNEL_ID = "battery_alerts_connected_critical"
+        private const val MESH_BATTERY_ALERT_CHANNEL_ID = "battery_alerts_mesh"
+        private const val MESH_CRITICAL_BATTERY_ALERT_CHANNEL_ID = "battery_alerts_mesh_critical"
     }
 
     private val notificationManager: NotificationManager get() = context.notificationManager
@@ -118,40 +123,57 @@ class MeshServiceNotifications(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun createBatteryAlertNotificationChannel(): String {
-        val channelId = "battery_alerts"
-        val channelName = context.getString(R.string.battery_alert_notifications)
-        val channel = NotificationChannel(
-            channelId,
-            channelName,
-            NotificationManager.IMPORTANCE_DEFAULT
-        ).apply {
-            lightColor = Color.YELLOW
-            lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-            setShowBadge(true)
+    private fun createBatteryAlertNotificationChannel(
+        source: BatteryAlertSource,
+        level: BatteryAlertLevel,
+        soundUri: Uri
+    ): String {
+        val channelId = when (source) {
+            BatteryAlertSource.CONNECTED_NODE -> {
+                if (level == BatteryAlertLevel.CRITICAL) {
+                    CONNECTED_CRITICAL_BATTERY_ALERT_CHANNEL_ID
+                } else {
+                    CONNECTED_BATTERY_ALERT_CHANNEL_ID
+                }
+            }
+            BatteryAlertSource.MESH -> {
+                if (level == BatteryAlertLevel.CRITICAL) {
+                    MESH_CRITICAL_BATTERY_ALERT_CHANNEL_ID
+                } else {
+                    MESH_BATTERY_ALERT_CHANNEL_ID
+                }
+            }
         }
-        notificationManager.createNotificationChannel(channel)
-        return channelId
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun createCriticalBatteryAlertNotificationChannel(): String {
-        val channelId = "battery_alerts_critical"
-        val channelName = context.getString(R.string.battery_alert_critical_notifications)
+        val sourceLabel = context.getString(
+            if (source == BatteryAlertSource.CONNECTED_NODE) {
+                R.string.battery_alert_connected_node_label
+            } else {
+                R.string.battery_alert_mesh_nodes_label
+            }
+        )
+        val channelName = context.getString(
+            if (level == BatteryAlertLevel.CRITICAL) {
+                R.string.battery_alert_critical_notification_channel_name
+            } else {
+                R.string.battery_alert_notification_channel_name
+            },
+            sourceLabel,
+        )
         val channel = NotificationChannel(
             channelId,
             channelName,
-            NotificationManager.IMPORTANCE_HIGH
+            if (level == BatteryAlertLevel.CRITICAL) {
+                NotificationManager.IMPORTANCE_HIGH
+            } else {
+                NotificationManager.IMPORTANCE_DEFAULT
+            }
         ).apply {
-            lightColor = Color.RED
+            lightColor = if (level == BatteryAlertLevel.CRITICAL) Color.RED else Color.YELLOW
             lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             setShowBadge(true)
             setSound(
-                RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build()
+                soundUri,
+                batteryAlertAudioAttributes
             )
         }
         notificationManager.createNotificationChannel(channel)
@@ -186,20 +208,11 @@ class MeshServiceNotifications(
         }
     }
 
-    private val batteryAlertChannelId: String by lazy {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            createBatteryAlertNotificationChannel()
-        } else {
-            ""
-        }
-    }
-
-    private val criticalBatteryAlertChannelId: String by lazy {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            createCriticalBatteryAlertNotificationChannel()
-        } else {
-            ""
-        }
+    private val batteryAlertAudioAttributes: AudioAttributes by lazy {
+        AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
     }
 
     private fun LocalStats?.formatToString(): String = this?.allFields?.mapNotNull { (k, v) ->
@@ -243,15 +256,33 @@ class MeshServiceNotifications(
         )
     }
 
-    fun showLowBatteryNotification(node: NodeEntity, level: BatteryAlertLevel) {
+    fun showLowBatteryNotification(
+        node: NodeEntity,
+        level: BatteryAlertLevel,
+        source: BatteryAlertSource,
+        soundUri: String?
+    ) {
         notificationManager.notify(
             lowBatteryNotificationId(node.num),
-            createLowBatteryNotification(node, level)
+            createLowBatteryNotification(node, level, source, soundUri)
         )
     }
 
     fun cancelLowBatteryNotification(nodeNum: Int) {
         notificationManager.cancel(lowBatteryNotificationId(nodeNum))
+    }
+
+    fun resetBatteryAlertChannels() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+
+        listOf(
+            CONNECTED_BATTERY_ALERT_CHANNEL_ID,
+            CONNECTED_CRITICAL_BATTERY_ALERT_CHANNEL_ID,
+            MESH_BATTERY_ALERT_CHANNEL_ID,
+            MESH_CRITICAL_BATTERY_ALERT_CHANNEL_ID,
+            "battery_alerts",
+            "battery_alerts_critical",
+        ).forEach(notificationManager::deleteNotificationChannel)
     }
 
     private val openAppIntent: PendingIntent by lazy {
@@ -374,11 +405,21 @@ class MeshServiceNotifications(
 
     private fun lowBatteryNotificationId(nodeNum: Int): Int = "battery_alert_$nodeNum".hashCode()
 
-    private fun createLowBatteryNotification(node: NodeEntity, level: BatteryAlertLevel): Notification {
-        val channelId = when (level) {
-            BatteryAlertLevel.CRITICAL -> criticalBatteryAlertChannelId
-            BatteryAlertLevel.LOW,
-            BatteryAlertLevel.NONE -> batteryAlertChannelId
+    private fun batteryAlertSoundUri(soundUri: String?): Uri =
+        soundUri?.takeUnless { it.isBlank() }?.let(Uri::parse)
+            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
+    private fun createLowBatteryNotification(
+        node: NodeEntity,
+        level: BatteryAlertLevel,
+        source: BatteryAlertSource,
+        soundUri: String?
+    ): Notification {
+        val notificationSoundUri = batteryAlertSoundUri(soundUri)
+        val channelId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createBatteryAlertNotificationChannel(source, level, notificationSoundUri)
+        } else {
+            ""
         }
         val nodeName = node.user.longName.takeUnless { it.isNullOrBlank() }
             ?: node.user.shortName.takeUnless { it.isNullOrBlank() }
@@ -413,6 +454,9 @@ class MeshServiceNotifications(
             setCategory(Notification.CATEGORY_STATUS)
             setAutoCancel(true)
             setSmallIcon(R.drawable.ic_battery_alert)
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+                setSound(notificationSoundUri)
+            }
             setContentTitle(
                 context.getString(
                     if (level == BatteryAlertLevel.CRITICAL) {

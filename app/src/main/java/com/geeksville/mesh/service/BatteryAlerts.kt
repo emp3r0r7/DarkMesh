@@ -23,11 +23,17 @@ import org.meshtastic.proto.TelemetryProtos
 const val PREF_BATTERY_ALERTS_ENABLED = "battery-alerts-enabled"
 const val PREF_BATTERY_ALERT_PERCENT_THRESHOLD = "battery-alert-percent-threshold"
 const val PREF_BATTERY_ALERT_VOLTAGE_THRESHOLD = "battery-alert-voltage-threshold"
+const val PREF_BATTERY_ALERT_SCOPE = "battery-alert-scope"
+const val PREF_BATTERY_ALERT_CONNECTED_SOUND_URI = "battery-alert-connected-sound-uri"
+const val PREF_BATTERY_ALERT_MESH_SOUND_URI = "battery-alert-mesh-sound-uri"
 
 val BATTERY_ALERT_PREFERENCE_KEYS = setOf(
     PREF_BATTERY_ALERTS_ENABLED,
     PREF_BATTERY_ALERT_PERCENT_THRESHOLD,
     PREF_BATTERY_ALERT_VOLTAGE_THRESHOLD,
+    PREF_BATTERY_ALERT_SCOPE,
+    PREF_BATTERY_ALERT_CONNECTED_SOUND_URI,
+    PREF_BATTERY_ALERT_MESH_SOUND_URI,
 )
 
 const val DEFAULT_BATTERY_ALERT_PERCENT_THRESHOLD = 20
@@ -37,6 +43,22 @@ private const val CRITICAL_BATTERY_PERCENT_THRESHOLD = 10
 private const val CRITICAL_BATTERY_VOLTAGE_THRESHOLD = 3.5f
 private const val BATTERY_PERCENT_HYSTERESIS = 3
 private const val BATTERY_VOLTAGE_HYSTERESIS = 0.15f
+
+enum class BatteryAlertScope(val preferenceValue: String) {
+    ALL_NODES("all_nodes"),
+    CONNECTED_NODE_ONLY("connected_node_only"),
+    ;
+
+    companion object {
+        fun fromPreferenceValue(value: String?): BatteryAlertScope =
+            entries.firstOrNull { it.preferenceValue == value } ?: ALL_NODES
+    }
+}
+
+enum class BatteryAlertSource {
+    CONNECTED_NODE,
+    MESH,
+}
 
 enum class BatteryAlertLevel {
     NONE,
@@ -48,9 +70,22 @@ data class BatteryAlertSettings(
     val enabled: Boolean = false,
     val percentThreshold: Int = DEFAULT_BATTERY_ALERT_PERCENT_THRESHOLD,
     val voltageThreshold: Float = DEFAULT_BATTERY_ALERT_VOLTAGE_THRESHOLD,
+    val scope: BatteryAlertScope = BatteryAlertScope.ALL_NODES,
+    val connectedNodeSoundUri: String? = null,
+    val meshSoundUri: String? = null,
 ) {
     val hasEnabledThresholds: Boolean
         get() = percentThreshold > 0 || voltageThreshold > 0f
+
+    fun allows(source: BatteryAlertSource): Boolean = when (scope) {
+        BatteryAlertScope.ALL_NODES -> true
+        BatteryAlertScope.CONNECTED_NODE_ONLY -> source == BatteryAlertSource.CONNECTED_NODE
+    }
+
+    fun soundUriFor(source: BatteryAlertSource): String? = when (source) {
+        BatteryAlertSource.CONNECTED_NODE -> connectedNodeSoundUri
+        BatteryAlertSource.MESH -> meshSoundUri
+    }.takeUnless { it.isNullOrBlank() }
 }
 
 data class BatterySnapshot(
@@ -74,6 +109,11 @@ fun SharedPreferences.getBatteryAlertSettings(): BatteryAlertSettings = BatteryA
         PREF_BATTERY_ALERT_VOLTAGE_THRESHOLD,
         DEFAULT_BATTERY_ALERT_VOLTAGE_THRESHOLD
     ).coerceIn(0f, MAX_BATTERY_ALERT_VOLTAGE_THRESHOLD),
+    scope = BatteryAlertScope.fromPreferenceValue(
+        getString(PREF_BATTERY_ALERT_SCOPE, BatteryAlertScope.ALL_NODES.preferenceValue)
+    ),
+    connectedNodeSoundUri = getString(PREF_BATTERY_ALERT_CONNECTED_SOUND_URI, null),
+    meshSoundUri = getString(PREF_BATTERY_ALERT_MESH_SOUND_URI, null),
 )
 
 fun TelemetryProtos.DeviceMetrics.toBatterySnapshot(): BatterySnapshot = BatterySnapshot(
