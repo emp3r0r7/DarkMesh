@@ -24,6 +24,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -58,6 +59,7 @@ import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -327,6 +329,7 @@ internal fun MessageScreen(
                 TextInput(
                     isConnected,
                     messageInput,
+                    viewModel = viewModel,
                     modifier = Modifier.focusRequester(focusRequester)
                 ) {
                     viewModel.sendMessage(it, contactKey, replyTo?.packetId)
@@ -561,11 +564,43 @@ private fun TextInput(
     enabled: Boolean,
     message: MutableState<TextFieldValue>,
     modifier: Modifier = Modifier,
+    viewModel: UIViewModel = hiltViewModel(),
     maxSize: Int = 200,
     onClick: (String) -> Unit = {}
 ) = Column(modifier) {
+
     val focusManager = LocalFocusManager.current
     var isFocused by remember { mutableStateOf(false) }
+
+    val nodes = viewModel.nodeList.collectAsStateWithLifecycle()
+    val ourNodeNum = viewModel.ourNodeInfo.collectAsState().value?.num
+
+    var showNodes by remember { mutableStateOf(false) }
+    var lastChar : Char? by remember { mutableStateOf(null) }
+    var taggedNodes : List<Node>? by remember { mutableStateOf(null) }
+
+    if (showNodes && !taggedNodes.isNullOrEmpty()) {
+        MentionNodeList(
+            nodes = taggedNodes!!,
+            onNodeSelected = { node ->
+
+                val text = message.value.text
+                val tagStart = text.lastIndexOf("@")
+
+                if (tagStart != -1) {
+                    val newText =
+                        text.take(tagStart + 1) + node.user.id + " "
+
+                    message.value = TextFieldValue(
+                        newText,
+                        TextRange(newText.length)
+                    )
+                }
+
+                showNodes = false
+            }
+        )
+    }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -576,6 +611,47 @@ private fun TextInput(
                 if (it.text.toByteArray().size <= maxSize) {
                     message.value = it
                 }
+
+                if(it.text.isBlank() || !it.text.contains("@")){
+                    showNodes = false
+                    lastChar = null
+                    taggedNodes = null
+                    return@TextField
+                }
+
+                if(showNodes && (it.text.last() == '@' || it.text.split("@").size > 1)){
+                    print("Writing while tagging")
+
+                    val tag = it.text.substringAfter("@").lowercase()
+
+                    taggedNodes = nodes.value
+                        .asSequence()
+                        .filter { n -> n.num != ourNodeNum && n.user.longName.lowercase().contains(tag)}
+                        .take(5)
+                        .toList()
+
+                } else if(!showNodes && it.text.last() == '@'){
+
+                    showNodes = true
+                    println("TAGGING BEGIN") //todo remove
+
+                    taggedNodes = nodes.value
+                        .asSequence()
+                        .filter { n -> n.num != ourNodeNum}
+                        .take(5)
+                        .toList()
+
+                    return@TextField //so it can skip lastchar
+
+                } else if(showNodes && lastChar == '@') { //when not selecting any node and going back
+
+                    showNodes = false
+                    taggedNodes = null
+                    println("STOP TAGGING") //todo remove
+                }
+
+                lastChar = it.text.last()
+
             },
             modifier = Modifier
                 .weight(1f)
@@ -621,6 +697,31 @@ private fun TextInput(
                 .align(Alignment.End)
                 .padding(top = 4.dp, end = 72.dp)
         )
+    }
+}
+
+@Composable
+fun MentionNodeList(
+    nodes: List<Node>,
+    onNodeSelected: (Node) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colors.surface)
+    ) {
+
+        nodes.forEach { node ->
+
+            Text(
+                text = node.user.longName,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onNodeSelected(node) }
+                    .padding(8.dp),
+                style = MaterialTheme.typography.body1
+            )
+        }
     }
 }
 

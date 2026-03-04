@@ -363,6 +363,7 @@ class UIViewModel @Inject constructor(
 
     fun getNode(userId: String?) = nodeDB.getNode(userId ?: DataPacket.ID_BROADCAST)
     fun getUser(userId: String?) = nodeDB.getUser(userId ?: DataPacket.ID_BROADCAST)
+    fun getByUserId(userId: String?) = nodeDB.nodeDBbyNum.value.values.firstOrNull{ it.user.id == userId }
 
     private val _snackbarText = MutableLiveData<Any?>(null)
     val snackbarText: LiveData<Any?> get() = _snackbarText

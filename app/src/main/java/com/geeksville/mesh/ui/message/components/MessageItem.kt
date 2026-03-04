@@ -47,6 +47,7 @@ import androidx.compose.material.icons.twotone.HowToReg
 import androidx.compose.material.icons.twotone.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -56,13 +57,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.DataPacket
 import com.geeksville.mesh.MessageStatus
 import com.geeksville.mesh.model.Message
 import com.geeksville.mesh.model.Node
+import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.ui.components.AutoLinkText
 import com.geeksville.mesh.ui.components.UserAvatar
+import com.geeksville.mesh.ui.components.mentionRegex
 import com.geeksville.mesh.ui.preview.NodePreviewParameterProvider
 import com.geeksville.mesh.ui.theme.AppTheme
 
@@ -100,6 +105,9 @@ internal fun MessageItem(
         Modifier.padding(start = 8.dp, top = 8.dp, end = 0.dp, bottom = 6.dp)
     }
 
+    val uiModel: UIViewModel = hiltViewModel()
+    val ourNode by uiModel.ourNodeInfo.collectAsStateWithLifecycle()
+
     if (!fromLocal) {
         UserAvatar(
             node = node,
@@ -109,11 +117,23 @@ internal fun MessageItem(
         ) { onChipClick() }
     }
 
+    val ourNodeIsMentioned = remember(messageText, ourNode?.user?.id) {
+        val id = ourNode?.user?.id
+        id != null &&
+                mentionRegex.findAll(messageText.orEmpty())
+                    .any { it.groupValues[1] == id }
+    }
+
     val highlightColor by animateColorAsState(
-        targetValue = if (highlighted)
-            MaterialTheme.colors.primary.copy(alpha = 0.18f)
-        else
-            colorResource(id = messageColor),
+        targetValue =
+            when {
+                highlighted -> MaterialTheme.colors.primary.copy(alpha = 0.18f)
+
+                ourNodeIsMentioned ->
+                    MaterialTheme.colors.secondary.copy(alpha = 0.10f)
+
+                else -> colorResource(id = messageColor)
+            },
         label = "messageHighlight"
     )
 
