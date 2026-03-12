@@ -219,6 +219,10 @@ class MeshService : Service(), Logging {
             return hexId.removePrefix("!").toUInt(16).toInt()
         }
 
+        fun nodeNumToHexId(nodeNum: Int): String {
+            return "!" + nodeNum.toString(16)
+        }
+
         /** The minimum firmware version we know how to talk to. We'll still be able
          * to talk to 2.0 firmwares but only well enough to ask them to firmware update.
          */

@@ -100,5 +100,6 @@ private fun getDrawableFrom(hwModel: Int): Int = when (hwModel) {
     MeshProtos.HardwareModel.TRACKER_T1000_E_VALUE -> R.drawable.hw_tracker_t1000_e
     MeshProtos.HardwareModel.WIO_WM1110_VALUE -> R.drawable.hw_wio_tracker_wm1110
     MeshProtos.HardwareModel.WISMESH_TAP_VALUE -> R.drawable.hw_rak_wismeshtap
+    MeshProtos.HardwareModel.HELTEC_V4_VALUE -> R.drawable.hw_heltec_v4
     else -> R.drawable.hw_unknown
 }

@@ -19,18 +19,20 @@ package com.geeksville.mesh.ui
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
-import androidx.compose.material.Chip
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
@@ -39,18 +41,20 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.emp3r0r7.darkmesh.R
+import com.geeksville.mesh.DataPacket.CREATOR.ID_BROADCAST
 import com.geeksville.mesh.model.Contact
 import com.geeksville.mesh.ui.theme.AppTheme
+import com.geeksville.mesh.util.IdentIkonGen
 
 @Suppress("LongMethod")
 @OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
@@ -62,6 +66,9 @@ fun ContactItem(
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {},
 ) = with(contact) {
+
+    val isChannel = contactKey.contains(ID_BROADCAST)
+
     Card(
         modifier = Modifier
             .background(color = if (selected) Color.Gray else MaterialTheme.colors.background)
@@ -75,6 +82,12 @@ fun ContactItem(
                 onClick = onClick,
                 onLongClick = onLongClick,
             ),
+            // zero is default like medium fast, short turbo.. etc
+            color = if (isChannel && "0" == contact.shortName) {
+                MaterialTheme.colors.secondary.copy(alpha = 0.05f)
+            } else {
+                MaterialTheme.colors.surface
+            }
         ) {
             Row(
                 modifier = Modifier
@@ -82,19 +95,26 @@ fun ContactItem(
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Chip(
-                    onClick = { },
-                    modifier = Modifier
-                        .padding(end = 8.dp)
-                        .width(72.dp),
-                ) {
-                    Text(
-                        text = shortName,
-                        modifier = Modifier.fillMaxWidth(),
-                        fontSize = MaterialTheme.typography.button.fontSize,
-                        fontWeight = FontWeight.Normal,
-                        textAlign = TextAlign.Center,
+                if(isChannel){
+
+                    Image(
+                        painter = painterResource(R.drawable.ic_twotone_people_24),
+                        contentDescription = "Channel Chat",
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .width(50.dp),
                     )
+                } else {
+                    Image(
+                        bitmap = IdentIkonGen.generateOrGetFromHexId(
+                            nodeId ?: "???",
+                        ),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(55.dp)
+                            .clip(CircleShape)
+                    )
+                    Spacer(Modifier.width(10.dp))
                 }
                 Column(
                     modifier = Modifier.weight(1f),
@@ -157,13 +177,14 @@ private fun ContactItemPreview() {
     AppTheme {
         ContactItem(
             contact = Contact(
-                contactKey = "0^all",
+                contactKey = "^all",
                 shortName = stringResource(R.string.some_username),
                 longName = stringResource(R.string.unknown_username),
                 lastMessageTime = "3 minutes ago",
                 lastMessageText = stringResource(R.string.sample_message),
                 unreadCount = 2,
                 messageCount = 10,
+                nodeId = "12346578",
                 isMuted = true,
             ),
             selected = false,

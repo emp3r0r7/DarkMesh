@@ -19,6 +19,7 @@ package com.geeksville.mesh.ui
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -31,6 +32,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -62,7 +64,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -88,6 +89,7 @@ import com.geeksville.mesh.ui.compose.SatelliteCountInfo
 import com.geeksville.mesh.ui.preview.NodePreviewParameterProvider
 import com.geeksville.mesh.ui.theme.AppTheme
 import com.geeksville.mesh.util.AppUtil
+import com.geeksville.mesh.util.IdentIkonGen
 import com.geeksville.mesh.util.toDistanceString
 import kotlinx.coroutines.delay
 import org.meshtastic.proto.ConfigProtos.Config.DeviceConfig
@@ -111,9 +113,6 @@ fun NodeItem(
     val isIgnored = thatNode.isIgnored
     val longName = thatNode.user.longName.ifEmpty { stringResource(id = R.string.unknown_username) }
     val unmessagable = thatNode.user.isUnmessagable
-
-    val tooltipState = rememberTooltipState()
-    val scope = rememberCoroutineScope()
 
     val isThisNode = thisNode?.num == thatNode.num
     val system = remember(distanceUnits) { DisplayConfig.DisplayUnits.forNumber(distanceUnits) }
@@ -142,6 +141,8 @@ fun NodeItem(
 
     val (detailsShown, showDetails) = remember { mutableStateOf(expanded) }
 
+    val id = thatNode.user.id.ifEmpty { "???" }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -168,17 +169,27 @@ fun NodeItem(
                         Chip(
                             modifier = Modifier
                                 .width(IntrinsicSize.Min)
-                                .defaultMinSize(minHeight = 32.dp, minWidth = 42.dp),
+                                .defaultMinSize(minHeight = 32.dp, minWidth = 32.dp),
                             colors = ChipDefaults.chipColors(
                                 backgroundColor = Color(nodeColor),
                                 contentColor = Color(textColor),
                             ),
-                            onClick = {
-                                menuExpanded = !menuExpanded
-                            },
+                            onClick = { menuExpanded = !menuExpanded }
                         ) {
+
+                            Image(
+                                bitmap = IdentIkonGen.generateOrGetFromHexId(id),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .offset(x = (-10).dp)
+                                    .size(28.dp)
+                                    .clip(CircleShape)
+                            )
+
                             Text(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .offset(x = (-3).dp),
                                 text = thatNode.user.shortName.ifEmpty { "???" },
                                 fontWeight = FontWeight.Normal,
                                 fontSize = MaterialTheme.typography.button.fontSize,
@@ -361,7 +372,7 @@ fun NodeItem(
                         )
                         Text(
                             modifier = Modifier.weight(1f),
-                            text = thatNode.user.id.ifEmpty { "???" },
+                            text = id,
                             textAlign = TextAlign.End,
                             fontSize = MaterialTheme.typography.button.fontSize,
                             style = style,

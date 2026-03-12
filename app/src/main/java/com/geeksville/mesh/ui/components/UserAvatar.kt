@@ -17,6 +17,7 @@
 
 package com.geeksville.mesh.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -28,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -39,6 +41,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.ui.preview.NodePreviewParameterProvider
 import com.geeksville.mesh.ui.theme.AppTheme
+import com.geeksville.mesh.util.IdentIkonGen
 
 @Composable
 fun UserAvatar(
@@ -46,6 +49,7 @@ fun UserAvatar(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
 ) {
+    val nodeId = node.user.id
     val textMeasurer = rememberTextMeasurer()
     val textStyle = MaterialTheme.typography.button.copy(
         fontWeight = FontWeight.Normal,
@@ -54,24 +58,35 @@ fun UserAvatar(
         textMeasurer.measure(text = "MMMM", style = textStyle)
     }
 
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier
-            .size(with(LocalDensity.current) { textLayoutResult.size.width.toDp() })
-            .background(
-                color = Color(node.colors.second),
-                shape = CircleShape
-            )
-            .clickable(onClick = onClick)
-    ) {
-        Text(
-            text = node.user.shortName.ifEmpty { "?" },
-            color = Color(node.colors.first),
-            style = textStyle,
-            textAlign = TextAlign.Center,
-            overflow = TextOverflow.Ellipsis,
-            maxLines = 1,
+    if(nodeId != null){
+        Image(
+            bitmap = IdentIkonGen.generateOrGetFromHexId(nodeId),
+            contentDescription = null,
+            modifier = modifier
+                .size(with(LocalDensity.current) { textLayoutResult.size.width.toDp() })
+                .clip(CircleShape)
+                .clickable(onClick = onClick)
         )
+    } else {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = modifier
+                .size(with(LocalDensity.current) { textLayoutResult.size.width.toDp() })
+                .background(
+                    color = Color(node.colors.second),
+                    shape = CircleShape
+                )
+                .clickable(onClick = onClick)
+        ) {
+            Text(
+                text = node.user.shortName.ifEmpty { "?" },
+                color = Color(node.colors.first),
+                style = textStyle,
+                textAlign = TextAlign.Center,
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1,
+            )
+        }
     }
 }
 

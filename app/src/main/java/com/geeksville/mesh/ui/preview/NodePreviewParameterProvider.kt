@@ -33,7 +33,7 @@ class NodePreviewParameterProvider : PreviewParameterProvider<Node> {
     val mickeyMouse = Node(
         num = 1955,
         user = user {
-            id = "mickeyMouseId"
+            id = "!78d7356a"
             longName = "Mickey Mouse"
             shortName = "MM"
             hwModel = MeshProtos.HardwareModel.TBEAM

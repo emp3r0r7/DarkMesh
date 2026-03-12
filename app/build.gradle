@@ -285,6 +285,8 @@ dependencies {
     implementation("com.google.openlocationcode:openlocationcode:1.0.4")
 
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+
+    implementation("io.github.thibseisel.identikon:identikon-android:1.0.0")
 }
 
 ksp {

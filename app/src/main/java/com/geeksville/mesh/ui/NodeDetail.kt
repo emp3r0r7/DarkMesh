@@ -106,6 +106,7 @@ import com.geeksville.mesh.ui.preview.NodePreviewParameterProvider
 import com.geeksville.mesh.ui.share.SharedContactDialog
 import com.geeksville.mesh.ui.theme.AppTheme
 import com.geeksville.mesh.util.DistanceUnit
+import com.geeksville.mesh.util.IdentIkonGen
 import com.geeksville.mesh.util.formatAgo
 import com.geeksville.mesh.util.formatUptime
 import com.geeksville.mesh.util.thenIf
@@ -254,11 +255,19 @@ private fun DeviceDetailsContent(
         contentAlignment = Alignment.Center
     ) {
         Image(
-            modifier = Modifier.padding(16.dp),
-            imageVector = ImageVector.vectorResource(deviceHardware.image),
-            contentDescription = hwModelName,
+            bitmap = IdentIkonGen.generateOrGetFromHexId(
+                node.user.id,
+                500,
+            ),
+            contentDescription = null,
+            modifier = Modifier
+                .size(100.dp)
+                .clip(CircleShape)
         )
     }
+
+    Spacer(Modifier.height(16.dp))
+
     NodeDetailRow(
         label = "Hardware",
         icon = Icons.Default.Router,
