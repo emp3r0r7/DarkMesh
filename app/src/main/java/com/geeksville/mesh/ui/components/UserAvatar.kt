@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,6 +45,7 @@ import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.ui.REMOVE_CUSTOM_ICON_CHAT
 import com.geeksville.mesh.ui.preview.NodePreviewParameterProvider
 import com.geeksville.mesh.ui.theme.AppTheme
+import com.geeksville.mesh.util.ComposableUtil.rememberBooleanPreference
 import com.geeksville.mesh.util.IdentIkonGen
 
 @Composable
@@ -53,7 +55,12 @@ fun UserAvatar(
     onClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val removeCustomIconChatPrefs = context.advancedPrefs.getBoolean(REMOVE_CUSTOM_ICON_CHAT, false)
+
+    val removeCustomIconChatPrefs by rememberBooleanPreference(
+        context.advancedPrefs,
+        REMOVE_CUSTOM_ICON_CHAT,
+        false
+    )
 
     val nodeId = node.user.id
     val textMeasurer = rememberTextMeasurer()
