@@ -34,6 +34,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
@@ -47,6 +48,8 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
+import androidx.compose.material.Chip
+import androidx.compose.material.ChipDefaults
 import androidx.compose.material.Divider
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
@@ -79,15 +82,18 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.emp3r0r7.darkmesh.R
+import com.geeksville.mesh.android.advancedPrefs
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.ui.components.NodeKeyStatusIcon
 import com.geeksville.mesh.ui.components.NodeMenu
@@ -98,6 +104,7 @@ import com.geeksville.mesh.ui.compose.SatelliteCountInfo
 import com.geeksville.mesh.ui.preview.NodePreviewParameterProvider
 import com.geeksville.mesh.ui.theme.AppTheme
 import com.geeksville.mesh.util.AppUtil
+import com.geeksville.mesh.util.ComposableUtil.rememberBooleanPreference
 import com.geeksville.mesh.util.IdentIkonGen
 import com.geeksville.mesh.util.toDistanceString
 import kotlinx.coroutines.delay
@@ -119,6 +126,15 @@ fun NodeItem(
     currentTimeMillis: Long,
     isConnected: Boolean = false,
 ) {
+
+    val context = LocalContext.current
+
+    val removeCustomIconChatPrefs by rememberBooleanPreference(
+        context.advancedPrefs,
+        REMOVE_CUSTOM_ICON_CHAT,
+        false
+    )
+
     val isIgnored = thatNode.isIgnored
     val longName = thatNode.user.longName.ifEmpty { stringResource(id = R.string.unknown_username) }
     val unmessagable = thatNode.user.isUnmessagable
@@ -175,15 +191,39 @@ fun NodeItem(
                     Box(
                         modifier = Modifier.wrapContentSize(Alignment.TopStart),
                     ) {
-                        PremiumChip(
-                            text = thatNode.user.shortName.ifEmpty { "???" },
-                            nodeColor = Color(nodeColor),
-                            textColor = Color(textColor),
-                            icon = IdentIkonGen.generateOrGetFromHexId(id),
-                            enabled = isThisNode,
-                            isConnected = isConnected,
-                            onClick = { menuExpanded = !menuExpanded }
-                        )
+                        if(removeCustomIconChatPrefs){
+                            Chip(
+                                modifier = Modifier
+                                    .width(IntrinsicSize.Min)
+                                    .defaultMinSize(minHeight = 32.dp, minWidth = 42.dp),
+                                colors = ChipDefaults.chipColors(
+                                    backgroundColor = Color(nodeColor),
+                                    contentColor = Color(textColor),
+                                ),
+                                onClick = {
+                                    menuExpanded = !menuExpanded
+                                },
+                            ) {
+                                Text(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    text = thatNode.user.shortName.ifEmpty { "???" },
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = MaterialTheme.typography.button.fontSize,
+                                    textDecoration = TextDecoration.LineThrough.takeIf { isIgnored },
+                                    textAlign = TextAlign.Center,
+                                )
+                            }
+                        } else {
+                            PremiumChip(
+                                text = thatNode.user.shortName.ifEmpty { "???" },
+                                nodeColor = Color(nodeColor),
+                                textColor = Color(textColor),
+                                icon = IdentIkonGen.generateOrGetFromHexId(id),
+                                enabled = isThisNode,
+                                isConnected = isConnected,
+                                onClick = { menuExpanded = !menuExpanded }
+                            )
+                        }
 
                         NodeMenu(
                             node = thatNode,
