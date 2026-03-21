@@ -18,6 +18,7 @@
 package com.geeksville.mesh.ui.components
 
 import android.graphics.Color
+import android.os.Build
 import android.text.Spannable
 import android.text.Spannable.Factory
 import android.text.SpannableStringBuilder
@@ -86,7 +87,15 @@ fun AutoLinkText(
     val spannable = remember(text) {
         SpannableStringBuilder(text).apply {
 
-            Linkify.addLinks(this, Linkify.ALL)
+            //PATCH issue #14 - 21/03/2026 for devices below Android 8
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                Linkify.addLinks(this, Linkify.ALL)
+            } else {
+                Linkify.addLinks(this,
+                    Linkify.WEB_URLS or
+                            Linkify.EMAIL_ADDRESSES or
+                            Linkify.PHONE_NUMBERS)
+            }
 
             val match = DistressService.findValidPlusCode(this.toString())
             if (!match.isNullOrBlank()) {
