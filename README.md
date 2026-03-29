@@ -63,6 +63,10 @@ This ensures a significantly smaller payload over the mesh, resulting in less ai
 The database import/export feature has been introduced using a proprietary .dmdb file format.
 You can export the entire database or selectively export only nodes marked as favorites. This can be useful if you want to share your nodes with someone.
 
+### 🗜️ Unicode Message Compression
+DarkMesh introduces message compression, reducing payload size (e.g. from ~30 to ~20 characters).  
+This results in lighter radio traffic, improved LoRa efficiency, and a higher probability of message delivery.  
+This feature is supported exclusively by the DarkMesh firmware.
 
 ---
 
