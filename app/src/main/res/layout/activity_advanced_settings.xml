@@ -41,12 +41,14 @@
 
         <TextView
             android:id="@+id/tracemaxDescription"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
             android:text="Sets the Traceroute packet priority to MAX. It can speed-up packet forwarding locally. Since this is an experimental feature, use it with caution!"
             android:textSize="13sp"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/traceMaxLabel"
             tools:ignore="HardcodedText" />
 
@@ -192,13 +194,14 @@
 
         <TextView
             android:id="@+id/deleteOldNodesDesc"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
             android:text="DarkMesh will automatically delete older nodes to prevent gateway detection collisions and to keep the NodeDB clean. You can select the hours threshold."
-
             android:textSize="13sp"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/deleteOldNodesTW"
             tools:ignore="HardcodedText" />
 
@@ -282,11 +285,13 @@
         <TextView
             android:id="@+id/useCompressionDesc"
             android:layout_marginStart="8dp"
-            android:layout_width="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Uses a special compression algorithm for short text messages."
+            android:text="Uses a special compression algorithm for text messages making them more compact. IMPORTANT: You'll need the latest DarkMesh FW on your board to use this setting."
             android:textSize="13sp"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/useCompressionInMessages"
             tools:ignore="HardcodedText" />
 

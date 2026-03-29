@@ -23,6 +23,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -44,6 +45,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
+import androidx.compose.material.Switch
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.material.TextField
@@ -56,6 +58,7 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SelectAll
+import androidx.compose.material.icons.twotone.FolderZip
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -89,6 +92,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
@@ -98,11 +102,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.DataPacket
 import com.geeksville.mesh.android.Logging
+import com.geeksville.mesh.android.advancedPrefs
 import com.geeksville.mesh.database.entity.QuickChatAction
 import com.geeksville.mesh.model.Message
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.model.getChannel
+import com.geeksville.mesh.ui.USE_COMPRESSION_MESSAGES
 import com.geeksville.mesh.ui.activity.PlanMsgActivity
 import com.geeksville.mesh.ui.activity.PlanMsgActivity.NODE_ID_EXTRA_PARAM
 import com.geeksville.mesh.ui.components.BroadcastIconButton
@@ -111,6 +117,7 @@ import com.geeksville.mesh.ui.components.NodeMenuAction
 import com.geeksville.mesh.ui.message.components.MessageList
 import com.geeksville.mesh.ui.navigateToNavGraph
 import com.geeksville.mesh.ui.theme.AppTheme
+import com.geeksville.mesh.util.ComposableUtil.rememberBooleanPreference
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -215,6 +222,12 @@ internal fun MessageScreen(
     val quickChat by viewModel.quickChatActions.collectAsStateWithLifecycle()
     val messages by viewModel.getMessagesFrom(contactKey).collectAsStateWithLifecycle(listOf())
 
+    val useCompressedMessages by rememberBooleanPreference(
+        context.advancedPrefs,
+        USE_COMPRESSION_MESSAGES,
+        false
+    )
+
     val canResend by remember {
         derivedStateOf {
             selectedIds.value.isNotEmpty() &&
@@ -293,7 +306,15 @@ internal fun MessageScreen(
                     }
                 }
             } else {
-                MessageTopBar(context, title, channelIndex, contactKey, channelName, onNavigateBack)
+                MessageTopBar(
+                    context,
+                    title,
+                    channelIndex,
+                    contactKey,
+                    channelName,
+                    onNavigateBack,
+                    useCompressedMessages = useCompressedMessages
+                )
             }
         },
         bottomBar = {
@@ -504,7 +525,8 @@ private fun MessageTopBar(
             putExtra(NODE_ID_EXTRA_PARAM, "$contactKey^$channelName")
         }
         localContext.startActivity(intent)
-    }
+    },
+    useCompressedMessages: Boolean
 ) = TopAppBar(
     title = { Text(text = title) },
     navigationIcon = {
@@ -516,6 +538,31 @@ private fun MessageTopBar(
         }
     },
     actions = {
+
+        Icon(
+            imageVector = Icons.TwoTone.FolderZip,
+            contentDescription = "Compress Messages",
+            modifier = Modifier
+                .padding(start = 8.dp)
+        )
+        Switch(
+            checked = useCompressedMessages,
+            onCheckedChange = {
+
+                val status = if (it) "ON" else "OFF"
+
+                Toast.makeText(
+                    localContext,
+                    "Text Compression: $status",
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                localContext.advancedPrefs.edit {
+                    putBoolean(USE_COMPRESSION_MESSAGES, it).apply()
+                }
+            }
+        )
+
         if (contactKey.contains(DataPacket.ID_BROADCAST)) {
             BroadcastIconButton(onClick = onBroadcastClick)
         }
