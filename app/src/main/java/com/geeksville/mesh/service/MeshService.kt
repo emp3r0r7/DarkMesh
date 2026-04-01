@@ -934,12 +934,19 @@ class MeshService : Service(), Logging {
 
                     Portnums.PortNum.TEXT_MESSAGE_APP_VALUE,
                     Portnums.PortNum.TEXT_MESSAGE_COMPRESSED_APP_VALUE -> {
-                        if (data.emoji != 0) {
-                            debug("Received EMOJI from $fromId")
-                            rememberReaction(packet)
+                        if(!fromUs){ //we skip messages coming from ID that resembles ourselves
+                            if (data.emoji != 0) {
+                                debug("Received EMOJI from $fromId")
+                                rememberReaction(packet)
+                            } else {
+                                debug("Received CLEAR_TEXT from $fromId")
+                                rememberDataPacket(dataPacket)
+                            }
                         } else {
-                            debug("Received CLEAR_TEXT from $fromId")
-                            rememberDataPacket(dataPacket)
+                            mainLooperToast(
+                                "Skipped a message with our ID!",
+                                Toast.LENGTH_LONG
+                            )
                         }
                     }
 
