@@ -51,15 +51,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.DataPacket.CREATOR.ID_BROADCAST
 import com.geeksville.mesh.android.advancedPrefs
 import com.geeksville.mesh.model.Contact
+import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.ui.theme.AppTheme
 import com.geeksville.mesh.util.ComposableUtil.rememberBooleanPreference
 import com.geeksville.mesh.util.IdentIkonGen
@@ -73,6 +76,7 @@ fun ContactItem(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {},
+    viewModel: UIViewModel = hiltViewModel()
 ) = with(contact) {
 
     val isChannel = contactKey.contains(ID_BROADCAST)
@@ -160,6 +164,17 @@ fun ContactItem(
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
                         var name = longName
+                        var fontStyle = FontStyle.Normal
+
+                        if (nodeId != null && !isChannel) {
+                            val node = viewModel.getNode(nodeId)
+
+                            if (node.isUnknownUser) {
+                                fontStyle = FontStyle.Italic
+                                val registryNode = viewModel.getNodeRegistry(node.user.id)
+                                name = registryNode?.longName ?: longName
+                            }
+                        }
 
                         if(isDefaultChannnel){
                             name += " (Public)"
@@ -168,6 +183,7 @@ fun ContactItem(
                         Text(
                             text = name,
                             modifier = Modifier.weight(1f),
+                            fontStyle = fontStyle
                         )
                         Text(
                             text = lastMessageTime.orEmpty(),

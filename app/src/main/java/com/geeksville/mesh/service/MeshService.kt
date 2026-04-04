@@ -52,10 +52,12 @@ import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.database.DbImportState
 import com.geeksville.mesh.database.DbImportState.dbImportContactMap
 import com.geeksville.mesh.database.MeshLogRepository
+import com.geeksville.mesh.database.NodeRegistryRepository
 import com.geeksville.mesh.database.PacketRepository
 import com.geeksville.mesh.database.entity.MeshLog
 import com.geeksville.mesh.database.entity.MyNodeEntity
 import com.geeksville.mesh.database.entity.NodeEntity
+import com.geeksville.mesh.database.entity.NodeRegistry
 import com.geeksville.mesh.database.entity.Packet
 import com.geeksville.mesh.database.entity.ReactionEntity
 import com.geeksville.mesh.model.DeviceVersion
@@ -167,6 +169,9 @@ class MeshService : Service(), Logging {
 
     @Inject
     lateinit var mqttRepository: MQTTRepository
+
+    @Inject
+    lateinit var nodeRegistryRepository: NodeRegistryRepository
 
     private lateinit var huntingPrefs: SharedPreferences
 
@@ -1148,8 +1153,22 @@ class MeshService : Service(), Logging {
 
     // Update our DB of users based on someone sending out a User subpacket
     private fun handleReceivedUser(fromNum: Int, p: MeshProtos.User, channel: Int = 0, dbImport: Boolean = false) {
+
         updateNodeInfo(fromNum) {
             val newNode = (it.isUnknownUser && p.hwModel != MeshProtos.HardwareModel.UNSET)
+
+            if(newNode){ //we remember only nodes we already know well
+                val nodeRegistry = NodeRegistry(
+                    nodeId = p.id,
+                    longName = p.longName,
+                    shortName = p.shortName,
+                    lastSeen = System.currentTimeMillis(),
+                )
+
+                serviceScope.handledLaunch {
+                    nodeRegistryRepository.upsert(nodeRegistry)
+                }
+            }
 
             val keyMatch = !it.hasPKC || it.user.publicKey == p.publicKey
             it.user = if (keyMatch) p else p.copy {

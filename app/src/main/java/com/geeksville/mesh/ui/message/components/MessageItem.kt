@@ -56,6 +56,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -165,16 +166,29 @@ internal fun MessageItem(
                 Column(
                     modifier = Modifier.padding(top = 8.dp),
                 ) {
+
                     if (!fromLocal) {
+
+                        var longName = with(node.user) { "$longName ($id)" }
+
+                        if(node.isUnknownUser){
+                            uiModel.getNodeRegistry(node.user.id)?.let {
+                                longName = "${it.longName} (${it.nodeId})"
+                            }
+                        }
+
+                        val textStyle = MaterialTheme.typography.button.copy(
+                            color = MaterialTheme.colors.onSurface,
+                            letterSpacing = 0.1.sp,
+                            fontStyle = if (node.isUnknownUser) FontStyle.Italic else FontStyle.Normal
+                        )
+
                         Text(
-                            text = with(node.user) { "$longName ($id)" },
+                            text = longName,
                             modifier = Modifier.padding(bottom = 4.dp),
                             overflow = TextOverflow.Ellipsis,
                             maxLines = 1,
-                            style = MaterialTheme.typography.button.copy(
-                                color = MaterialTheme.colors.onSurface,
-                                letterSpacing = 0.1.sp,
-                            )
+                            style = textStyle
                         )
                     }
                     repliedMessage?.let {

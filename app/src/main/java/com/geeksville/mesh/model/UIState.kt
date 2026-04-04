@@ -46,10 +46,12 @@ import com.geeksville.mesh.database.DbImportState.MAX_ALLOWED_DB_SIZE_BYTES
 import com.geeksville.mesh.database.DbImportState.NODE_EXPORT_DB_VER
 import com.geeksville.mesh.database.DbImportState.NODE_EXPORT_SEPARATOR
 import com.geeksville.mesh.database.MeshLogRepository
+import com.geeksville.mesh.database.NodeRegistryRepository
 import com.geeksville.mesh.database.NodeRepository
 import com.geeksville.mesh.database.PacketRepository
 import com.geeksville.mesh.database.QuickChatActionRepository
 import com.geeksville.mesh.database.entity.MyNodeEntity
+import com.geeksville.mesh.database.entity.NodeRegistry
 import com.geeksville.mesh.database.entity.Packet
 import com.geeksville.mesh.database.entity.QuickChatAction
 import com.geeksville.mesh.repository.datastore.RadioConfigRepository
@@ -209,6 +211,7 @@ class UIViewModel @Inject constructor(
     private val quickChatActionRepository: QuickChatActionRepository,
     private val preferences: SharedPreferences,
     private val serviceRepository: ServiceRepository,
+    private val nodeRegistryRepository: NodeRegistryRepository
     ) : ViewModel(), Logging {
 
     private val _lastRelayNode = MutableStateFlow<RelayEvent?>(null)
@@ -355,6 +358,15 @@ class UIViewModel @Inject constructor(
         initialValue = emptyList(),
     )
 
+    val nodeRegistryMap: StateFlow<Map<String, NodeRegistry>> =
+        nodeRegistryRepository.getAllNodes()
+            .map { list -> list.associateBy { it.nodeId } }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = emptyMap(),
+            )
+
     // hardware info about our local device (can be null)
     val myNodeInfo: StateFlow<MyNodeEntity?> get() = nodeDB.myNodeInfo
     val ourNodeInfo: StateFlow<Node?> get() = nodeDB.ourNodeInfo
@@ -368,6 +380,10 @@ class UIViewModel @Inject constructor(
     fun getNode(userId: String?) = nodeDB.getNode(userId ?: DataPacket.ID_BROADCAST)
     fun getUser(userId: String?) = nodeDB.getUser(userId ?: DataPacket.ID_BROADCAST)
     fun getByUserId(userId: String?) = nodeDB.nodeDBbyNum.value.values.firstOrNull{ it.user.id == userId }
+
+    fun getNodeRegistry(nodeId: String): NodeRegistry? {
+        return nodeRegistryMap.value[nodeId]
+    }
 
     private val _snackbarText = MutableLiveData<Any?>(null)
     val snackbarText: LiveData<Any?> get() = _snackbarText
