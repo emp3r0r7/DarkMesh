@@ -57,6 +57,7 @@ data class Node(
     //liteNode useful for nodeRegistry
     val liteNodeId: String? = null,
     val liteLongName: String? = null,
+    val liteDefaultName: String? = null,
     val liteShortName: String? = null,
     val liteLatitude: Double? = null,
     val liteLongitude: Double? = null
@@ -96,7 +97,7 @@ data class Node(
     }
 
     val validPosition: MeshProtos.Position? get() = position.takeIf { hasValidPosition() }
-    val validLiteNode: Boolean get() = isValideNodeLite()
+    val validLiteNode: Boolean get() = isValidNodeLite()
 
     // @return distance in meters to some other node (or null if unknown)
     fun distance(o: Node): Int? = when {
@@ -116,20 +117,32 @@ data class Node(
         else -> com.geeksville.mesh.util.bearing(latitude, longitude, o.latitude, o.longitude).toInt()
     }
 
-    fun gpsString(gpsFormat: Int): String = when (gpsFormat) {
-        DEC_VALUE -> GPSFormat.toDEC(latitude, longitude)
-        DMS_VALUE -> GPSFormat.toDMS(latitude, longitude)
-        UTM_VALUE -> GPSFormat.toUTM(latitude, longitude)
-        MGRS_VALUE -> GPSFormat.toMGRS(latitude, longitude)
-        else -> GPSFormat.toDEC(latitude, longitude)
+    fun gpsString(gpsFormat: Int): String {
+        val lat = effectiveLatitude ?: return ""
+        val lon = effectiveLongitude ?: return ""
+
+        return when (gpsFormat) {
+            DEC_VALUE -> GPSFormat.toDEC(lat, lon)
+            DMS_VALUE -> GPSFormat.toDMS(lat, lon)
+            UTM_VALUE -> GPSFormat.toUTM(lat, lon)
+            MGRS_VALUE -> GPSFormat.toMGRS(lat, lon)
+            else -> GPSFormat.toDEC(lat, lon)
+        }
     }
 
-    private fun isValideNodeLite(): Boolean {
+    val effectiveLatitude: Double?
+        get() = if (isValidNodeLite()) liteLatitude else latitude
+
+    val effectiveLongitude: Double?
+        get() = if (isValidNodeLite()) liteLongitude else longitude
+
+    fun isValidNodeLite(): Boolean {
         return liteNodeId != null &&
                liteShortName != null &&
                liteLongName != null &&
                liteLatitude != null &&
-               liteLongitude != null
+               liteLongitude != null &&
+               liteDefaultName != null
     }
 
     private fun EnvironmentMetrics.getDisplayString(isFahrenheit: Boolean): String {

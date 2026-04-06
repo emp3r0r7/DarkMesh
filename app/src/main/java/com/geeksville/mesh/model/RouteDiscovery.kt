@@ -165,10 +165,11 @@ private fun parseNodeFromTraceroute(tracedNodes: List<String>?,
                 val backupNode = nodeRegistrMap.values
                     .filter {
                         it.longName != null &&
+                        it.defaultName != null &&
                         it.shortName != null &&
                         it.latitudeI != null &&
                         it.longitudeI != null
-                    }.firstOrNull { it.longName!!.contains(trimmedNode) }
+                    }.firstOrNull { trimmedNode.contains(it.defaultName!!) }
 
                 if(backupNode != null){
                     val nodeNum = hexIdToNodeNum(backupNode.nodeId)
@@ -176,6 +177,7 @@ private fun parseNodeFromTraceroute(tracedNodes: List<String>?,
                         Node(
                             num = nodeNum,
                             liteNodeId = backupNode.nodeId,
+                            liteDefaultName = backupNode.defaultName,
                             liteLongName = backupNode.longName,
                             liteShortName = backupNode.shortName,
                             liteLatitude = backupNode.latitudeI!! * 1e-7,

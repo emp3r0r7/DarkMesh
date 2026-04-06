@@ -524,37 +524,54 @@ fun MapView(
     }
 
     fun MapView.onNodesChanged(nodes: Collection<Node>): List<MarkerWithLabel> {
-        val nodesWithPosition = nodes.filter { it.validPosition != null }
+
+        val nodesWithPosition = nodes.filter { it.validPosition != null || it.isValidNodeLite() }
         val ourNode = model.ourNodeInfo.value
 
         val gpsFormat = AppUtil.safeGpsFormat(model.config.display.gpsFormat)
         val displayUnits = model.config.display.units.number
         return nodesWithPosition.map { node ->
+
             val (p, u) = node.position to node.user
-            val nodePosition = GeoPoint(node.latitude, node.longitude)
+
+            val nodePosition = if(!node.isValidNodeLite()){
+                GeoPoint(node.latitude, node.longitude)
+            } else {
+                GeoPoint(node.liteLatitude!!, node.liteLongitude!!)
+            }
+
             MarkerWithLabel(
                 mapView = this,
-                label = "${u.shortName} ${formatAgo(p.time)}"
+                label = if (!node.isValidNodeLite()) "${u.shortName} ${formatAgo(p.time)}" else "${node.liteShortName}"
+
             ).apply {
-                id = u.id
-                title = "${u.longName} ${node.batteryStr}"
+                id = if(!node.isValidNodeLite()) u.id else node.liteNodeId
+                title = if(!node.isValidNodeLite()) "${u.longName} ${node.batteryStr}" else "${node.liteLongName}"
                 snippet = node.gpsString(gpsFormat)
+
                 ourNode?.distanceStr(node, displayUnits)?.let { dist ->
                     subDescription =
                         context.getString(R.string.map_subDescription, ourNode.bearing(node), dist)
                 }
+
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                 position = nodePosition
                 icon = markerIcon
 
                 setOnLongClickListener{
                     performHapticFeedback()
-                    model.filterForNode(node, null)
+                    if(!node.isValidNodeLite()){
+                        model.filterForNode(node, null)
+                    } else {
+                        model.filterForNode(null, node.liteLongName)
+                    }
                     true
                 }
 
                 setNodeColors(node.colors)
-                setPrecisionBits(p.precisionBits)
+                if(!node.isValidNodeLite()){
+                    setPrecisionBits(p.precisionBits)
+                }
             }
         }
     }

@@ -61,6 +61,7 @@ class NodeRegistryRepository @Inject constructor(
                                nodeNum: Int?,
                                longName: String?,
                                shortName: String?,
+                               defaultName: String?,
                                lastSeen: Long
     ) = withContext(dispatchers.io) {
 
@@ -69,6 +70,7 @@ class NodeRegistryRepository @Inject constructor(
             nodeNum,
             longName,
             shortName,
+            defaultName,
             lastSeen
         )
     }
@@ -90,6 +92,7 @@ class NodeRegistryRepository @Inject constructor(
     suspend fun insertNodeRegistryPosition(
         nodeId: String,
         longName: String,
+        defaultName: String,
         shortName: String,
         latitudeI: Int?,
         longitudeI: Int?,
@@ -98,6 +101,7 @@ class NodeRegistryRepository @Inject constructor(
         nodeRegistryDao.insertNodeRegistryPosition(
             nodeId,
             longName,
+            defaultName,
             shortName,
             latitudeI,
             longitudeI,

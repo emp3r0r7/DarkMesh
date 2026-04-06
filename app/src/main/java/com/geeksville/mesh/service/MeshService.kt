@@ -1195,6 +1195,7 @@ class MeshService : Service(), Logging {
                     nodeNum = fromNum,
                     longName = p.longName,
                     shortName = p.shortName,
+                    defaultName = "Meshtastic ${p.id.takeLast(n = 4)}",
                     lastSeen = now
                 )
                 debug("INSERT NodeRegistry ${p.id} NODEUSER entry")
@@ -1218,9 +1219,13 @@ class MeshService : Service(), Logging {
             )
 
             if (updated == 0) {
+
+                val defaultName = "Meshtastic ${nodeId.takeLast(n = 4)}"
+
                 nodeRegistryRepository.insertNodeRegistryPosition(
                     nodeId = nodeId,
-                    longName = "Meshtastic ${nodeId.takeLast(n = 4)}",
+                    longName = defaultName,
+                    defaultName = defaultName,
                     shortName = nodeId.takeLast(n = 4),
                     latitudeI = p.latitudeI,
                     longitudeI = p.longitudeI,

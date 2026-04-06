@@ -15,6 +15,7 @@ data class NodeRegistry(
     @PrimaryKey val nodeId: String,
 
     val shortName: String? = null,
+    val defaultName: String? = null, //default longname = Meshtastic abcd
     val longName: String? = null,
     val nodeNum: Int? = null,
 

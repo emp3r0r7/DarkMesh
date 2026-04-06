@@ -65,6 +65,7 @@ interface NodeRegistryDao {
         nodeNum,
         longName,
         shortName,
+        defaultName,
         lastSeen
     )
     VALUES (
@@ -72,6 +73,7 @@ interface NodeRegistryDao {
         :nodeNum,
         :longName,
         :shortName,
+        :defaultName,
         :lastSeen)
     """
     )
@@ -80,6 +82,7 @@ interface NodeRegistryDao {
         nodeNum: Int?,
         longName: String?,
         shortName: String?,
+        defaultName: String?,
         lastSeen: Long,
     )
 
@@ -100,10 +103,11 @@ interface NodeRegistryDao {
     ): Int
 
     @Query("""
-    INSERT INTO node_registry (nodeId, longName, shortName, latitudeI, longitudeI, lastSeen)
+    INSERT INTO node_registry (nodeId, longName, defaultName, shortName, latitudeI, longitudeI, lastSeen)
     VALUES (
         :nodeId,
         :longName,
+        :defaultName,
         :shortName,
         :latitudeI,
         :longitudeI,
@@ -113,6 +117,7 @@ interface NodeRegistryDao {
     suspend fun insertNodeRegistryPosition(
         nodeId: String,
         longName: String,
+        defaultName: String,
         shortName: String,
         latitudeI: Int?,
         longitudeI: Int?,

@@ -67,7 +67,7 @@ import com.geeksville.mesh.database.entity.ReactionEntity
         AutoMigration(from = 14, to = 15),
         AutoMigration(from = 15, to = 16),
     ],
-    version = 22,
+    version = 23,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
