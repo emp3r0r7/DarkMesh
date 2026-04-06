@@ -27,3 +27,11 @@ data class NodeRegistry(
     val hopCount: Int? = null,
     val lastRssi: Int? = null
 )
+
+fun NodeRegistry.isValidForTraceMap() : Boolean {
+    return longName != null &&
+           defaultName != null &&
+           shortName != null &&
+           latitudeI != null &&
+           longitudeI != null
+}

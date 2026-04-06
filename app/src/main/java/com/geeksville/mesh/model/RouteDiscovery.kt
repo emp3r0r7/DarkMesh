@@ -27,6 +27,7 @@ import android.text.style.StyleSpan
 import android.util.Log
 import com.geeksville.mesh.database.NodeRepository
 import com.geeksville.mesh.database.entity.NodeRegistry
+import com.geeksville.mesh.database.entity.isValidForTraceMap
 import com.geeksville.mesh.util.AppUtil.hexIdToNodeNum
 import org.meshtastic.proto.MeshProtos
 import org.meshtastic.proto.MeshProtos.RouteDiscovery
@@ -158,33 +159,32 @@ private fun parseNodeFromTraceroute(tracedNodes: List<String>?,
             if(trimmedNode.isBlank()) continue
 
             val user = nodeDb?.getUserLongNameContains(trimmedNode)
-            user?.let { u ->
-                targetList.add(u)
-            } ?: run {
 
-                val backupNode = nodeRegistrMap.values
+            if(user != null && user.validPosition != null){
+                //valid user and valid coords
+                targetList.add(user)
+            } else {
+                //fallback on backupNode if exists
+                nodeRegistrMap.values
                     .filter {
-                        it.longName != null &&
-                        it.defaultName != null &&
-                        it.shortName != null &&
-                        it.latitudeI != null &&
-                        it.longitudeI != null
-                    }.firstOrNull { trimmedNode.contains(it.defaultName!!) }
-
-                if(backupNode != null){
-                    val nodeNum = hexIdToNodeNum(backupNode.nodeId)
-                    targetList.add(
-                        Node(
-                            num = nodeNum,
-                            liteNodeId = backupNode.nodeId,
-                            liteDefaultName = backupNode.defaultName,
-                            liteLongName = backupNode.longName,
-                            liteShortName = backupNode.shortName,
-                            liteLatitude = backupNode.latitudeI!! * 1e-7,
-                            liteLongitude = backupNode.longitudeI!! * 1e-7,
+                        it.isValidForTraceMap()
+                    }.firstOrNull {
+                        trimmedNode.contains(it.defaultName!!) ||
+                        trimmedNode.contains(it.longName!!)
+                    }?.let { backupNode ->
+                        val nodeNum = hexIdToNodeNum(backupNode.nodeId)
+                        targetList.add(
+                            Node(
+                                num = nodeNum,
+                                liteNodeId = backupNode.nodeId,
+                                liteDefaultName = backupNode.defaultName,
+                                liteLongName = backupNode.longName,
+                                liteShortName = backupNode.shortName,
+                                liteLatitude = backupNode.latitudeI!! * 1e-7,
+                                liteLongitude = backupNode.longitudeI!! * 1e-7,
+                            )
                         )
-                    )
-                }
+                    }
             }
         }
     }
