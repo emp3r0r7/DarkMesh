@@ -177,7 +177,7 @@ internal fun MessageItem(
 
                         if(currentNode == null || node.isUnknownUser){
                             nodeRegistry[node.user.id]?.let {
-                                longName = "${it.longName} (${it.nodeId})"
+                                longName = "${it.longName ?: longName} (${node.user.id})"
                             }
                         }
 

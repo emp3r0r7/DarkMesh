@@ -299,7 +299,7 @@ class UIViewModel @Inject constructor(
     }
 
     fun tracerouteMapAvailability(traceroute: String?) : TraceRouteMap? {
-        return evaluateTracerouteMapAvailability(traceroute, nodeDB)
+        return evaluateTracerouteMapAvailability(traceroute, nodeDB, nodeRegistryMap.value)
     }
 
     fun filterForNode(node: Node?, longName: String?) {
@@ -366,10 +366,10 @@ class UIViewModel @Inject constructor(
 
     val nodeRegistryMap: StateFlow<Map<String, NodeRegistry>> =
         nodeRegistryRepository.getAllNodes()
-            .onEach { debug("DAO emitted list size=${it.size}") }
+            .onEach { /*debug("DAO emitted list size=${it.size}")*/ }
             .map { list ->
                 val map = list.associateBy { it.nodeId }
-                debug("Mapped registry size=${map.size}")
+                //debug("Mapped registry size=${map.size}")
                 map
             }
             .stateIn(

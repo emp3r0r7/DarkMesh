@@ -56,7 +56,6 @@ import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.model.RadioConfigViewModel
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.model.getInitials
-import com.geeksville.mesh.service.MeshService
 import com.geeksville.mesh.ui.components.EditTextPreference
 import com.geeksville.mesh.ui.components.PreferenceCategory
 import com.geeksville.mesh.ui.components.PreferenceFooter
@@ -261,7 +260,7 @@ fun UserConfigItemList(
 
                     if(userConfig.id.isNotBlank() && nodeId != null){
 
-                        val currentNode = MeshService.hexIdToNodeNum(userConfig.id)
+                        val currentNode = AppUtil.hexIdToNodeNum(userConfig.id)
 
                         uiModel.setFavorite(
                             currentNode,

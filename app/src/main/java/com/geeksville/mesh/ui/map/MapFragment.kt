@@ -317,6 +317,9 @@ fun totalDistanceKm(nodes: List<Node>): Double {
         .sumOf { (a, b) -> haversine(a, b) }
 }
 
+private fun validCoordinates(lat: Double, lon: Double): Boolean {
+    return !lat.isNaN() && !lon.isNaN()
+}
 
 fun buildSegments(
     nodes: List<Node>,
@@ -325,10 +328,36 @@ fun buildSegments(
     side: Int
 ): List<MapSegment> =
     nodes.zipWithNext().mapNotNull { (a, b) ->
-        if (a.validPosition == null || b.validPosition == null) return@mapNotNull null
 
-        val rawFrom = GeoPoint(a.latitude, a.longitude)
-        val rawTo = GeoPoint(b.latitude, b.longitude)
+        //fixme, refactor this part
+        var latA = Double.NaN
+        var lonA = Double.NaN
+
+        var latB = Double.NaN
+        var lonB = Double.NaN
+
+        if (a.validPosition != null) {
+            latA = a.latitude
+            lonA = a.longitude
+        } else if (a.validLiteNode && a.liteLatitude != null && a.liteLongitude != null) {
+            latA = a.liteLatitude
+            lonA = a.liteLongitude
+        }
+
+        if (b.validPosition != null) {
+            latB = b.latitude
+            lonB = b.longitude
+        } else if (b.validLiteNode && b.liteLatitude != null && b.liteLongitude != null) {
+            latB = b.liteLatitude
+            lonB = b.liteLongitude
+        }
+
+        if(!validCoordinates(latA, lonA) || !validCoordinates(latB, lonB)){
+            return@mapNotNull null
+        }
+
+        val rawFrom = GeoPoint(latA, lonA)
+        val rawTo = GeoPoint(latB, lonB)
 
         // normalizza: sempre da sud a nord (o qualsiasi criterio stabile)
         val (from, to) =

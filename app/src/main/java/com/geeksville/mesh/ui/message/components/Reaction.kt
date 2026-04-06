@@ -218,7 +218,7 @@ fun ReactionDialog(
             if(node == null || node.isUnknownUser){
                 fontStyle = FontStyle.Italic
                 nodeRegistry[reaction.user.id]?.let {
-                    longName = it.longName
+                    longName = it.longName ?: reaction.user.longName
                 }
             }
 

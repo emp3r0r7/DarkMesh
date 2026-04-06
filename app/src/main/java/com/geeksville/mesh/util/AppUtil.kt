@@ -187,4 +187,12 @@ object AppUtil {
             else       -> Quality.REALLY_BAD.color
         }
     }
+
+    fun hexIdToNodeNum(hexId: String): Int {
+        return hexId.removePrefix("!").toUInt(16).toInt()
+    }
+
+    fun nodeNumToHexId(nodeNum: Int): String {
+        return "!" + nodeNum.toString(16)
+    }
 }

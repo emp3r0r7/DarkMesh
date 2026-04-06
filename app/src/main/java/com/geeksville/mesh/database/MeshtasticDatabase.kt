@@ -67,7 +67,7 @@ import com.geeksville.mesh.database.entity.ReactionEntity
         AutoMigration(from = 14, to = 15),
         AutoMigration(from = 15, to = 16),
     ],
-    version = 19,
+    version = 22,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -76,7 +76,6 @@ abstract class MeshtasticDatabase : RoomDatabase() {
     abstract fun packetDao(): PacketDao
     abstract fun meshLogDao(): MeshLogDao
     abstract fun quickChatActionDao(): QuickChatActionDao
-
     abstract fun nodeRegistryDao(): NodeRegistryDao
 
     companion object {

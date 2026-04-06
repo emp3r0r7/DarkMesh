@@ -151,8 +151,8 @@ fun NodeItem(
         style = LocalTextStyle.current.copy(fontStyle = FontStyle.Italic)
 
         nodeRegistry[thatNode.user.id]?.let {
-            longName = it.longName
-            shortName = it.shortName
+            longName = it.longName ?: longName
+            shortName = it.shortName ?: shortName
         }
     }
 

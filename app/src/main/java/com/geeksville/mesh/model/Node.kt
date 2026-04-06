@@ -52,7 +52,15 @@ data class Node(
     val environmentMetrics: EnvironmentMetrics = EnvironmentMetrics.getDefaultInstance(),
     val powerMetrics: PowerMetrics = PowerMetrics.getDefaultInstance(),
     val paxcounter: PaxcountProtos.Paxcount = PaxcountProtos.Paxcount.getDefaultInstance(),
-    val role: String? = ""
+    val role: String? = "",
+
+    //liteNode useful for nodeRegistry
+    val liteNodeId: String? = null,
+    val liteLongName: String? = null,
+    val liteShortName: String? = null,
+    val liteLatitude: Double? = null,
+    val liteLongitude: Double? = null
+
 ) {
     val colors: Pair<Int, Int>
         get() { // returns foreground and background @ColorInt for each 'num'
@@ -88,6 +96,7 @@ data class Node(
     }
 
     val validPosition: MeshProtos.Position? get() = position.takeIf { hasValidPosition() }
+    val validLiteNode: Boolean get() = isValideNodeLite()
 
     // @return distance in meters to some other node (or null if unknown)
     fun distance(o: Node): Int? = when {
@@ -113,6 +122,14 @@ data class Node(
         UTM_VALUE -> GPSFormat.toUTM(latitude, longitude)
         MGRS_VALUE -> GPSFormat.toMGRS(latitude, longitude)
         else -> GPSFormat.toDEC(latitude, longitude)
+    }
+
+    private fun isValideNodeLite(): Boolean {
+        return liteNodeId != null &&
+               liteShortName != null &&
+               liteLongName != null &&
+               liteLatitude != null &&
+               liteLongitude != null
     }
 
     private fun EnvironmentMetrics.getDisplayString(isFahrenheit: Boolean): String {

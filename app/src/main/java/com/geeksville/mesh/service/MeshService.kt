@@ -57,7 +57,6 @@ import com.geeksville.mesh.database.PacketRepository
 import com.geeksville.mesh.database.entity.MeshLog
 import com.geeksville.mesh.database.entity.MyNodeEntity
 import com.geeksville.mesh.database.entity.NodeEntity
-import com.geeksville.mesh.database.entity.NodeRegistry
 import com.geeksville.mesh.database.entity.Packet
 import com.geeksville.mesh.database.entity.ReactionEntity
 import com.geeksville.mesh.model.DeviceVersion
@@ -78,6 +77,7 @@ import com.geeksville.mesh.service.GlobalRadioMesh.ourTracerouteRequests
 import com.geeksville.mesh.ui.SKIP_MQTT_ENTIRELY
 import com.geeksville.mesh.ui.TRACE_MAX_PRIORITY_PREF
 import com.geeksville.mesh.util.AppUtil
+import com.geeksville.mesh.util.AppUtil.hexIdToNodeNum
 import com.geeksville.mesh.util.anonymize
 import com.geeksville.mesh.util.toOneLineString
 import com.geeksville.mesh.util.toPIIString
@@ -220,14 +220,6 @@ class MeshService : Service(), Logging {
             "com.emp3r0r7.darkmesh",
             "com.geeksville.mesh.service.MeshService"
         )
-
-        fun hexIdToNodeNum(hexId: String): Int {
-            return hexId.removePrefix("!").toUInt(16).toInt()
-        }
-
-        fun nodeNumToHexId(nodeNum: Int): String {
-            return "!" + nodeNum.toString(16)
-        }
 
         /** The minimum firmware version we know how to talk to. We'll still be able
          * to talk to 2.0 firmwares but only well enough to ask them to firmware update.
@@ -1159,20 +1151,9 @@ class MeshService : Service(), Logging {
             val newNode = (it.isUnknownUser && p.hwModel != MeshProtos.HardwareModel.UNSET)
 
             if(p.hwModel != MeshProtos.HardwareModel.UNSET &&
-                p.role != Config.DeviceConfig.Role.UNRECOGNIZED &&
-                !p.longName.startsWith("Meshtastic") //we dont want to store default names
+                p.role != Config.DeviceConfig.Role.UNRECOGNIZED
             ){ //we try to update every fully decoded nodeinfo
-                val nodeRegistry = NodeRegistry(
-                    nodeId = p.id,
-                    nodeNum = fromNum,
-                    longName = p.longName,
-                    shortName = p.shortName,
-                    lastSeen = System.currentTimeMillis(),
-                )
-
-                serviceScope.handledLaunch {
-                    nodeRegistryRepository.upsert(nodeRegistry)
-                }
+                updateOrInsertNodeRegistry(fromNum, p)
             }
 
             val keyMatch = !it.hasPKC || it.user.publicKey == p.publicKey
@@ -1194,6 +1175,64 @@ class MeshService : Service(), Logging {
         }
     }
 
+    private fun updateOrInsertNodeRegistry(fromNum: Int, p: MeshProtos.User){
+
+        serviceScope.handledLaunch {
+
+            val now = System.currentTimeMillis()
+
+            val updated = nodeRegistryRepository.updateNodeInfo(
+                nodeId = p.id,
+                nodeNum = fromNum,
+                longName = p.longName,
+                shortName = p.shortName,
+                lastSeen = now
+            )
+
+            if(updated == 0){
+                nodeRegistryRepository.insertNodeInfo(
+                    nodeId = p.id,
+                    nodeNum = fromNum,
+                    longName = p.longName,
+                    shortName = p.shortName,
+                    lastSeen = now
+                )
+                debug("INSERT NodeRegistry ${p.id} NODEUSER entry")
+            } else {
+                debug("UPDATE NodeRegistry ${p.id} NODEUSER entry")
+            }
+        }
+    }
+
+    private fun updateOrInsertNodeRegistryPosition(nodeId: String, p: MeshProtos.Position){
+
+        serviceScope.handledLaunch {
+
+            val now = System.currentTimeMillis()
+
+            val updated = nodeRegistryRepository.updatePosition(
+                nodeId = nodeId,
+                latitudeI = p.latitudeI,
+                longitudeI = p.longitudeI,
+                lastSeen = now
+            )
+
+            if (updated == 0) {
+                nodeRegistryRepository.insertNodeRegistryPosition(
+                    nodeId = nodeId,
+                    longName = "Meshtastic ${nodeId.takeLast(n = 4)}",
+                    shortName = nodeId.takeLast(n = 4),
+                    latitudeI = p.latitudeI,
+                    longitudeI = p.longitudeI,
+                    lastSeen = now
+                )
+                debug("INSERT NodeRegistry $nodeId POSITION entry")
+            } else {
+                debug("UPDATE NodeRegistry $nodeId POSITION entry")
+            }
+        }
+    }
+
     /** Update our DB of users based on someone sending out a Position subpacket
      * @param defaultTime in msecs since 1970
      */
@@ -1209,6 +1248,11 @@ class MeshService : Service(), Logging {
             debug("Ignoring nop position update for the local node")
         } else {
             updateNodeInfo(fromNum) {
+
+                serviceScope.handledLaunch {
+                    updateOrInsertNodeRegistryPosition(it.user.id, p)
+                }
+
                 debug("update position: ${it.longName?.toPIIString()} with ${p.toPIIString()}")
                 it.setPosition(p, (defaultTime / 1000L).toInt())
             }

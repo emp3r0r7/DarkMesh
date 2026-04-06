@@ -99,6 +99,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emp3r0r7.darkmesh.R
+import com.geeksville.mesh.database.entity.NodeRegistry
 import com.geeksville.mesh.model.MetricsState
 import com.geeksville.mesh.model.MetricsViewModel
 import com.geeksville.mesh.model.Node
@@ -126,15 +127,16 @@ fun NodeDetailScreen(
 
     if (state.node != null) {
         val node = state.node ?: return
+
         val nodeRegistryMap by uiViewModel.nodeRegistryMap.collectAsState()
-        val nodeBackup = nodeRegistryMap[node.user.id] != null
+        val nodeRegistry = nodeRegistryMap[node.user.id]
 
         NodeDetailList(
             node = node,
             metricsState = state,
             onNavigate = onNavigate,
             modifier = modifier,
-            nodeBackup = nodeBackup
+            nodeRegistry = nodeRegistry,
         )
     } else {
         Box(
@@ -151,7 +153,7 @@ private fun NodeDetailList(
     modifier: Modifier = Modifier,
     node: Node,
     metricsState: MetricsState,
-    nodeBackup: Boolean,
+    nodeRegistry: NodeRegistry?,
     onNavigate: (Any) -> Unit = {},
 ) {
     LazyColumn(
@@ -187,7 +189,7 @@ private fun NodeDetailList(
         if (metricsState.deviceHardware != null) {
             item {
                 PreferenceCategory("Device") {
-                    DeviceDetailsContent(metricsState, nodeBackup)
+                    DeviceDetailsContent(metricsState, nodeRegistry)
                 }
             }
         }
@@ -272,7 +274,7 @@ private fun NodeDetailRow(
 @Composable
 private fun DeviceDetailsContent(
     state: MetricsState,
-    nodeBackup: Boolean,
+    nodeRegistry: NodeRegistry?,
 ) {
     val deviceHardware = state.deviceHardware ?: return
     val hwModelName = deviceHardware.displayName
@@ -294,9 +296,16 @@ private fun DeviceDetailsContent(
         )
     }
 
-    if(nodeBackup){
+    if(nodeRegistry != null){
+
+        val label = if(nodeRegistry.latitudeI != null && nodeRegistry.longitudeI != null){
+            "Node and Position Backup Available"
+        } else {
+            "Node Backup Available"
+        }
+
         NodeDetailRow(
-            label = "Node Backup Available",
+            label = label,
             icon = Icons.Default.Verified,
             value = "",
             iconTint = Color.Green
@@ -687,7 +696,7 @@ private fun NodeDetailsPreview(
         NodeDetailList(
             node = node,
             metricsState = MetricsState.Empty,
-            nodeBackup = true
+            nodeRegistry = null
         )
     }
 }

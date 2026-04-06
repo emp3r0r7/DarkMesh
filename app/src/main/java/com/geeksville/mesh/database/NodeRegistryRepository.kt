@@ -36,4 +36,78 @@ class NodeRegistryRepository @Inject constructor(
     suspend fun updateLastSeen(nodeId: String, timestamp: Long) = withContext(dispatchers.io) {
         nodeRegistryDao.updateLastSeen(nodeId, timestamp)
     }
+
+    suspend fun updatePosition(nodeId: String, latitude: Int, longitude: Int) = withContext(dispatchers.io) {
+        nodeRegistryDao.updatePosition(nodeId, latitude, longitude)
+    }
+
+    suspend fun updateNodeInfo(nodeId: String,
+                               nodeNum: Int?,
+                               longName: String?,
+                               shortName: String?,
+                               lastSeen: Long
+    ) = withContext(dispatchers.io) {
+
+        nodeRegistryDao.updateNodeInfo(
+            nodeId,
+            nodeNum,
+            longName,
+            shortName,
+            lastSeen
+        )
+    }
+
+    suspend fun insertNodeInfo(nodeId: String,
+                               nodeNum: Int?,
+                               longName: String?,
+                               shortName: String?,
+                               lastSeen: Long
+    ) = withContext(dispatchers.io) {
+
+        nodeRegistryDao.insertNodeInfo(
+            nodeId,
+            nodeNum,
+            longName,
+            shortName,
+            lastSeen
+        )
+    }
+
+    suspend fun updatePosition(
+        nodeId: String,
+        latitudeI: Int?,
+        longitudeI: Int?,
+        lastSeen: Long
+    ) = withContext(dispatchers.io) {
+        nodeRegistryDao.updatePosition(
+            nodeId,
+            latitudeI,
+            longitudeI,
+            lastSeen
+        )
+    }
+
+    suspend fun insertNodeRegistryPosition(
+        nodeId: String,
+        longName: String,
+        shortName: String,
+        latitudeI: Int?,
+        longitudeI: Int?,
+        lastSeen: Long
+    ) = withContext(dispatchers.io) {
+        nodeRegistryDao.insertNodeRegistryPosition(
+            nodeId,
+            longName,
+            shortName,
+            latitudeI,
+            longitudeI,
+            lastSeen
+        )
+    }
+
+    suspend fun searchLongName(
+        longName: String
+    ) = withContext(dispatchers.io) {
+        nodeRegistryDao.searchLongName(longName)
+    }
 }

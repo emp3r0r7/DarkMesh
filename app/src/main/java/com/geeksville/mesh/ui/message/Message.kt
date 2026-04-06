@@ -322,9 +322,7 @@ internal fun MessageScreen(
                 val unknownUserNode = nodeId != DataPacket.ID_BROADCAST && (node == null || node.isUnknownUser)
 
                 if(unknownUserNode){
-                    nodeRegistry[nodeId]?.let {
-                        chatName = it.longName
-                    }
+                    nodeRegistry[nodeId]?.let { chatName = it.longName ?: title }
                 }
 
                 MessageTopBar(

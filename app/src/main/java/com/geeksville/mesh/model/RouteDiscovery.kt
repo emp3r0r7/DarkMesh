@@ -26,6 +26,8 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
 import android.util.Log
 import com.geeksville.mesh.database.NodeRepository
+import com.geeksville.mesh.database.entity.NodeRegistry
+import com.geeksville.mesh.util.AppUtil.hexIdToNodeNum
 import org.meshtastic.proto.MeshProtos
 import org.meshtastic.proto.MeshProtos.RouteDiscovery
 import org.meshtastic.proto.Portnums
@@ -104,13 +106,26 @@ fun MeshProtos.MeshPacket.getTracerouteResponse(
 
 
 fun evaluateTracerouteMapAvailability(traceroute: String?,
-                                      nodeDb: NodeRepository) : TraceRouteMap? {
+                                      nodeDb: NodeRepository,
+                                      nodeRegistryMap: Map<String, NodeRegistry>) : TraceRouteMap? {
 
     val backtoUs = traceroute?.split("Route traced back to us:")
 
     try {
-        val traceBackList = parseNodeFromTraceroute(backtoUs, 1, nodeDb)
-        val traceForwardList = parseNodeFromTraceroute(backtoUs, 0, nodeDb)
+
+        val traceBackList = parseNodeFromTraceroute(
+            backtoUs,
+            1,
+            nodeDb,
+            nodeRegistryMap
+        )
+
+        val traceForwardList = parseNodeFromTraceroute(
+            backtoUs,
+            0,
+            nodeDb,
+            nodeRegistryMap
+        )
 
         if(traceForwardList.isNotEmpty() &&
             traceBackList.isNotEmpty()){
@@ -131,9 +146,10 @@ fun evaluateTracerouteMapAvailability(traceroute: String?,
 private fun parseNodeFromTraceroute(tracedNodes: List<String>?,
                                     searchIndex: Int ,
                                     nodeDb: NodeRepository?,
+                                    nodeRegistrMap: Map<String, NodeRegistry>
                                     ): ArrayList<Node> {
 
-    var targetList = ArrayList<Node>()
+    val targetList = ArrayList<Node>()
 
     tracedNodes?.get(searchIndex)?.trim()?.split("■")?.let { tracers ->
         for(node in tracers){
@@ -144,6 +160,29 @@ private fun parseNodeFromTraceroute(tracedNodes: List<String>?,
             val user = nodeDb?.getUserLongNameContains(trimmedNode)
             user?.let { u ->
                 targetList.add(u)
+            } ?: run {
+
+                val backupNode = nodeRegistrMap.values
+                    .filter {
+                        it.longName != null &&
+                        it.shortName != null &&
+                        it.latitudeI != null &&
+                        it.longitudeI != null
+                    }.firstOrNull { it.longName!!.contains(trimmedNode) }
+
+                if(backupNode != null){
+                    val nodeNum = hexIdToNodeNum(backupNode.nodeId)
+                    targetList.add(
+                        Node(
+                            num = nodeNum,
+                            liteNodeId = backupNode.nodeId,
+                            liteLongName = backupNode.longName,
+                            liteShortName = backupNode.shortName,
+                            liteLatitude = backupNode.latitudeI!! * 1e-7,
+                            liteLongitude = backupNode.longitudeI!! * 1e-7,
+                        )
+                    )
+                }
             }
         }
     }

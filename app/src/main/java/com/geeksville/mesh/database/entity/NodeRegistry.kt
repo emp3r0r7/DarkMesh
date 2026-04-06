@@ -18,7 +18,9 @@ data class NodeRegistry(
     val longName: String? = null,
     val nodeNum: Int? = null,
 
-    val firstSeen: Long = System.currentTimeMillis(),
+    val latitudeI: Int? = null,
+    val longitudeI: Int? = null,
+
     val lastSeen: Long = System.currentTimeMillis(),
 
     val hopCount: Int? = null,

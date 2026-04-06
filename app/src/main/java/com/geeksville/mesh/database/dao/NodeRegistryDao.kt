@@ -30,4 +30,98 @@ interface NodeRegistryDao {
         WHERE nodeId = :nodeId
     """)
     suspend fun updateLastSeen(nodeId: String, timestamp: Long)
+
+
+    @Query(
+        """
+        UPDATE node_registry
+        SET latitudeI = :latitude, longitudeI = :longitude
+        WHERE nodeId = :nodeId
+    """
+    )
+    suspend fun updatePosition(nodeId: String, latitude: Int, longitude: Int)
+
+    @Query("""
+    UPDATE node_registry
+    SET
+        nodeNum = :nodeNum,
+        longName = :longName,
+        shortName = :shortName,
+        lastSeen = :lastSeen
+    WHERE nodeId = :nodeId 
+    """
+    )
+    suspend fun updateNodeInfo(
+        nodeId: String,
+        nodeNum: Int?,
+        longName: String?,
+        shortName: String?,
+        lastSeen: Long
+    ): Int
+
+    @Query("""
+    INSERT INTO node_registry (
+        nodeId,
+        nodeNum,
+        longName,
+        shortName,
+        lastSeen
+    )
+    VALUES (
+        :nodeId,
+        :nodeNum,
+        :longName,
+        :shortName,
+        :lastSeen)
+    """
+    )
+    suspend fun insertNodeInfo(
+        nodeId: String,
+        nodeNum: Int?,
+        longName: String?,
+        shortName: String?,
+        lastSeen: Long,
+    )
+
+    @Query("""
+    UPDATE node_registry
+    SET
+        latitudeI = :latitudeI,
+        longitudeI = :longitudeI,
+        lastSeen = :lastSeen
+    WHERE nodeId = :nodeId
+    """
+    )
+    suspend fun updatePosition(
+        nodeId: String,
+        latitudeI: Int?,
+        longitudeI: Int?,
+        lastSeen: Long,
+    ): Int
+
+    @Query("""
+    INSERT INTO node_registry (nodeId, longName, shortName, latitudeI, longitudeI, lastSeen)
+    VALUES (
+        :nodeId,
+        :longName,
+        :shortName,
+        :latitudeI,
+        :longitudeI,
+        :lastSeen)
+    """
+    )
+    suspend fun insertNodeRegistryPosition(
+        nodeId: String,
+        longName: String,
+        shortName: String,
+        latitudeI: Int?,
+        longitudeI: Int?,
+        lastSeen: Long,
+    )
+
+    @Query("""
+        SELECT * FROM node_registry
+        WHERE longName like :longName ORDER BY lastSeen DESC
+    """)
+    suspend fun searchLongName(longName: String?): List<NodeRegistry>
 }
