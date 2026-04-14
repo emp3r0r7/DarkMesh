@@ -67,10 +67,8 @@ import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.model.RadioConfigState
 import com.geeksville.mesh.model.RadioConfigViewModel
 import com.geeksville.mesh.ui.components.PreferenceCategory
-import com.geeksville.mesh.ui.components.SimpleAlertDialog
 import com.geeksville.mesh.ui.components.config.EditDeviceProfileDialog
 import com.geeksville.mesh.ui.components.config.PacketResponseStateDialog
-import com.geeksville.mesh.util.Capabilities
 import org.meshtastic.proto.ClientOnlyProtos.DeviceProfile
 
 private fun getNavRouteFrom(routeName: String): Any? {
@@ -87,33 +85,6 @@ fun RadioConfigScreen(
 ) {
     val state by viewModel.radioConfigState.collectAsStateWithLifecycle()
     var isWaiting by remember { mutableStateOf(false) }
-
-    val firmwareVersion = state.metadata?.firmwareVersion
-    val capabilities = remember(firmwareVersion) { Capabilities(firmwareVersion) }
-    var showTrafficCompatDialog by remember { mutableStateOf(false) }
-    var showStatusMessageCompatDialog by remember { mutableStateOf(false) }
-
-    if(showTrafficCompatDialog){
-        SimpleAlertDialog(
-            title = R.string.fw_mismatch,
-            text = "This feature is available for FW ver. >= 2.7.20\n" +
-                    "You are currently using $firmwareVersion",
-            onDismiss = {
-                showTrafficCompatDialog = false
-            }
-        )
-    }
-
-    if(showStatusMessageCompatDialog){
-        SimpleAlertDialog(
-            title = R.string.fw_mismatch,
-            text = "This feature is available for FW ver. >= 2.7.17\n" +
-                    "You are currently using $firmwareVersion",
-            onDismiss = {
-                showStatusMessageCompatDialog = false
-            }
-        )
-    }
 
     if (isWaiting) {
         PacketResponseStateDialog(
@@ -183,25 +154,8 @@ fun RadioConfigScreen(
         state = state,
         modifier = modifier,
         onRouteClick = { route ->
-
-            if (route == ModuleRoute.TRAFFIC_MANAGEMENT &&
-                !capabilities.supportsTrafficManagementConfig
-            ) {
-                showTrafficCompatDialog = true
-            } else {
-                isWaiting = true
-                viewModel.setResponseStateLoading(route)
-            }
-
-            if (route == ModuleRoute.STATUS_MESSAGE &&
-                !capabilities.supportsStatusMessage
-            ) {
-                showStatusMessageCompatDialog = true
-            } else {
-                isWaiting = true
-                viewModel.setResponseStateLoading(route)
-            }
-
+            isWaiting = true
+            viewModel.setResponseStateLoading(route)
         },
         onImport = {
             viewModel.clearPacketResponse()

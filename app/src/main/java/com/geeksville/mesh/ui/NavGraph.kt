@@ -110,6 +110,7 @@ import com.geeksville.mesh.ui.components.config.StoreForwardConfigScreen
 import com.geeksville.mesh.ui.components.config.TelemetryConfigScreen
 import com.geeksville.mesh.ui.components.config.TrafficManagementConfigScreen
 import com.geeksville.mesh.ui.components.config.UserConfigScreen
+import com.geeksville.mesh.util.Capabilities
 import com.geeksville.mesh.util.UiText
 import com.google.accompanist.themeadapter.appcompat.AppCompatTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -339,111 +340,58 @@ enum class ConfigRoute(
 
 // ModuleConfig (type = AdminProtos.AdminMessage.ModuleConfigType)
 enum class ModuleRoute(
-    val title: String, val route: Route, val icon: ImageVector?, val type: Int = 0
+    val title: String,
+    val route: Route,
+    val icon: ImageVector?,
+    val type: Int
 ) {
-    //refer to admin.pb.h firmware header file
-
     MQTT("MQTT", Route.MQTT, Icons.Default.Cloud, 0),
+    SERIAL("Serial", Route.Serial, Icons.Default.Usb, 1),
+    EXT_NOTIFICATION("External Notification", Route.ExtNotification, Icons.Default.Notifications, 2),
+    STORE_FORWARD("Store & Forward", Route.StoreForward, Icons.AutoMirrored.Default.Forward, 3),
+    RANGE_TEST("Range Test", Route.RangeTest, Icons.Default.Speed, 4),
+    TELEMETRY("Telemetry", Route.Telemetry, Icons.Default.DataUsage, 5),
+    CANNED_MESSAGE("Canned Message", Route.CannedMessage, Icons.AutoMirrored.Default.Message, 6),
+    AUDIO("Audio", Route.Audio, Icons.AutoMirrored.Default.VolumeUp, 7),
+    REMOTE_HARDWARE("Remote Hardware", Route.RemoteHardware, Icons.Default.SettingsRemote, 8),
+    NEIGHBOR_INFO("Neighbor Info", Route.NeighborInfo, Icons.Default.People, 9),
+    AMBIENT_LIGHTING("Ambient Lighting", Route.AmbientLighting, Icons.Default.LightMode, 10),
+    DETECTION_SENSOR("Detection Sensor", Route.DetectionSensor, Icons.Default.Sensors, 11),
+    PAXCOUNTER("Paxcounter", Route.Paxcounter, Icons.Default.PermScanWifi, 12),
+    STATUS_MESSAGE("Status Message", Route.StatusMessage, Icons.AutoMirrored.Filled.Message, 13),
+    TRAFFIC_MANAGEMENT("Traffic Management", Route.TrafficManagement, Icons.Default.Route, 14);
 
-    SERIAL(
-        "Serial",
-        Route.Serial,
-        Icons.Default.Usb,
-        1
-    ),
-
-    EXT_NOTIFICATION(
-        "External Notification", Route.ExtNotification, Icons.Default.Notifications, 2
-    ),
-
-    STORE_FORWARD(
-        "Store & Forward",
-        Route.StoreForward,
-        Icons.AutoMirrored.Default.Forward,
-        3
-    ),
-
-    RANGE_TEST("Range Test", Route.RangeTest, Icons.Default.Speed, 4), TELEMETRY(
-        "Telemetry",
-        Route.Telemetry,
-        Icons.Default.DataUsage,
-        5
-    ),
-
-    CANNED_MESSAGE(
-        "Canned Message",
-        Route.CannedMessage,
-        Icons.AutoMirrored.Default.Message,
-        6
-    ),
-
-    AUDIO(
-        "Audio",
-        Route.Audio,
-        Icons.AutoMirrored.Default.VolumeUp,
-        7
-    ),
-
-    REMOTE_HARDWARE(
-        "Remote Hardware",
-        Route.RemoteHardware,
-        Icons.Default.SettingsRemote,
-        8
-    ),
-
-    NEIGHBOR_INFO(
-        "Neighbor Info",
-        Route.NeighborInfo,
-        Icons.Default.People,
-        9
-    ),
-
-    AMBIENT_LIGHTING(
-        "Ambient Lighting",
-        Route.AmbientLighting,
-        Icons.Default.LightMode,
-        10
-    ),
-
-    DETECTION_SENSOR(
-        "Detection Sensor",
-        Route.DetectionSensor,
-        Icons.Default.Sensors,
-        11
-    ),
-
-    PAXCOUNTER(
-        "Paxcounter",
-        Route.Paxcounter,
-        Icons.Default.PermScanWifi,
-        12
-    ),
-
-    STATUS_MESSAGE(
-        "Status Message",
-        Route.StatusMessage,
-        Icons.AutoMirrored.Filled.Message,
-        13,
-    ),
-
-    TRAFFIC_MANAGEMENT(
-        "Traffic Management",
-        Route.TrafficManagement,
-        Icons.Default.Route,
-        14 //this number is important, it is read firmware-wise
-    ), ;
-
-    val bitfield: Int get() = 1 shl ordinal
+    val bitfield: Int get() = 1 shl type
 
     companion object {
         fun filterExcludedFrom(metadata: DeviceMetadata?): List<ModuleRoute> = entries.filter {
-            when (metadata) {
-                null -> true
-                else -> metadata.excludedModules and it.bitfield == 0
-            }
+            it.isSupportedBy(metadata)
         }
     }
 }
+
+fun ModuleRoute.isSupportedBy(metadata: DeviceMetadata?): Boolean {
+    if (metadata == null) return true
+
+    val notExcluded = (metadata.excludedModules and bitfield) == 0
+
+    return when (this) {
+        ModuleRoute.STATUS_MESSAGE -> notExcluded && supportsStatusMessage(metadata)
+        ModuleRoute.TRAFFIC_MANAGEMENT -> supportsTrafficManagement(metadata)
+        else -> notExcluded
+    }
+}
+
+private fun getFirmwareVersion(metadata: DeviceMetadata?): String?{
+    if (metadata == null) return null
+    return metadata.firmwareVersion
+}
+
+private fun supportsStatusMessage(metadata: DeviceMetadata?): Boolean =
+    getFirmwareVersion(metadata)?.let { Capabilities(it).supportsStatusMessage } ?: false
+
+private fun supportsTrafficManagement(metadata: DeviceMetadata?): Boolean =
+    getFirmwareVersion(metadata)?.let { Capabilities(it).supportsTrafficManagementConfig } ?: false
 
 /**
  * Generic sealed class defines each possible state of a response.

@@ -38,13 +38,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.ui.ResponseState
-
 @Composable
 fun <T> PacketResponseStateDialog(
     state: ResponseState<T>,
     onDismiss: () -> Unit = {},
     onComplete: () -> Unit = {},
 ) {
+    if (state is ResponseState.Loading) {
+        androidx.compose.runtime.LaunchedEffect(state.total, state.completed) {
+            if (state.completed >= state.total && state.total > 0) {
+                onComplete()
+            }
+        }
+    }
+
     AlertDialog(
         onDismissRequest = {},
         shape = RoundedCornerShape(16.dp),
@@ -54,27 +61,37 @@ fun <T> PacketResponseStateDialog(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (state is ResponseState.Loading) {
-                    val progress by animateFloatAsState(
-                        targetValue = state.completed.toFloat() / state.total.toFloat(),
-                        label = "progress",
-                    )
-                    Text("%.0f%%".format(progress * 100))
-                    LinearProgressIndicator(
-                        progress = progress,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
-                        color = MaterialTheme.colors.onSurface,
-                    )
-                    if (state.total == state.completed) onComplete()
-                }
-                if (state is ResponseState.Success) {
-                    Text(text = stringResource(id = R.string.delivery_confirmed))
-                }
-                if (state is ResponseState.Error) {
-                    Text(text = stringResource(id = R.string.error), minLines = 2)
-                    Text(text = state.error.asString())
+                when (state) {
+                    is ResponseState.Loading -> {
+                        val rawProgress = if (state.total > 0) {
+                            state.completed.toFloat() / state.total.toFloat()
+                        } else 0f
+
+                        val clampedProgress by animateFloatAsState(
+                            targetValue = rawProgress.coerceIn(0f, 1f),
+                            label = "progress",
+                        )
+
+                        Text("${state.completed}/${state.total}")
+                        LinearProgressIndicator(
+                            progress = clampedProgress,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            color = MaterialTheme.colors.onSurface,
+                        )
+                    }
+
+                    is ResponseState.Success -> {
+                        Text(text = stringResource(id = R.string.delivery_confirmed))
+                    }
+
+                    is ResponseState.Error -> {
+                        Text(text = stringResource(id = R.string.error), minLines = 2)
+                        Text(text = state.error.asString())
+                    }
+
+                    is ResponseState.Empty -> Unit
                 }
             }
         },

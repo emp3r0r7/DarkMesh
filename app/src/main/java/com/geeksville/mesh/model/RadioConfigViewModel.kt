@@ -471,9 +471,9 @@ class RadioConfigViewModel @Inject constructor(
             ConfigRoute.USER -> getOwner(destNum)
 
             ConfigRoute.CHANNELS -> {
+                _radioConfigState.update { it.copy(channelList = emptyList()) }
                 getChannel(destNum, 0)
                 getConfig(destNum, ConfigRoute.LORA.type)
-                // channel editor is synchronous, so we don't use requestIds as total
                 setResponseStateTotal(maxChannels + 1)
             }
 
@@ -576,20 +576,25 @@ class RadioConfigViewModel @Inject constructor(
 
                 AdminProtos.AdminMessage.PayloadVariantCase.GET_CHANNEL_RESPONSE -> {
                     val response = parsed.getChannelResponse
-                    // Stop once we get to the first disabled entry
+
                     if (response.role != ChannelProtos.Channel.Role.DISABLED) {
                         _radioConfigState.update { state ->
-                            state.copy(channelList = state.channelList.toMutableList().apply {
-                                add(response.index, response.settings)
-                            })
+                            val list = state.channelList.toMutableList()
+
+                            while (list.size <= response.index) {
+                                list.add(ChannelProtos.ChannelSettings.getDefaultInstance())
+                            }
+
+                            list[response.index] = response.settings
+                            state.copy(channelList = list)
                         }
+
                         incrementCompleted()
+
                         if (response.index + 1 < maxChannels && route == ConfigRoute.CHANNELS.name) {
-                            // Not done yet, request next channel
                             getChannel(destNum, response.index + 1)
                         }
                     } else {
-                        // Received last channel, update total and start channel editor
                         setResponseStateTotal(response.index + 1)
                     }
                 }
