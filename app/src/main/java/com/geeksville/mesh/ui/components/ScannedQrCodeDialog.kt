@@ -149,14 +149,14 @@ fun ScannedQrCodeDialog(
                             colors = if (!shouldReplace) selectedColors else unselectedColors,
                         ) { Text(text = stringResource(R.string.add)) }
 
-                        OutlinedButton(
-                            onClick = { shouldReplace = true },
-                            modifier = Modifier
-                                .height(48.dp)
-                                .weight(1f),
-                            enabled = incoming.hasLoraConfig(),
-                            colors = if (shouldReplace) selectedColors else unselectedColors,
-                        ) { Text(text = stringResource(R.string.replace)) }
+//                        OutlinedButton(
+//                            onClick = { shouldReplace = true },
+//                            modifier = Modifier
+//                                .height(48.dp)
+//                                .weight(1f),
+//                            enabled = incoming.hasLoraConfig(),
+//                            colors = if (shouldReplace) selectedColors else unselectedColors,
+//                        ) { Text(text = stringResource(R.string.replace)) }
                     }
                 }
 
