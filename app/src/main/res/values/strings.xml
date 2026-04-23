@@ -333,7 +333,19 @@
     <string name="signal">Signal</string>
     <string name="signal_quality">Signal Quality</string>
     <string name="traceroute_log">Traceroute Log</string>
+    <string name="neighbor_discovery">Neighbor Discovery</string>
+    <string name="neighbor_discovery_log">Neighbor Discovery Log</string>
+    <string name="neighbor_discovery_no_neighbors">No neighbors discovered</string>
+    <string name="neighbor_discovery_cannot_draw_map">Cannot draw Neighbor Discovery map!</string>
+    <string name="neighbor_discovery_request_gps_prompt">No discovered nodes with GPS available for map. Would you like to try retrieving GPS locations?</string>
+    <string name="neighbor_discovery_requesting_gps">Requesting GPS locations for Neighbor Discovery nodes</string>
+    <string name="view_on_map">View on Map</string>
+    <string name="view_on_list">View on List</string>
     <string name="traceroute_direct">Direct</string>
+    <plurals name="neighbor_discovery_nodes">
+        <item quantity="one">%d node discovered</item>
+        <item quantity="other">%d nodes discovered</item>
+    </plurals>
     <plurals name="traceroute_hops">
         <item quantity="one">1 hop</item>
         <item quantity="other">%d hops</item>

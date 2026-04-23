@@ -19,6 +19,7 @@ package com.geeksville.mesh.service
 
 import com.geeksville.mesh.IMeshService
 import com.geeksville.mesh.android.Logging
+import com.geeksville.mesh.model.NeighborDiscoveryResult
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -86,6 +87,17 @@ class ServiceRepository @Inject constructor() : Logging {
 
     fun clearTracerouteResponse() {
         setTracerouteResponse(null)
+    }
+
+    private val _neighborDiscoveryResponse = MutableStateFlow<NeighborDiscoveryResult?>(null)
+    val neighborDiscoveryResponse: StateFlow<NeighborDiscoveryResult?> get() = _neighborDiscoveryResponse
+
+    fun setNeighborDiscoveryResponse(value: NeighborDiscoveryResult?) {
+        _neighborDiscoveryResponse.value = value
+    }
+
+    fun clearNeighborDiscoveryResponse() {
+        setNeighborDiscoveryResponse(null)
     }
 
     private val _serviceAction = Channel<ServiceAction>()

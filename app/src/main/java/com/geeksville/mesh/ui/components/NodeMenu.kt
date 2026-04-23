@@ -178,6 +178,13 @@ fun NodeMenu(
                 content = { Text(stringResource(R.string.traceroute)) }
             )
             DropdownMenuItem(
+                onClick = {
+                    onDismissRequest()
+                    onAction(NodeMenuAction.NeighborDiscovery(node))
+                },
+                content = { Text(stringResource(R.string.neighbor_discovery)) }
+            )
+            DropdownMenuItem(
                 enabled = isKnownNode.value,
                 onClick = {
                     onDismissRequest()
@@ -247,6 +254,7 @@ sealed class NodeMenuAction {
     data class RequestDeviceMetadata(val node: Node) : NodeMenuAction()
     data class RequestPosition(val node: Node) : NodeMenuAction()
     data class TraceRoute(val node: Node) : NodeMenuAction()
+    data class NeighborDiscovery(val node: Node) : NodeMenuAction()
     data class FavoriteNode(val node: Node) : NodeMenuAction()
     data class MoreDetails(val node: Node) : NodeMenuAction()
 }

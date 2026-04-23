@@ -39,6 +39,7 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.LocationDisabled
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.MyLocation
@@ -73,14 +74,18 @@ import com.geeksville.mesh.android.hasGps
 import com.geeksville.mesh.android.hasLocationPermission
 import com.geeksville.mesh.database.entity.Packet
 import com.geeksville.mesh.model.MapMode
+import com.geeksville.mesh.model.NeighborDiscoveryMap
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.TraceRouteMap
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.model.colorizeTracerouteResponse
+import com.geeksville.mesh.model.neighborDiscoverySnrColor
 import com.geeksville.mesh.model.map.CustomTileSource
 import com.geeksville.mesh.model.map.MarkerWithLabel
 import com.geeksville.mesh.model.map.clustering.RadiusMarkerClusterer
 import com.geeksville.mesh.ui.ScreenFragment
+import com.geeksville.mesh.ui.components.NeighborDiscoveryContent
+import com.geeksville.mesh.ui.components.NeighborDiscoveryDialog
 import com.geeksville.mesh.ui.theme.AppTheme
 import com.geeksville.mesh.util.AppUtil
 import com.geeksville.mesh.util.SqlTileWriterExt
@@ -293,6 +298,24 @@ fun MapView.drawTraceroute(trace: TraceRouteMap) {
     invalidate()
 }
 
+fun MapView.drawNeighborDiscovery(discovery: NeighborDiscoveryMap) {
+    overlays.removeAll { it is Polyline || it is Marker }
+
+    discovery.links.mapNotNull { link ->
+        buildMapSegment(
+            fromNode = link.origin,
+            toNode = link.discovered,
+            color = neighborDiscoverySnrColor(link.snr),
+            offsetMeters = 0.0,
+            side = 1,
+        )
+    }.forEach {
+        overlays.add(it.toPolyline())
+    }
+
+    invalidate()
+}
+
 
 fun totalDistanceKm(nodes: List<Node>): Double {
     fun haversine(a: GeoPoint, b: GeoPoint): Double {
@@ -328,51 +351,52 @@ fun buildSegments(
     side: Int
 ): List<MapSegment> =
     nodes.zipWithNext().mapNotNull { (a, b) ->
+        buildMapSegment(a, b, color, offsetMeters, side)
+    }
 
-        //fixme, refactor this part
-        var latA = Double.NaN
-        var lonA = Double.NaN
+private fun Node.toGeoPointOrNull(): GeoPoint? = when {
+    validPosition != null -> GeoPoint(latitude, longitude)
+    validLiteNode && liteLatitude != null && liteLongitude != null -> GeoPoint(liteLatitude, liteLongitude)
+    else -> null
+}
 
-        var latB = Double.NaN
-        var lonB = Double.NaN
+private fun buildMapSegment(
+    fromNode: Node,
+    toNode: Node,
+    color: Int,
+    offsetMeters: Double,
+    side: Int,
+): MapSegment? {
+    val rawFrom = fromNode.toGeoPointOrNull() ?: return null
+    val rawTo = toNode.toGeoPointOrNull() ?: return null
 
-        if (a.validPosition != null) {
-            latA = a.latitude
-            lonA = a.longitude
-        } else if (a.validLiteNode && a.liteLatitude != null && a.liteLongitude != null) {
-            latA = a.liteLatitude
-            lonA = a.liteLongitude
-        }
+    if (!validCoordinates(rawFrom.latitude, rawFrom.longitude) ||
+        !validCoordinates(rawTo.latitude, rawTo.longitude)
+    ) {
+        return null
+    }
 
-        if (b.validPosition != null) {
-            latB = b.latitude
-            lonB = b.longitude
-        } else if (b.validLiteNode && b.liteLatitude != null && b.liteLongitude != null) {
-            latB = b.liteLatitude
-            lonB = b.liteLongitude
-        }
-
-        if(!validCoordinates(latA, lonA) || !validCoordinates(latB, lonB)){
-            return@mapNotNull null
-        }
-
-        val rawFrom = GeoPoint(latA, lonA)
-        val rawTo = GeoPoint(latB, lonB)
-
-        // normalizza: sempre da sud a nord (o qualsiasi criterio stabile)
-        val (from, to) =
-            if (rawFrom.latitude < rawTo.latitude) rawFrom to rawTo
-            else rawTo to rawFrom
-
-        val brg = bearing(from, to)
-        val perpendicular = brg + (90 * side)
-
-        MapSegment(
-            from = rawFrom.offsetMeters(offsetMeters, perpendicular),
-            to = rawTo.offsetMeters(offsetMeters, perpendicular),
-            lineColor = color
+    if (offsetMeters == 0.0) {
+        return MapSegment(
+            from = rawFrom,
+            to = rawTo,
+            lineColor = color,
         )
     }
+
+    val (from, to) =
+        if (rawFrom.latitude < rawTo.latitude) rawFrom to rawTo
+        else rawTo to rawFrom
+
+    val brg = bearing(from, to)
+    val perpendicular = brg + (90 * side)
+
+    return MapSegment(
+        from = rawFrom.offsetMeters(offsetMeters, perpendicular),
+        to = rawTo.offsetMeters(offsetMeters, perpendicular),
+        lineColor = color,
+    )
+}
 
 
 fun GeoPoint.offset(latOffset: Double, lonOffset: Double) =
@@ -430,6 +454,8 @@ fun MapView(
         }
         else -> null
     }
+
+    var showNeighborDiscoveryList by remember { mutableStateOf(false) }
 
     // UI Elements
     var cacheEstimate by remember { mutableStateOf("") }
@@ -513,6 +539,12 @@ fun MapView(
         is MapMode.Normal -> nodes
         is MapMode.Traceroute -> {
             (mode.trace.traceForwardList + mode.trace.traceBackList)
+                .distinctBy { it.num }
+        }
+        is MapMode.NeighborDiscovery -> {
+            (listOf(mode.discovery.origin) + mode.discovery.discovered.filter {
+                it.validPosition != null || it.isValidNodeLite()
+            })
                 .distinctBy { it.num }
         }
     }
@@ -665,6 +697,8 @@ fun MapView(
     }
 
     LaunchedEffect(mapMode) {
+        showNeighborDiscoveryList = false
+
         when (val mode = mapMode) {
             is MapMode.Traceroute -> {
                 map.drawTraceroute(mode.trace)
@@ -689,6 +723,24 @@ fun MapView(
                     map.zoomToBoundingBox(
                         BoundingBox.fromGeoPoints(points),
                         true
+                    )
+                }
+            }
+
+            is MapMode.NeighborDiscovery -> {
+                map.drawNeighborDiscovery(mode.discovery)
+
+                val points = mode.discovery.links.flatMap { link ->
+                    listOfNotNull(
+                        link.origin.toGeoPointOrNull(),
+                        link.discovered.toGeoPointOrNull(),
+                    )
+                }
+
+                if (points.isNotEmpty()) {
+                    map.zoomToBoundingBox(
+                        BoundingBox.fromGeoPoints(points),
+                        true,
                     )
                 }
             }
@@ -740,7 +792,7 @@ fun MapView(
 
         var wpts = onWaypointChanged(waypoints.values)
 
-        if(mapMode is MapMode.Traceroute){
+        if(mapMode is MapMode.Traceroute || mapMode is MapMode.NeighborDiscovery){
             wpts = emptyList()
         }
 
@@ -893,6 +945,15 @@ fun MapView(
                 )
             }
 
+            if (mapMode is MapMode.NeighborDiscovery && showNeighborDiscoveryList) {
+                NeighborDiscoveryDialog(
+                    discovery = (mapMode as MapMode.NeighborDiscovery).discovery.source,
+                    onDismiss = {
+                        showNeighborDiscoveryList = false
+                    },
+                )
+            }
+
             if (downloadRegionBoundingBox != null) CacheLayout(
                 cacheEstimate = cacheEstimate,
                 onExecuteJob = { startDownload() },
@@ -961,6 +1022,25 @@ fun MapView(
                         contentDescription = "Show Traceroute",
                     )
 
+                }
+
+                if (mapMode is MapMode.NeighborDiscovery) {
+                    MapButton(
+                        icon = Icons.Default.Clear,
+                        onClick = {
+                            showNeighborDiscoveryList = false
+                            model.exitNeighborDiscoveryMode()
+                        },
+                        contentDescription = "Clear Neighbor Discovery",
+                    )
+
+                    MapButton(
+                        icon = Icons.Default.People,
+                        onClick = {
+                            showNeighborDiscoveryList = !showNeighborDiscoveryList
+                        },
+                        contentDescription = "Show Neighbor Discovery",
+                    )
                 }
             }
         }

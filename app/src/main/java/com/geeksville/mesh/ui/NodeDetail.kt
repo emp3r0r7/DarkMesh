@@ -65,6 +65,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Numbers
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Power
 import androidx.compose.material.icons.filled.Route
@@ -485,6 +486,14 @@ fun LogNavigationList(state: MetricsState, onNavigate: (Any) -> Unit) {
         enabled = state.hasTracerouteLogs()
     ) {
         onNavigate(Route.TracerouteLog)
+    }
+
+    NavCard(
+        title = stringResource(R.string.neighbor_discovery_log),
+        icon = Icons.Default.People,
+        enabled = state.hasNeighborDiscoveryLogs()
+    ) {
+        onNavigate(Route.NeighborDiscoveryLog)
     }
 }
 

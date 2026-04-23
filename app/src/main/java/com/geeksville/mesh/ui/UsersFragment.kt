@@ -222,6 +222,7 @@ fun NodesScreen(
                         is NodeMenuAction.RequestUserInfo -> model.requestUserInfo(node.num)
                         is NodeMenuAction.RequestPosition -> model.requestPosition(node.num)
                         is NodeMenuAction.TraceRoute -> model.requestTraceroute(node.num)
+                        is NodeMenuAction.NeighborDiscovery -> model.requestNeighborDiscovery(node.num)
                         is NodeMenuAction.MoreDetails -> navigateToNodeDetails(node.num)
                         is NodeMenuAction.FavoriteNode -> model.handleFavorite(node)
                         is NodeMenuAction.RequestDeviceMetadata -> model.requestDeviceMetadata(node)

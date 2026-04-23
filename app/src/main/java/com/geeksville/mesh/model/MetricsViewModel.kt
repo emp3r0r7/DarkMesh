@@ -77,6 +77,8 @@ data class MetricsState(
     val signalMetrics: List<MeshPacket> = emptyList(),
     val tracerouteRequests: List<MeshLog> = emptyList(),
     val tracerouteResults: List<MeshPacket> = emptyList(),
+    val neighborDiscoveryRequests: List<MeshLog> = emptyList(),
+    val neighborDiscoveryResults: List<MeshPacket> = emptyList(),
     val positionLogs: List<Position> = emptyList(),
     val deviceHardware: DeviceHardware? = null,
 ) {
@@ -84,6 +86,7 @@ data class MetricsState(
     fun hasEnvironmentMetrics() = environmentMetrics.isNotEmpty()
     fun hasSignalMetrics() = signalMetrics.isNotEmpty()
     fun hasTracerouteLogs() = tracerouteRequests.isNotEmpty()
+    fun hasNeighborDiscoveryLogs() = neighborDiscoveryRequests.isNotEmpty()
     fun hasPositionLogs() = positionLogs.isNotEmpty()
 
     fun deviceMetricsFiltered(timeFrame: TimeFrame): List<TelemetryProtos.Telemetry> {
@@ -198,7 +201,12 @@ class MetricsViewModel @Inject constructor(
         hasDecoded() && decoded.wantResponse && from == 0 && to == destNum
     }
 
+    private fun MeshLog.hasValidNeighborDiscovery(): Boolean = with(fromRadio.packet) {
+        hasDecoded() && decoded.wantResponse && from == 0 && to == destNum
+    }
+
     fun getUser(nodeNum: Int) = radioConfigRepository.getUser(nodeNum)
+    fun getNode(nodeNum: Int) = radioConfigRepository.nodeDBbyNum.value[nodeNum]
     val tileSource get() = CustomTileSource.getTileSource(preferences.getInt(MAP_STYLE_ID, 0))
 
     fun deleteLog(uuid: String) = viewModelScope.launch(dispatchers.io) {
@@ -267,6 +275,18 @@ class MetricsViewModel @Inject constructor(
                 state.copy(
                     tracerouteRequests = request.filter { it.hasValidTraceroute() },
                     tracerouteResults = response,
+                )
+            }
+        }.launchIn(viewModelScope)
+
+        combine(
+            meshLogRepository.getLogsFrom(nodeNum = 0, PortNum.NEIGHBORINFO_APP_VALUE),
+            meshLogRepository.getMeshPacketsFrom(destNum, PortNum.NEIGHBORINFO_APP_VALUE),
+        ) { request, response ->
+            _state.update { state ->
+                state.copy(
+                    neighborDiscoveryRequests = request.filter { it.hasValidNeighborDiscovery() },
+                    neighborDiscoveryResults = response,
                 )
             }
         }.launchIn(viewModelScope)

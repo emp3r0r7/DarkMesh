@@ -396,6 +396,7 @@ internal fun MessageScreen(
                     is NodeMenuAction.RequestUserInfo -> viewModel.requestUserInfo(action.node.num)
                     is NodeMenuAction.RequestPosition -> viewModel.requestPosition(action.node.num)
                     is NodeMenuAction.TraceRoute -> viewModel.requestTraceroute(action.node.num)
+                    is NodeMenuAction.NeighborDiscovery -> viewModel.requestNeighborDiscovery(action.node.num)
                     is NodeMenuAction.MoreDetails -> navigateToNodeDetails(action.node.num)
                     is NodeMenuAction.FavoriteNode -> viewModel.handleFavorite(action.node)
                     is NodeMenuAction.RequestDeviceMetadata -> viewModel.requestDeviceMetadata(action.node)

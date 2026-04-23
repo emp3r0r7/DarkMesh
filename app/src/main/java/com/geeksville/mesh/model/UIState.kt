@@ -297,9 +297,15 @@ class UIViewModel @Inject constructor(
 
     private val _mapMode = MutableStateFlow<MapMode>(MapMode.Normal)
     val mapMode = _mapMode.asStateFlow()
+    private val pendingNeighborDiscoveryGpsRecovery = MutableStateFlow<NeighborDiscoveryResult?>(null)
 
     fun showTracerouteMap(trace: TraceRouteMap) {
         _mapMode.value = MapMode.Traceroute(trace)
+        setCurrentTab(2)
+    }
+
+    fun showNeighborDiscoveryMap(discovery: NeighborDiscoveryMap) {
+        _mapMode.value = MapMode.NeighborDiscovery(discovery)
         setCurrentTab(2)
     }
 
@@ -307,8 +313,16 @@ class UIViewModel @Inject constructor(
         _mapMode.value = MapMode.Normal
     }
 
+    fun exitNeighborDiscoveryMode() {
+        _mapMode.value = MapMode.Normal
+    }
+
     fun tracerouteMapAvailability(traceroute: String?) : TraceRouteMap? {
         return evaluateTracerouteMapAvailability(traceroute, nodeDB, nodeRegistryMap.value)
+    }
+
+    fun neighborDiscoveryMapAvailability(discovery: NeighborDiscoveryResult?) : NeighborDiscoveryMap? {
+        return evaluateNeighborDiscoveryMapAvailability(discovery, nodeDB, nodeRegistryMap.value)
     }
 
     fun filterForNode(node: Node?, longName: String?) {
@@ -409,6 +423,19 @@ class UIViewModel @Inject constructor(
             _snackbarText.value = it
             radioConfigRepository.clearErrorMessage()
         }.launchIn(viewModelScope)
+
+        combine(
+            pendingNeighborDiscoveryGpsRecovery,
+            radioConfigRepository.nodeDBbyNum,
+            nodeRegistryMap,
+        ) { pending, _, _ -> pending }
+            .onEach { pending ->
+                if (pending != null && neighborDiscoveryMapAvailability(pending) != null) {
+                    radioConfigRepository.setNeighborDiscoveryResponse(pending)
+                    pendingNeighborDiscoveryGpsRecovery.value = null
+                }
+            }
+            .launchIn(viewModelScope)
 
         radioConfigRepository.localConfigFlow.onEach { config ->
             _localConfig.value = config
@@ -650,6 +677,27 @@ class UIViewModel @Inject constructor(
         } catch (ex: RemoteException) {
             errormsg("Request traceroute error: ${ex.message}")
         }
+    }
+
+    fun requestNeighborDiscovery(destNum: Int) {
+        info("Requesting neighbor discovery for '$destNum'")
+        pendingNeighborDiscoveryGpsRecovery.value = null
+        try {
+            val packetId = meshService?.packetId ?: return
+            meshService?.requestNeighborInfo(packetId, destNum)
+        } catch (ex: RemoteException) {
+            errormsg("Request neighbor discovery error: ${ex.message}")
+        }
+    }
+
+    fun requestNeighborDiscoveryPositions(discovery: NeighborDiscoveryResult) {
+        pendingNeighborDiscoveryGpsRecovery.value = discovery
+
+        val nodeNums = (listOf(discovery.origin.nodeNum) + discovery.discovered.map { it.node.nodeNum })
+            .distinct()
+
+        nodeNums.forEach { requestPosition(it) }
+        showSnackbar(R.string.neighbor_discovery_requesting_gps)
     }
 
     fun removeNode(nodeNum: Int) = viewModelScope.launch(Dispatchers.IO) {
@@ -1263,6 +1311,13 @@ class UIViewModel @Inject constructor(
 
     fun clearTracerouteResponse() {
         radioConfigRepository.clearTracerouteResponse()
+    }
+
+    val neighborDiscoveryResponse: LiveData<NeighborDiscoveryResult?>
+        get() = radioConfigRepository.neighborDiscoveryResponse.asLiveData()
+
+    fun clearNeighborDiscoveryResponse() {
+        radioConfigRepository.clearNeighborDiscoveryResponse()
     }
 
     private val _currentTab = MutableLiveData(0)

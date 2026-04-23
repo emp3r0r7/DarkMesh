@@ -22,6 +22,7 @@ import com.geeksville.mesh.database.NodeRepository
 import com.geeksville.mesh.database.entity.MetadataEntity
 import com.geeksville.mesh.database.entity.MyNodeEntity
 import com.geeksville.mesh.database.entity.NodeEntity
+import com.geeksville.mesh.model.NeighborDiscoveryResult
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.RelayEvent
 import com.geeksville.mesh.model.getChannelUrl
@@ -222,6 +223,17 @@ class RadioConfigRepository @Inject constructor(
 
     fun clearTracerouteResponse() {
         setTracerouteResponse(null)
+    }
+
+    val neighborDiscoveryResponse: StateFlow<NeighborDiscoveryResult?>
+        get() = serviceRepository.neighborDiscoveryResponse
+
+    fun setNeighborDiscoveryResponse(value: NeighborDiscoveryResult?) {
+        serviceRepository.setNeighborDiscoveryResponse(value)
+    }
+
+    fun clearNeighborDiscoveryResponse() {
+        setNeighborDiscoveryResponse(null)
     }
 
     private val _relayEvents = MutableSharedFlow<RelayEvent>(

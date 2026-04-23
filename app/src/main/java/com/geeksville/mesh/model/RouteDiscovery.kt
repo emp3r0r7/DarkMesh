@@ -64,6 +64,7 @@ data class TraceRouteMap(
 sealed class MapMode {
     data object Normal : MapMode()
     data class Traceroute(val trace: TraceRouteMap) : MapMode()
+    data class NeighborDiscovery(val discovery: NeighborDiscoveryMap) : MapMode()
 }
 
 @Suppress("MagicNumber")

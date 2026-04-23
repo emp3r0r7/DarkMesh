@@ -81,6 +81,7 @@ import com.geeksville.mesh.model.RadioConfigViewModel
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.ui.components.DeviceMetricsScreen
 import com.geeksville.mesh.ui.components.EnvironmentMetricsScreen
+import com.geeksville.mesh.ui.components.NeighborDiscoveryLogScreen
 import com.geeksville.mesh.ui.components.NodeMapScreen
 import com.geeksville.mesh.ui.components.PositionLogScreen
 import com.geeksville.mesh.ui.components.SignalMetricsScreen
@@ -291,6 +292,9 @@ sealed interface Route {
 
     @Serializable
     data object TracerouteLog : Route
+
+    @Serializable
+    data object NeighborDiscoveryLog : Route
 }
 
 // Config (type = AdminProtos.AdminMessage.ConfigType)
@@ -476,6 +480,16 @@ fun NavGraph(
         composable<Route.TracerouteLog> {
             val parentEntry = remember { navController.getBackStackEntry<Route.NodeDetail>() }
             TracerouteLogScreen(
+                uiModel,
+                hiltViewModel<MetricsViewModel>(parentEntry),
+                onClose = {
+                    parentFragmentManager.popBackStack()
+                }
+            )
+        }
+        composable<Route.NeighborDiscoveryLog> {
+            val parentEntry = remember { navController.getBackStackEntry<Route.NodeDetail>() }
+            NeighborDiscoveryLogScreen(
                 uiModel,
                 hiltViewModel<MetricsViewModel>(parentEntry),
                 onClose = {

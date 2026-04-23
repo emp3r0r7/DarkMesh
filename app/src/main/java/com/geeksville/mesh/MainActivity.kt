@@ -40,6 +40,7 @@ import android.widget.ArrayAdapter
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
@@ -86,11 +87,14 @@ import com.geeksville.mesh.database.DbImportState
 import com.geeksville.mesh.model.BluetoothViewModel
 import com.geeksville.mesh.model.Contact
 import com.geeksville.mesh.model.DeviceVersion
+import com.geeksville.mesh.model.NeighborDiscoveryResult
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.RadioConfigViewModel
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.model.UIViewModel.Companion.getPreferences
 import com.geeksville.mesh.model.colorizeTracerouteResponse
+import com.geeksville.mesh.model.formatNeighborDiscoverySnr
+import com.geeksville.mesh.model.neighborDiscoverySnrColor
 import com.geeksville.mesh.prefs.UserPrefs
 import com.geeksville.mesh.prefs.UserPrefs.Hunting.BACKGROUND_HUNT
 import com.geeksville.mesh.prefs.UserPrefs.Hunting.HUNT_MODE
@@ -739,6 +743,49 @@ class MainActivity : AppCompatActivity(), Logging {
             )
 
             model.clearTracerouteResponse()
+        }
+
+        model.neighborDiscoveryResponse.observe(this) { discovery ->
+
+            if (discovery == null) return@observe
+
+            val storedDiscovery = discovery
+
+            val dialog = MaterialAlertDialogBuilder(this)
+                .setCancelable(false)
+                .setView(buildNeighborDiscoveryDialogView(storedDiscovery))
+                .setNegativeButton(R.string.view_on_map) { _, _ ->
+
+                    model.neighborDiscoveryMapAvailability(storedDiscovery)?.let {
+                        model.showNeighborDiscoveryMap(it)
+                    } ?: run {
+                        val gpsDialog = MaterialAlertDialogBuilder(this)
+                            .setCancelable(false)
+                            .setMessage(R.string.neighbor_discovery_request_gps_prompt)
+                            .setNegativeButton(android.R.string.no) { _, _ -> }
+                            .setPositiveButton(android.R.string.yes) { _, _ ->
+                                model.requestNeighborDiscoveryPositions(storedDiscovery)
+                            }
+                            .show()
+
+                        setDialogButtonsColor(
+                            gpsDialog,
+                            AlertDialog.BUTTON_NEGATIVE,
+                            AlertDialog.BUTTON_POSITIVE,
+                        )
+                    }
+
+                }
+                .setPositiveButton(R.string.okay) { _, _ -> }
+                .show()
+
+            setDialogButtonsColor(
+                dialog,
+                AlertDialog.BUTTON_NEGATIVE,
+                AlertDialog.BUTTON_POSITIVE,
+            )
+
+            model.clearNeighborDiscoveryResponse()
         }
 
         try {
@@ -1527,6 +1574,81 @@ class MainActivity : AppCompatActivity(), Logging {
             badge.isVisible = true
         } else {
             tab.removeBadge()
+        }
+    }
+
+    private fun buildNeighborDiscoveryDialogView(discovery: NeighborDiscoveryResult): View {
+        val density = resources.displayMetrics.density
+        val outerPadding = (24 * density).toInt()
+        val rowPadding = (8 * density).toInt()
+
+        val rows = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+
+        if (discovery.discovered.isEmpty()) {
+            rows.addView(
+                TextView(this).apply {
+                    text = getString(R.string.neighbor_discovery_no_neighbors)
+                    gravity = Gravity.CENTER_HORIZONTAL
+                }
+            )
+        } else {
+            discovery.discovered.forEach { link ->
+                rows.addView(
+                    LinearLayout(this).apply {
+                        orientation = LinearLayout.HORIZONTAL
+                        setPadding(0, rowPadding, 0, rowPadding)
+
+                        addView(
+                            TextView(this@MainActivity).apply {
+                                text = link.node.longName
+                                layoutParams = LinearLayout.LayoutParams(
+                                    0,
+                                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                                    1f,
+                                )
+                            }
+                        )
+
+                        addView(
+                            TextView(this@MainActivity).apply {
+                                text = formatNeighborDiscoverySnr(link.snr)
+                                gravity = Gravity.END
+                                setTextColor(neighborDiscoverySnrColor(link.snr))
+                            }
+                        )
+                    }
+                )
+            }
+        }
+
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(outerPadding, outerPadding, outerPadding, outerPadding / 2)
+
+            addView(
+                TextView(this@MainActivity).apply {
+                    text = getString(R.string.neighbor_discovery)
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    textSize = 20f
+                }
+            )
+
+            addView(
+                TextView(this@MainActivity).apply {
+                    text = discovery.origin.longName
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    textSize = 16f
+                    setPadding(0, rowPadding, 0, outerPadding / 2)
+                }
+            )
+
+            addView(
+                ScrollView(this@MainActivity).apply {
+                    addView(rows)
+                }
+            )
         }
     }
 

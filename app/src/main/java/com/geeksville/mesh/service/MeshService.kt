@@ -60,6 +60,8 @@ import com.geeksville.mesh.database.entity.NodeEntity
 import com.geeksville.mesh.database.entity.Packet
 import com.geeksville.mesh.database.entity.ReactionEntity
 import com.geeksville.mesh.model.DeviceVersion
+import com.geeksville.mesh.model.NeighborDiscoveryNode
+import com.geeksville.mesh.model.getNeighborDiscoveryResult
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.RelayEvent
 import com.geeksville.mesh.model.UIViewModel.Companion.getPreferences
@@ -636,6 +638,49 @@ class MeshService : Service(), Logging {
     private fun getUserShortName(num: Int): String =
         with(radioConfigRepository.getUser(num)) { "$shortName" }
 
+    private fun persistNeighborDiscoveryNode(node: NeighborDiscoveryNode) {
+        updateNodeInfo(node.nodeNum, withBroadcast = false) {
+            val updatedUser = it.user.toBuilder().apply {
+                id = node.userId
+                longName = node.longName
+                shortName = node.shortName
+                hwModel = MeshProtos.HardwareModel.UNSET
+            }.build()
+
+            it.user = updatedUser
+            it.longName = updatedUser.longName
+            it.shortName = updatedUser.shortName
+        }
+
+        serviceScope.handledLaunch {
+            val now = System.currentTimeMillis()
+            val updated = nodeRegistryRepository.updateNodeInfo(
+                nodeId = node.userId,
+                nodeNum = node.nodeNum,
+                longName = node.longName,
+                shortName = node.shortName,
+                lastSeen = now,
+            )
+
+            if (updated == 0) {
+                nodeRegistryRepository.insertNodeInfo(
+                    nodeId = node.userId,
+                    nodeNum = node.nodeNum,
+                    longName = node.longName,
+                    shortName = node.shortName,
+                    defaultName = "Meshtastic ${node.userId.takeLast(n = 4)}",
+                    lastSeen = now,
+                )
+            }
+        }
+    }
+
+    private fun persistNeighborDiscoveryNodes(packet: MeshPacket) {
+        val discovery = packet.getNeighborDiscoveryResult { nodeNum -> nodeDBbyNodeNum[nodeNum]?.user } ?: return
+        persistNeighborDiscoveryNode(discovery.origin)
+        discovery.discovered.forEach { persistNeighborDiscoveryNode(it.node) }
+    }
+
     private val numNodes get() = nodeDBbyNodeNum.size
 
     /**
@@ -1076,6 +1121,16 @@ class MeshService : Service(), Logging {
                             }
 
                             radioConfigRepository.setTracerouteResponse(traceRouteResponse)
+                        }
+                    }
+
+                    Portnums.PortNum.NEIGHBORINFO_APP_VALUE -> {
+                        persistNeighborDiscoveryNodes(packet)
+
+                        if (!huntingPrefs.getBoolean(UserPrefs.Hunting.BACKGROUND_HUNT, false)) {
+                            radioConfigRepository.setNeighborDiscoveryResponse(
+                                packet.getNeighborDiscoveryResult { nodeNum -> nodeDBbyNodeNum[nodeNum]?.user }
+                            )
                         }
                     }
 
@@ -2699,6 +2754,19 @@ class MeshService : Service(), Logging {
             }
 
             sendToRadio(tracePacket)
+        }
+
+        override fun requestNeighborInfo(requestId: Int, destNum: Int) = toRemoteExceptions {
+            val neighborPacket = newMeshPacketTo(destNum).buildMeshPacket(
+                wantAck = true,
+                id = requestId,
+                channel = nodeDBbyNodeNum[destNum]?.channel ?: 0,
+            ) {
+                portnumValue = Portnums.PortNum.NEIGHBORINFO_APP_VALUE
+                wantResponse = true
+            }
+
+            sendToRadio(neighborPacket)
         }
 
         override fun requestShutdown(requestId: Int, destNum: Int) = toRemoteExceptions {
