@@ -70,6 +70,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -99,6 +100,14 @@ import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import org.meshtastic.proto.TelemetryProtos.DeviceMetrics
+
+private const val CH_UTIL_GOOD_THRESHOLD = 25f
+private const val CH_UTIL_FAIR_THRESHOLD = 50f
+private const val AIR_UTIL_GOOD_THRESHOLD = 3f
+private const val AIR_UTIL_FAIR_THRESHOLD = 5f
+private const val AIR_UTIL_BAD_THRESHOLD = 7f
+private const val AIR_UTIL_REALLY_BAD_THRESHOLD = 10f
 
 @AndroidEntryPoint
 class UsersFragment : ScreenFragment("Users"), Logging {
@@ -244,12 +253,17 @@ fun NodesScreen(
 fun RelayInfoBox(relayNode: RelayEvent, model: UIViewModel) {
 
     val context = LocalContext.current
+    val nodes by model.unfilteredNodeList.collectAsStateWithLifecycle()
     val nodeName = relayNode.nodeLongName ?: "undefined"
     val shortName = relayNode.nodeShortName ?: "undefined"
     val nodeNum = relayNode.relayNodeNum
     val timeLabel = formatRelayTime(relayNode.timestamp)
     val rxSnr = relayNode.rxSnr
     val rxRssi = relayNode.rxRssi
+    val relayMetrics = nodes
+        .firstOrNull { it.num == nodeNum }
+        ?.deviceMetrics
+        ?.takeIf { it != DeviceMetrics.getDefaultInstance() }
     val (foregroundColor, backgroundColor) = AppUtil.getNodeColorLabel(nodeNum)
 
     val snrColor = when {
@@ -264,12 +278,22 @@ fun RelayInfoBox(relayNode: RelayEvent, model: UIViewModel) {
         else -> Quality.BAD.color
     }
 
+    val chUtilColor = relayMetrics
+        ?.channelUtilization
+        ?.let(::relayChUtilColor)
+        ?: Quality.FAIR.color
+
+    val airUtilColor = relayMetrics
+        ?.airUtilTx
+        ?.let(::relayAirUtilColor)
+        ?: Quality.FAIR.color
+
     val confidenceColor = AppUtil.relayNodePacketLabelColor(relayNode.confidence)
     var confidence = relayNode.confidence.toString() + "%"
 
-    if(relayNode.isTraceroute){
+    if (relayNode.isTraceroute) {
         confidence += " (TRACE)"
-    } else if(relayNode.isDirect){
+    } else if (relayNode.isDirect) {
         confidence += " (DIRECT)"
     }
 
@@ -282,10 +306,7 @@ fun RelayInfoBox(relayNode: RelayEvent, model: UIViewModel) {
     }
 
     val borderColor by animateColorAsState(
-        targetValue = if (highlight)
-            Color.Green
-        else
-            Color.Transparent,
+        targetValue = if (highlight) Color.Green else Color.Transparent,
         animationSpec = tween(durationMillis = 900)
     )
 
@@ -308,26 +329,37 @@ fun RelayInfoBox(relayNode: RelayEvent, model: UIViewModel) {
                     model.filterForNode(null, nodeName)
                 }
             )
-    )  {
-
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(7.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(
-                    4.dp,
-                    Alignment.CenterHorizontally
-                ),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = Color(backgroundColor),
+                            shape = RoundedCornerShape(50)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        color = Color(foregroundColor),
+                        text = shortName,
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
 
                 Text(
-                    text = "Closest Relay Confidence :",
+                    text = "GRC",
                     fontSize = 14.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -339,81 +371,19 @@ fun RelayInfoBox(relayNode: RelayEvent, model: UIViewModel) {
                             confidenceColor,
                             RoundedCornerShape(6.dp)
                         )
-                        .padding(horizontal = 5.dp, vertical = 0.dp)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
                         text = confidence,
                         color = Color.Black,
-                        style = MaterialTheme.typography.labelSmall,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(
-                    9.dp,
-                    Alignment.CenterHorizontally
-                ),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-
-                Box(
-                    modifier = Modifier
-                        .background(
-                            color = Color(backgroundColor),
-                            shape = RoundedCornerShape(50)
-                        )
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                )  {
-                    Text(
-                        color = Color(foregroundColor),
-                        text = shortName,
-                        fontSize = 14.sp,
+                        style = MaterialTheme.typography.labelMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
 
-                if (rxSnr != Float.MAX_VALUE) {
-                    Box(
-                        modifier = Modifier
-                            .background(
-                                snrColor,
-                                RoundedCornerShape(6.dp)
-                            )
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = "SNR ${rxSnr}dB",
-                            color = Color.Black,
-                            style = MaterialTheme.typography.labelMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
+                Spacer(modifier = Modifier.weight(1f))
 
-                if (rxRssi != Int.MAX_VALUE) {
-                    Box(
-                        modifier = Modifier
-                            .background(
-                                rssiColor,
-                                RoundedCornerShape(6.dp)
-                            )
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = "RSSI ${rxRssi}dBm",
-                            color = Color.Black,
-                            style = MaterialTheme.typography.labelMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
                 Text(
                     text = timeLabel,
                     fontSize = 14.sp,
@@ -421,8 +391,91 @@ fun RelayInfoBox(relayNode: RelayEvent, model: UIViewModel) {
                     overflow = TextOverflow.Ellipsis
                 )
             }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RelayMetricBadge(
+                    text = if (rxSnr != Float.MAX_VALUE) "SNR ${rxSnr}dB" else "SNR --",
+                    color = if (rxSnr != Float.MAX_VALUE) snrColor else Quality.FAIR.color,
+                    modifier = Modifier.weight(1f),
+                )
+
+                RelayMetricBadge(
+                    text = if (rxRssi != Int.MAX_VALUE) "RSSI ${rxRssi}dBm" else "RSSI --",
+                    color = if (rxRssi != Int.MAX_VALUE) rssiColor else Quality.FAIR.color,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RelayMetricBadge(
+                    text = relayMetrics?.let {
+                        "ChUtil ${formatRelayPercent(it.channelUtilization)}"
+                    } ?: "ChUtil --",
+                    color = if (relayMetrics != null) chUtilColor else Quality.FAIR.color,
+                    modifier = Modifier.weight(1f),
+                )
+
+                RelayMetricBadge(
+                    text = relayMetrics?.let {
+                        "AirUtil ${formatRelayPercent(it.airUtilTx)}"
+                    } ?: "AirUtil --",
+                    color = if (relayMetrics != null) airUtilColor else Quality.FAIR.color,
+                    modifier = Modifier.weight(1f),
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun RelayMetricBadge(
+    text: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .background(
+                color,
+                RoundedCornerShape(6.dp)
+            )
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = text,
+            color = Color.Black,
+            style = MaterialTheme.typography.labelMedium,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+private fun formatRelayPercent(value: Float): String =
+    "${String.format(Locale.getDefault(), "%.1f", value)}%"
+
+private fun relayChUtilColor(value: Float): Color = when {
+    value < CH_UTIL_GOOD_THRESHOLD -> Quality.GOOD.color
+    value < CH_UTIL_FAIR_THRESHOLD -> Quality.FAIR.color
+    else -> Quality.BAD.color
+}
+
+private fun relayAirUtilColor(value: Float): Color = when {
+    value < AIR_UTIL_GOOD_THRESHOLD -> Quality.GOOD.color
+    value < AIR_UTIL_FAIR_THRESHOLD -> Quality.FAIR.color
+    value < AIR_UTIL_BAD_THRESHOLD -> Quality.BAD.color
+    value < AIR_UTIL_REALLY_BAD_THRESHOLD -> Quality.REALLY_BAD.color
+    else -> Quality.REALLY_BAD.color
 }
 
 @Composable
