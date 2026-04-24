@@ -119,6 +119,7 @@ import kotlinx.coroutines.delay
 import org.meshtastic.proto.ConfigProtos.Config.DeviceConfig
 import org.meshtastic.proto.ConfigProtos.Config.DisplayConfig
 import org.meshtastic.proto.MeshProtos
+import org.meshtastic.proto.TelemetryProtos
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
@@ -142,6 +143,18 @@ fun NodeItem(
     val removeCustomIconChatPrefs by rememberBooleanPreference(
         context.advancedPrefs,
         REMOVE_CUSTOM_ICON_CHAT,
+        false
+    )
+
+    val showAirUtilChUtilPrefs by rememberBooleanPreference(
+        context.advancedPrefs,
+        SHOW_AIRUTIL_CHUTIL,
+        false
+    )
+
+    val showAirUtilChUtilAllNodesPrefs by rememberBooleanPreference(
+        context.advancedPrefs,
+        SHOW_AIRUTIL_CHUTIL_ALL_NODES,
         false
     )
 
@@ -181,6 +194,17 @@ fun NodeItem(
     }
 
     val infrastructure = AppUtil.isInfrastructure(roleName)
+    val airUtilChUtilInfrastructureRole = roleName in setOf(
+        DeviceConfig.Role.CLIENT_BASE.name,
+        DeviceConfig.Role.ROUTER.name,
+        DeviceConfig.Role.ROUTER_LATE.name,
+    )
+    val hasDeviceMetricsTelemetry =
+        thatNode.deviceMetrics != TelemetryProtos.DeviceMetrics.getDefaultInstance()
+    val shouldShowAirUtilChUtil =
+        showAirUtilChUtilPrefs &&
+            hasDeviceMetricsTelemetry &&
+            (showAirUtilChUtilAllNodesPrefs || airUtilChUtilInfrastructureRole)
 
     val (detailsShown, showDetails) = remember { mutableStateOf(expanded) }
 
@@ -427,6 +451,22 @@ fun NodeItem(
                             fontSize = MaterialTheme.typography.button.fontSize,
                             style = style,
                         )
+                    }
+
+                    if (shouldShowAirUtilChUtil) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(
+                                text = stringResource(R.string.channel_air_util).format(
+                                    thatNode.deviceMetrics.channelUtilization,
+                                    thatNode.deviceMetrics.airUtilTx,
+                                ),
+                                fontSize = MaterialTheme.typography.button.fontSize,
+                                style = style,
+                            )
+                        }
                     }
                 }
 

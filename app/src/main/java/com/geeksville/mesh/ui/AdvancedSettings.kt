@@ -32,6 +32,8 @@ const val AUTO_DELETE_PRESERVE_FAVOURITES = "auto_delete_preserve_favourites"
 const val REMOVE_CUSTOM_ICON_CHAT = "remove_custom_icon_chat"
 const val USE_COMPRESSION_MESSAGES = "use_compression_messages"
 const val COMPRESSED_CHATS_PREFS = "compressed_chats_prefs"
+const val SHOW_AIRUTIL_CHUTIL = "show_airutil_chutil"
+const val SHOW_AIRUTIL_CHUTIL_ALL_NODES = "show_airutil_chutil_all_nodes"
 
 object AutoDeleteConfig {
 
@@ -85,6 +87,12 @@ class AdvancedSettings : AppCompatActivity() {
         val useCompressionSwitch =
             findViewById<SwitchCompat>(R.id.useCompressionSwitch)
 
+        val showAirUtilChUtilSwitch =
+            findViewById<SwitchCompat>(R.id.showAirUtilChUtilSwitch)
+
+        val showAirUtilChUtilAllNodesSwitch =
+            findViewById<SwitchCompat>(R.id.showAirUtilChUtilAllNodesSwitch)
+
         val autoDeleteTimeSpinner = findViewById<Spinner>(R.id.autoDeleteTiming)
 
         val autoDeleteNodesHoursAdapter = ArrayAdapter(
@@ -102,6 +110,8 @@ class AdvancedSettings : AppCompatActivity() {
         val autoDeletePreserveFavPref = advancedPrefs.getBoolean(AUTO_DELETE_PRESERVE_FAVOURITES, false)
         val removeCustomIconChatPrefs = advancedPrefs.getBoolean(REMOVE_CUSTOM_ICON_CHAT, false)
         val useMessageCompressionPrefs = advancedPrefs.getBoolean(USE_COMPRESSION_MESSAGES, false)
+        val showAirUtilChUtilPrefs = advancedPrefs.getBoolean(SHOW_AIRUTIL_CHUTIL, false)
+        val showAirUtilChUtilAllNodesPrefs = advancedPrefs.getBoolean(SHOW_AIRUTIL_CHUTIL_ALL_NODES, false)
 
         val autoDeleteTimeHours = advancedPrefs.getInt(
             AUTO_DELETE_TIME_HOURS,
@@ -121,6 +131,16 @@ class AdvancedSettings : AppCompatActivity() {
         autoDeletePreserveFav.isChecked = autoDeletePreserveFavPref
         removeCustomIconChatSwitch.isChecked = removeCustomIconChatPrefs
         useCompressionSwitch.isChecked = useMessageCompressionPrefs
+        showAirUtilChUtilSwitch.isChecked = showAirUtilChUtilPrefs
+        showAirUtilChUtilAllNodesSwitch.isChecked = showAirUtilChUtilAllNodesPrefs
+
+        fun updateAirUtilChUtilSectionState() {
+            val enabled = showAirUtilChUtilSwitch.isChecked
+            showAirUtilChUtilAllNodesSwitch.isEnabled = enabled
+            showAirUtilChUtilAllNodesSwitch.alpha = if (enabled) 1f else 0.5f
+        }
+
+        updateAirUtilChUtilSectionState()
 
         val autoDeleteSpinnerIndex = hoursValues
             .indexOf(autoDeleteTimeHours)
@@ -136,6 +156,10 @@ class AdvancedSettings : AppCompatActivity() {
         setSwitchListener(autoDeletePreserveFav, AUTO_DELETE_PRESERVE_FAVOURITES)
         setSwitchListener(removeCustomIconChatSwitch, REMOVE_CUSTOM_ICON_CHAT)
         setSwitchListener(useCompressionSwitch, USE_COMPRESSION_MESSAGES)
+        setSwitchListener(showAirUtilChUtilSwitch, SHOW_AIRUTIL_CHUTIL) {
+            updateAirUtilChUtilSectionState()
+        }
+        setSwitchListener(showAirUtilChUtilAllNodesSwitch, SHOW_AIRUTIL_CHUTIL_ALL_NODES)
 
         autoDeleteTimeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
@@ -184,7 +208,11 @@ class AdvancedSettings : AppCompatActivity() {
 
     }
 
-    private fun setSwitchListener(switchCompat: SwitchCompat, prefsFlag: String){
+    private fun setSwitchListener(
+        switchCompat: SwitchCompat,
+        prefsFlag: String,
+        onChanged: ((Boolean) -> Unit)? = null,
+    ){
         switchCompat.setOnCheckedChangeListener { _, isChecked ->
 
             if(isChecked){
@@ -192,6 +220,8 @@ class AdvancedSettings : AppCompatActivity() {
             } else {
                 advancedPrefs.edit { putBoolean(prefsFlag, false) }
             }
+
+            onChanged?.invoke(isChecked)
         }
     }
 

@@ -303,6 +303,64 @@
             app:layout_constraintTop_toBottomOf="@+id/useCompressionDesc"
             tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
 
+        <TextView
+            android:id="@+id/showAirUtilChUtilTitle"
+            android:layout_width="220dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="20dp"
+            android:text="AIRUTIL / CHUTIL DETAILS"
+            android:textColor="@color/colorAnnotation"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/useCompressionSwitch"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/showAirUtilChUtilDesc"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:text="Shows Channel Utilization and Air Utilization in node details. By default this applies only to infrastructure nodes: CLIENT_BASE, ROUTER and ROUTER_LATE."
+            android:textSize="13sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/showAirUtilChUtilTitle"
+            tools:ignore="HardcodedText" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/showAirUtilChUtilSwitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Show AirUtil/ChUtil  "
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/showAirUtilChUtilDesc"
+            tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
+
+        <TextView
+            android:id="@+id/showAirUtilChUtilAllNodesDesc"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:text="Extend this visualization to all nodes, not only infrastructure ones."
+            android:textSize="13sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/showAirUtilChUtilSwitch"
+            tools:ignore="HardcodedText" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/showAirUtilChUtilAllNodesSwitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Show on All Nodes  "
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/showAirUtilChUtilAllNodesDesc"
+            tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>
