@@ -352,7 +352,7 @@ fun RelayInfoBox(relayNode: RelayEvent, model: UIViewModel) {
                 }
 
                 Text(
-                    text = "GRC",
+                    text = "Relay Confidence :",
                     fontSize = 14.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
