@@ -2,6 +2,7 @@ package com.geeksville.mesh.util
 
 import android.content.Context
 import android.graphics.Color
+import androidx.compose.ui.graphics.Color as ComposeColor
 import com.geeksville.mesh.android.BuildUtils.errormsg
 import com.geeksville.mesh.model.DeviceHardware
 import com.geeksville.mesh.model.DeviceHardwareDto
@@ -21,6 +22,13 @@ import org.meshtastic.proto.MeshProtos.MeshPacket
 import org.meshtastic.proto.Portnums
 
 object AppUtil {
+
+    private const val CH_UTIL_GOOD_THRESHOLD = 25f
+    private const val CH_UTIL_FAIR_THRESHOLD = 50f
+    private const val AIR_UTIL_GOOD_THRESHOLD = 3f
+    private const val AIR_UTIL_FAIR_THRESHOLD = 5f
+    private const val AIR_UTIL_BAD_THRESHOLD = 7f
+    private const val AIR_UTIL_REALLY_BAD_THRESHOLD = 10f
 
     private val jsonParser: Json = Json {
         ignoreUnknownKeys = true
@@ -186,6 +194,20 @@ object AppUtil {
             in 30..59  -> Quality.BAD.color
             else       -> Quality.REALLY_BAD.color
         }
+    }
+
+    fun channelUtilizationColor(value: Float): ComposeColor = when {
+        value < CH_UTIL_GOOD_THRESHOLD -> Quality.GOOD.color
+        value < CH_UTIL_FAIR_THRESHOLD -> Quality.FAIR.color
+        else -> Quality.BAD.color
+    }
+
+    fun airUtilTxColor(value: Float): ComposeColor = when {
+        value < AIR_UTIL_GOOD_THRESHOLD -> Quality.GOOD.color
+        value < AIR_UTIL_FAIR_THRESHOLD -> Quality.FAIR.color
+        value < AIR_UTIL_BAD_THRESHOLD -> Quality.BAD.color
+        value < AIR_UTIL_REALLY_BAD_THRESHOLD -> Quality.REALLY_BAD.color
+        else -> Quality.REALLY_BAD.color
     }
 
     fun hexIdToNodeNum(hexId: String): Int {

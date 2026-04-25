@@ -89,12 +89,15 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -116,6 +119,7 @@ import com.geeksville.mesh.util.ComposableUtil.rememberBooleanPreference
 import com.geeksville.mesh.util.IdentIkonGen
 import com.geeksville.mesh.util.toDistanceString
 import kotlinx.coroutines.delay
+import java.util.Locale
 import org.meshtastic.proto.ConfigProtos.Config.DeviceConfig
 import org.meshtastic.proto.ConfigProtos.Config.DisplayConfig
 import org.meshtastic.proto.MeshProtos
@@ -458,11 +462,28 @@ fun NodeItem(
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                         ) {
+                            val channelUtilization = thatNode.deviceMetrics.channelUtilization
+                            val airUtilTx = thatNode.deviceMetrics.airUtilTx
                             Text(
-                                text = stringResource(R.string.channel_air_util).format(
-                                    thatNode.deviceMetrics.channelUtilization,
-                                    thatNode.deviceMetrics.airUtilTx,
-                                ),
+                                text = buildAnnotatedString {
+                                    append("ChUtil ")
+                                    withStyle(
+                                        SpanStyle(
+                                            color = AppUtil.channelUtilizationColor(channelUtilization)
+                                        )
+                                    ) {
+                                        append(formatMetricPercent(channelUtilization))
+                                    }
+                                    append(" AirUtilTX ")
+                                    withStyle(
+                                        SpanStyle(
+                                            color = AppUtil.airUtilTxColor(airUtilTx)
+                                        )
+                                    ) {
+                                        append(formatMetricPercent(airUtilTx))
+                                    }
+                                },
+                                color = MaterialTheme.colors.onSurface,
                                 fontSize = MaterialTheme.typography.button.fontSize,
                                 style = style,
                             )
@@ -477,6 +498,9 @@ fun NodeItem(
         }
     }
 }
+
+private fun formatMetricPercent(value: Float): String =
+    String.format(Locale.getDefault(), "%.1f%%", value)
 
 @Composable
 @Preview(showBackground = false)
