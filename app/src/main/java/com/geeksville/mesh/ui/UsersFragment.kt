@@ -102,13 +102,6 @@ import java.util.Date
 import java.util.Locale
 import org.meshtastic.proto.TelemetryProtos.DeviceMetrics
 
-private const val CH_UTIL_GOOD_THRESHOLD = 25f
-private const val CH_UTIL_FAIR_THRESHOLD = 50f
-private const val AIR_UTIL_GOOD_THRESHOLD = 3f
-private const val AIR_UTIL_FAIR_THRESHOLD = 5f
-private const val AIR_UTIL_BAD_THRESHOLD = 7f
-private const val AIR_UTIL_REALLY_BAD_THRESHOLD = 10f
-
 @AndroidEntryPoint
 class UsersFragment : ScreenFragment("Users"), Logging {
 
@@ -280,12 +273,12 @@ fun RelayInfoBox(relayNode: RelayEvent, model: UIViewModel) {
 
     val chUtilColor = relayMetrics
         ?.channelUtilization
-        ?.let(::relayChUtilColor)
+        ?.let(AppUtil::channelUtilizationColor)
         ?: Quality.FAIR.color
 
     val airUtilColor = relayMetrics
         ?.airUtilTx
-        ?.let(::relayAirUtilColor)
+        ?.let(AppUtil::airUtilTxColor)
         ?: Quality.FAIR.color
 
     val confidenceColor = AppUtil.relayNodePacketLabelColor(relayNode.confidence)
@@ -463,20 +456,6 @@ private fun RelayMetricBadge(
 
 private fun formatRelayPercent(value: Float): String =
     "${String.format(Locale.getDefault(), "%.1f", value)}%"
-
-private fun relayChUtilColor(value: Float): Color = when {
-    value < CH_UTIL_GOOD_THRESHOLD -> Quality.GOOD.color
-    value < CH_UTIL_FAIR_THRESHOLD -> Quality.FAIR.color
-    else -> Quality.BAD.color
-}
-
-private fun relayAirUtilColor(value: Float): Color = when {
-    value < AIR_UTIL_GOOD_THRESHOLD -> Quality.GOOD.color
-    value < AIR_UTIL_FAIR_THRESHOLD -> Quality.FAIR.color
-    value < AIR_UTIL_BAD_THRESHOLD -> Quality.BAD.color
-    value < AIR_UTIL_REALLY_BAD_THRESHOLD -> Quality.REALLY_BAD.color
-    else -> Quality.REALLY_BAD.color
-}
 
 @Composable
 fun DbImportInfoBox(
