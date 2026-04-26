@@ -79,12 +79,11 @@ import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.TraceRouteMap
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.model.colorizeTracerouteResponse
-import com.geeksville.mesh.model.neighborDiscoverySnrColor
 import com.geeksville.mesh.model.map.CustomTileSource
 import com.geeksville.mesh.model.map.MarkerWithLabel
 import com.geeksville.mesh.model.map.clustering.RadiusMarkerClusterer
+import com.geeksville.mesh.model.neighborDiscoverySnrColor
 import com.geeksville.mesh.ui.ScreenFragment
-import com.geeksville.mesh.ui.components.NeighborDiscoveryContent
 import com.geeksville.mesh.ui.components.NeighborDiscoveryDialog
 import com.geeksville.mesh.ui.theme.AppTheme
 import com.geeksville.mesh.util.AppUtil
@@ -275,7 +274,7 @@ fun MapView.drawTraceroute(trace: TraceRouteMap) {
     overlays.removeAll { it is Polyline || it is Marker }
 
     val forwardSegments =
-        buildSegments(
+        buildSegmentsForTraceroute(
             trace.traceForwardList,
             TRACE_COLOR_FORWARD,
             offsetMeters = DEFAULT_SPACING_POLYLINE_TRACE,
@@ -283,7 +282,7 @@ fun MapView.drawTraceroute(trace: TraceRouteMap) {
         )
 
     val backSegments =
-        buildSegments(
+        buildSegmentsForTraceroute(
             trace.traceBackList,
             TRACE_COLOR_BACK,
             offsetMeters = DEFAULT_SPACING_POLYLINE_TRACE,
@@ -302,7 +301,7 @@ fun MapView.drawNeighborDiscovery(discovery: NeighborDiscoveryMap) {
     overlays.removeAll { it is Polyline || it is Marker }
 
     discovery.links.mapNotNull { link ->
-        buildMapSegment(
+        buildSegmentForNeighbor(
             fromNode = link.origin,
             toNode = link.discovered,
             color = neighborDiscoverySnrColor(link.snr),
@@ -344,15 +343,6 @@ private fun validCoordinates(lat: Double, lon: Double): Boolean {
     return !lat.isNaN() && !lon.isNaN()
 }
 
-fun buildSegments(
-    nodes: List<Node>,
-    color: Int,
-    offsetMeters: Double,
-    side: Int
-): List<MapSegment> =
-    nodes.zipWithNext().mapNotNull { (a, b) ->
-        buildMapSegment(a, b, color, offsetMeters, side)
-    }
 
 private fun Node.toGeoPointOrNull(): GeoPoint? = when {
     validPosition != null -> GeoPoint(latitude, longitude)
@@ -360,7 +350,8 @@ private fun Node.toGeoPointOrNull(): GeoPoint? = when {
     else -> null
 }
 
-private fun buildMapSegment(
+@Suppress("SameParameterValue")
+private fun buildSegmentForNeighbor(
     fromNode: Node,
     toNode: Node,
     color: Int,
@@ -397,6 +388,57 @@ private fun buildMapSegment(
         lineColor = color,
     )
 }
+
+fun buildSegmentsForTraceroute(
+    nodes: List<Node>,
+    color: Int,
+    offsetMeters: Double,
+    side: Int
+): List<MapSegment> =
+    nodes.zipWithNext().mapNotNull { (a, b) ->
+
+        var latA = Double.NaN
+        var lonA = Double.NaN
+
+        var latB = Double.NaN
+        var lonB = Double.NaN
+
+        if (a.validPosition != null) {
+            latA = a.latitude
+            lonA = a.longitude
+        } else if (a.validLiteNode && a.liteLatitude != null && a.liteLongitude != null) {
+            latA = a.liteLatitude
+            lonA = a.liteLongitude
+        }
+
+        if (b.validPosition != null) {
+            latB = b.latitude
+            lonB = b.longitude
+        } else if (b.validLiteNode && b.liteLatitude != null && b.liteLongitude != null) {
+            latB = b.liteLatitude
+            lonB = b.liteLongitude
+        }
+
+        if(!validCoordinates(latA, lonA) || !validCoordinates(latB, lonB)){
+            return@mapNotNull null
+        }
+
+        val rawFrom = GeoPoint(latA, lonA)
+        val rawTo = GeoPoint(latB, lonB)
+
+        val (from, to) =
+            if (rawFrom.latitude < rawTo.latitude) rawFrom to rawTo
+            else rawTo to rawFrom
+
+        val brg = bearing(from, to)
+        val perpendicular = brg + (90 * side)
+
+        MapSegment(
+            from = rawFrom.offsetMeters(offsetMeters, perpendicular),
+            to = rawTo.offsetMeters(offsetMeters, perpendicular),
+            lineColor = color
+        )
+    }
 
 
 fun GeoPoint.offset(latOffset: Double, lonOffset: Double) =
@@ -704,20 +746,18 @@ fun MapView(
                 map.drawTraceroute(mode.trace)
 
                 val points =
-                    buildSegments(
+                    buildSegmentsForTraceroute(
                         mode.trace.traceForwardList,
                         TRACE_COLOR_FORWARD,
                         DEFAULT_SPACING_POLYLINE_TRACE,
                         +1
-                    )
-                        .flatMap { listOf(it.from, it.to) } +
-                            buildSegments(
+                    ).flatMap { listOf(it.from, it.to) } +
+                            buildSegmentsForTraceroute(
                                 mode.trace.traceBackList,
                                 TRACE_COLOR_BACK,
                                 DEFAULT_SPACING_POLYLINE_TRACE,
                                 -1
-                            )
-                                .flatMap { listOf(it.from, it.to) }
+                            ).flatMap { listOf(it.from, it.to) }
 
                 if (points.isNotEmpty()) {
                     map.zoomToBoundingBox(

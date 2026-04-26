@@ -61,10 +61,10 @@ import com.geeksville.mesh.database.entity.Packet
 import com.geeksville.mesh.database.entity.ReactionEntity
 import com.geeksville.mesh.model.DeviceVersion
 import com.geeksville.mesh.model.NeighborDiscoveryNode
-import com.geeksville.mesh.model.getNeighborDiscoveryResult
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.RelayEvent
 import com.geeksville.mesh.model.UIViewModel.Companion.getPreferences
+import com.geeksville.mesh.model.getNeighborDiscoveryResult
 import com.geeksville.mesh.model.getTracerouteResponse
 import com.geeksville.mesh.prefs.UserPrefs
 import com.geeksville.mesh.repository.datastore.RadioConfigRepository
@@ -675,6 +675,7 @@ class MeshService : Service(), Logging {
         }
     }
 
+    //fixme! this method currently overwrites existing nodes (even ournode)!
     private fun persistNeighborDiscoveryNodes(packet: MeshPacket) {
         val discovery = packet.getNeighborDiscoveryResult { nodeNum -> nodeDBbyNodeNum[nodeNum]?.user } ?: return
         persistNeighborDiscoveryNode(discovery.origin)
@@ -1125,7 +1126,8 @@ class MeshService : Service(), Logging {
                     }
 
                     Portnums.PortNum.NEIGHBORINFO_APP_VALUE -> {
-                        persistNeighborDiscoveryNodes(packet)
+                        //fixme, overwrites existing nodes on our db
+                        //persistNeighborDiscoveryNodes(packet)
 
                         if (!huntingPrefs.getBoolean(UserPrefs.Hunting.BACKGROUND_HUNT, false)) {
                             radioConfigRepository.setNeighborDiscoveryResponse(
