@@ -25,6 +25,9 @@ import org.meshtastic.proto.MeshProtos
 import org.meshtastic.proto.Portnums
 import java.util.Locale
 
+//1 min to expire the request
+const val neighborRequestExpiration = 60_000L
+
 data class NeighborDiscoveryNode(
     val nodeNum: Int,
     val userId: String,

@@ -56,6 +56,7 @@ import com.geeksville.mesh.database.entity.Packet
 import com.geeksville.mesh.database.entity.QuickChatAction
 import com.geeksville.mesh.repository.datastore.RadioConfigRepository
 import com.geeksville.mesh.repository.radio.RadioInterfaceService
+import com.geeksville.mesh.service.GlobalRadioMesh.ourNeighborRequests
 import com.geeksville.mesh.service.MeshService
 import com.geeksville.mesh.service.ServiceAction
 import com.geeksville.mesh.service.ServiceRepository
@@ -684,9 +685,18 @@ class UIViewModel @Inject constructor(
         pendingNeighborDiscoveryGpsRecovery.value = null
         try {
             val packetId = meshService?.packetId ?: return
+            rememberNeighborRequestAndExpire(packetId)
             meshService?.requestNeighborInfo(packetId, destNum)
         } catch (ex: RemoteException) {
             errormsg("Request neighbor discovery error: ${ex.message}")
+        }
+    }
+
+    private fun rememberNeighborRequestAndExpire(packetId: Int){
+        ourNeighborRequests[packetId] = System.currentTimeMillis()
+        viewModelScope.launch {
+            delay(neighborRequestExpiration)
+            ourNeighborRequests.remove(packetId)
         }
     }
 
