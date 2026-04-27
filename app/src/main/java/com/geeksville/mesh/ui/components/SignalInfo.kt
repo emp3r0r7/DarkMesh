@@ -40,6 +40,8 @@ fun SignalInfo(
     node: Node,
     isThisNode: Boolean
 ) {
+    var directValidSignal = false
+
     val text = if (isThisNode) {
         stringResource(R.string.channel_air_util).format(
             node.deviceMetrics.channelUtilization,
@@ -61,28 +63,32 @@ fun SignalInfo(
             if (node.hopsAway != 0) add(hopsString)
         }.joinToString(" ")
     }
-    if (text.isNotEmpty()) {
+
+    /* We only know the Signal Quality from direct nodes aka 0 hop. */
+    if (node.hopsAway <= 0){
+        if (!isThisNode && node.snr <= MAX_VALID_SNR && node.rssi <= MAX_VALID_RSSI) {
+            directValidSignal = true
+            NodeSignalQuality(node.snr, node.rssi)
+        } else {
+            //showing direct for != our node and unknown hops!
+            if (!isThisNode && node.hopsAway != -1) {
+                Text(
+                    modifier = modifier,
+                    text = "Direct Node",
+                    color = Color.Green,
+                    fontSize = MaterialTheme.typography.button.fontSize
+                )
+            }
+        }
+    }
+
+    if (text.isNotEmpty() && !directValidSignal) {
         Text(
             modifier = modifier,
             text = text,
             color = MaterialTheme.colors.onSurface,
             fontSize = MaterialTheme.typography.button.fontSize
         )
-    }
-    /* We only know the Signal Quality from direct nodes aka 0 hop. */
-    if (node.hopsAway <= 0){
-        if (!isThisNode && node.snr <= MAX_VALID_SNR && node.rssi <= MAX_VALID_RSSI) {
-            NodeSignalQuality(node.snr, node.rssi)
-        } else {
-            //not showing direct for our node or unknown hops!
-            if (isThisNode || node.hopsAway == -1) return
-            Text(
-                modifier = modifier,
-                text = "Direct Node",
-                color = Color.Green,
-                fontSize = MaterialTheme.typography.button.fontSize
-            )
-        }
     }
 }
 
@@ -97,7 +103,7 @@ fun SignalInfoSimplePreview() {
                 channel = 0,
                 snr = 12.5F,
                 rssi = -42,
-                hopsAway = 0
+                hopsAway = -1
             ),
             isThisNode = false
         )
