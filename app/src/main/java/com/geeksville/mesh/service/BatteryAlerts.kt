@@ -47,7 +47,7 @@ private const val BATTERY_VOLTAGE_HYSTERESIS = 0.15f
 enum class BatteryAlertScope(val preferenceValue: String) {
     ALL_NODES("all_nodes"),
     CONNECTED_NODE_ONLY("connected_node_only"),
-    ;
+    FAVORITES_ONLY("favorites_only");
 
     companion object {
         fun fromPreferenceValue(value: String?): BatteryAlertScope =
@@ -58,6 +58,7 @@ enum class BatteryAlertScope(val preferenceValue: String) {
 enum class BatteryAlertSource {
     CONNECTED_NODE,
     MESH,
+    MESH_FAVORITE
 }
 
 enum class BatteryAlertLevel {
@@ -80,11 +81,13 @@ data class BatteryAlertSettings(
     fun allows(source: BatteryAlertSource): Boolean = when (scope) {
         BatteryAlertScope.ALL_NODES -> true
         BatteryAlertScope.CONNECTED_NODE_ONLY -> source == BatteryAlertSource.CONNECTED_NODE
+        BatteryAlertScope.FAVORITES_ONLY -> source == BatteryAlertSource.MESH_FAVORITE
     }
 
     fun soundUriFor(source: BatteryAlertSource): String? = when (source) {
         BatteryAlertSource.CONNECTED_NODE -> connectedNodeSoundUri
-        BatteryAlertSource.MESH -> meshSoundUri
+        BatteryAlertSource.MESH,
+        BatteryAlertSource.MESH_FAVORITE -> meshSoundUri
     }.takeUnless { it.isNullOrBlank() }
 }
 

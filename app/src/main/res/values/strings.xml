@@ -272,6 +272,7 @@
     <string name="battery_alerts_enable">Enable low battery notifications</string>
     <string name="battery_alert_scope">Scope</string>
     <string name="battery_alert_scope_all_nodes">All nodes</string>
+    <string name="battery_alert_scope_favorite_nodes">Favorite nodes</string>
     <string name="battery_alert_scope_connected_bt_node">Only connected BT node</string>
     <string name="battery_alert_bt_sound">Connected BT node sound</string>
     <string name="battery_alert_mesh_sound">Mesh node sound</string>

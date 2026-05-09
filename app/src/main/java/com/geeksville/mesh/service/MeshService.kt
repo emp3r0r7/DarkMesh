@@ -1381,12 +1381,17 @@ class MeshService : Service(), Logging {
             return
         }
 
+        val node = nodeDBbyNodeNum[nodeNum] ?: return
         val settings = uiPrefs.getBatteryAlertSettings()
+
         val source = if (myNodeInfo?.myNodeNum == nodeNum) {
             BatteryAlertSource.CONNECTED_NODE
+        } else if (node.isFavorite){
+            BatteryAlertSource.MESH_FAVORITE
         } else {
             BatteryAlertSource.MESH
         }
+
         if (!settings.allows(source)) {
             if (previousLevel != BatteryAlertLevel.NONE) {
                 lowBatteryAlertLevels.remove(nodeNum)
@@ -1395,7 +1400,6 @@ class MeshService : Service(), Logging {
             return
         }
 
-        val node = nodeDBbyNodeNum[nodeNum] ?: return
         val nextLevel = BatteryAlertEvaluator.nextLevel(
             previousLevel = previousLevel,
             snapshot = node.deviceMetrics.toBatterySnapshot(),

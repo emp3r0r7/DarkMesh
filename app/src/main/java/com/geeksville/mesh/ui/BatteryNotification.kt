@@ -134,6 +134,10 @@ class BatteryNotification : AppCompatActivity() {
                 scope = BatteryAlertScope.CONNECTED_NODE_ONLY,
                 label = getString(R.string.battery_alert_scope_connected_bt_node)
             ),
+            BatteryAlertScopeOption(
+                scope = BatteryAlertScope.FAVORITES_ONLY,
+                label = getString(R.string.battery_alert_scope_favorite_nodes)
+            ),
         )
         binding.batteryAlertScopeDropdown.setAdapter(
             ArrayAdapter(

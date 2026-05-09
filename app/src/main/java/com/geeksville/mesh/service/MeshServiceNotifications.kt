@@ -136,7 +136,8 @@ class MeshServiceNotifications(
                     CONNECTED_BATTERY_ALERT_CHANNEL_ID
                 }
             }
-            BatteryAlertSource.MESH -> {
+            BatteryAlertSource.MESH,
+            BatteryAlertSource.MESH_FAVORITE -> {
                 if (level == BatteryAlertLevel.CRITICAL) {
                     MESH_CRITICAL_BATTERY_ALERT_CHANNEL_ID
                 } else {
