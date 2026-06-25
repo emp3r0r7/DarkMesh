@@ -254,6 +254,8 @@
     <string name="waypoint_new">New waypoint</string>
     <string name="waypoint_received">Received waypoint: %s</string>
     <string name="error_duty_cycle">Duty Cycle limit reached. Cannot send messages right now, please try again later.</string>
+    <string name="error_hardware_does_not_have_pubkey" translatable="false">Your hardware does not have a public key for this node, request a node info!</string>
+    <string name="error_hardware_does_not_have_pubkey_generic" translatable="false">You recently sent a private message to a node, but your device does not have that node\'s public key. Please request node info.</string>
     <string name="remove">Remove</string>
     <string name="fw_mismatch" translatable="false">Firmware Mismatch</string>
     <string name="remove_node_text">This node will be removed from your list until your node receives data from it again.</string>

@@ -1067,6 +1067,10 @@ class MeshService : Service(), Logging {
                             radioConfigRepository.setErrorMessage(getString(R.string.error_duty_cycle))
                         }
 
+                        if(u.errorReason == MeshProtos.Routing.Error.PKI_SEND_FAIL_PUBLIC_KEY){
+                            radioConfigRepository.setErrorMessage(getString(R.string.error_hardware_does_not_have_pubkey_generic))
+                        }
+
                         handleAckNak(packet, data.requestId, fromId, u.errorReasonValue)
                         queueResponse.remove(data.requestId)?.complete(true)
                     }
