@@ -89,7 +89,7 @@ data class Packet(
 
             val candidates = nodes.filter {
                 it.num != ourNodeNum &&
-                        ConfigProtos.Config.DeviceConfig.Role.CLIENT_MUTE.name != it.role //client mute does not rebroadcast
+                        ConfigProtos.Config.DeviceConfig.Role.CLIENT_MUTE.name != it.role && //client mute does not rebroadcast
                         it.lastHeard != 0 &&
                         (it.num and RELAY_NODE_SUFFIX_MASK) == relayNodeIdSuffix
             }
