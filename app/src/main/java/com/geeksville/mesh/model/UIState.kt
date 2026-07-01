@@ -22,6 +22,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.RemoteException
+import android.util.Log
 import android.view.Menu
 import android.widget.Toast
 import androidx.core.content.edit
@@ -65,6 +66,7 @@ import com.geeksville.mesh.ui.map.MAP_STYLE_ID
 import com.geeksville.mesh.ui.share.getSharedContactUrl
 import com.geeksville.mesh.ui.share.toSharedContact
 import com.geeksville.mesh.util.AppUtil
+import com.geeksville.mesh.util.NativeMessageCompression
 import com.geeksville.mesh.util.getShortDate
 import com.geeksville.mesh.util.positionToMeter
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -631,17 +633,38 @@ class UIViewModel @Inject constructor(
 
         val useCompression = app.advancedPrefs.getBoolean(USE_COMPRESSION_MESSAGES, false)
         val useCompressionOnContact = app.compressionPrefs.getBoolean(contactKey, false)
+        val sourceMessageSize = str.encodeToByteArray().size
+        var portnum: Int
 
-        val portnum = if(useCompressionOnContact && useCompression){
-            Portnums.PortNum.TEXT_MESSAGE_COMPRESSED_APP_VALUE
+        val payload = if(useCompressionOnContact && useCompression) {
+            NativeMessageCompression.compressText(str)?.let { compressed ->
+                if(compressed.size >= sourceMessageSize){
+                    //compression not worth, fallback to standard
+                    portnum = Portnums.PortNum.TEXT_MESSAGE_APP_VALUE
+                    str
+                } else {
+                    //compress success
+                    portnum = Portnums.PortNum.TEXT_MESSAGE_COMPRESSED_APP_VALUE
+                    Log.d("SEND", "compressed message is ${compressed.size} was $sourceMessageSize")
+                    compressed
+                }
+            } ?: run { //compression failed, rollback to standard message
+                portnum = Portnums.PortNum.TEXT_MESSAGE_APP_VALUE
+                str
+            }
+
         } else {
-            Portnums.PortNum.TEXT_MESSAGE_APP_VALUE
+            portnum = Portnums.PortNum.TEXT_MESSAGE_APP_VALUE
+            str
         }
+
+        val encoded = if(payload is String) payload.encodeToByteArray() else payload as ByteArray
 
         val p = DataPacket(
             to = dest,
             channel = channel ?: 0,
-            text = str,
+            clearText = str,
+            byteArray = encoded,
             replyId = replyId,
             dataType = portnum
         )

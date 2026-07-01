@@ -5,6 +5,7 @@ import static ar.com.hjg.pngj.PngHelperInternal.debug;
 import com.geeksville.mesh.DataPacket;
 import com.geeksville.mesh.IMeshService;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -42,7 +43,8 @@ public class GlobalRadioMesh {
             }
             String dest = (channel != null) ? contactKey.substring(1) : contactKey;
 
-            DataPacket p = new DataPacket(dest, (channel != null) ? channel : 0, str, replyId);
+            var byteString = str.getBytes(StandardCharsets.UTF_8);
+            DataPacket p = new DataPacket(dest, (channel != null) ? channel : 0, byteString, str, replyId);
             radioMeshService.send(p);
         } catch (Exception e) {
             debug("Could not send  message");

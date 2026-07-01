@@ -286,7 +286,7 @@
             android:layout_marginEnd="8dp"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Uses a special compression algorithm for text messages making them more compact. IMPORTANT: You'll need the latest DarkMesh FW on your board to use this setting."
+            android:text="Uses a special compression algorithm for text messages making them more compact. Since proto version 2.7.26 DarkMesh uses App Compression, you can send compressed messages with official Meshtastic firmware too."
             android:textSize="13sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"

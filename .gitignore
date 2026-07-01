@@ -25,3 +25,5 @@ keystore.properties
 
 # Kotlin compiler
 .kotlin
+
+third_party

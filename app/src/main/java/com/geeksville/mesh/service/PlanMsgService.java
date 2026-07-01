@@ -36,6 +36,7 @@ import com.geeksville.mesh.database.entity.NodeEntity;
 import com.geeksville.mesh.prefs.UserPrefs;
 import com.geeksville.mesh.ui.activity.PlanMsgActivity;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
 import java.util.Map;
 import java.util.Set;
@@ -402,7 +403,8 @@ public class PlanMsgService extends Service {
             dest = contactKey;
         }
 
-        DataPacket p = new DataPacket(dest, (channel != null) ? channel : 0, str, 0);
+        var byteString = str.getBytes(StandardCharsets.UTF_8);
+        DataPacket p = new DataPacket(dest, (channel != null) ? channel : 0, byteString, str, 0);
 
         if (GlobalRadioMesh.getRadio() != null) {
             GlobalRadioMesh.getRadio().send(p);

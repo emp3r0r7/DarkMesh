@@ -63,7 +63,9 @@ data class DataPacket(
     var channel: Int = 0, // channel index
     var relayNode: Int? = null,
     var replyId: Int? = null, // If this is a reply to a previous message, this is the ID of that message
-) : Parcelable {
+    val clearText: String? = null,  //our messages, for our UI only
+    val compressed: Boolean = false
+    ) : Parcelable {
 
     /**
      * If there was an error with this message, this string describes what was wrong.
@@ -75,11 +77,13 @@ data class DataPacket(
      */
     constructor(to: String?,
                 channel: Int,
-                text: String,
+                byteArray: ByteArray,
+                clearText: String,
                 replyId: Int? = null
     ) : this (
         to = to,
-        bytes = text.encodeToByteArray(),
+        bytes = byteArray,
+        clearText = clearText,
         dataType = Portnums.PortNum.TEXT_MESSAGE_APP_VALUE,
         channel = channel,
         replyId = replyId ?: 0,
@@ -90,12 +94,14 @@ data class DataPacket(
      */
     constructor(to: String?,
                 channel: Int,
-                text: String,
+                byteArray: ByteArray,
+                clearText: String,
                 replyId: Int? = null,
                 dataType: Int
     ) : this (
         to = to,
-        bytes = text.encodeToByteArray(),
+        clearText = clearText,
+        bytes = byteArray,
         dataType = dataType,
         channel = channel,
         replyId = replyId ?: 0,
@@ -108,7 +114,9 @@ data class DataPacket(
         get() = if (
             dataType == Portnums.PortNum.TEXT_MESSAGE_APP_VALUE ||
             dataType == Portnums.PortNum.TEXT_MESSAGE_COMPRESSED_APP_VALUE) {
-            bytes?.decodeToString()
+            if(clearText.isNullOrBlank()){
+                bytes?.decodeToString()
+            } else clearText
         } else {
             null
         }
