@@ -445,7 +445,7 @@ fun NavGraph(
     navController: NavHostController = rememberNavController(),
     startDestination: Any,
     modifier: Modifier = Modifier,
-    uiModel:  UIViewModel,
+    uiModel: UIViewModel,
     parentFragmentManager:  FragmentManager
 ) {
 

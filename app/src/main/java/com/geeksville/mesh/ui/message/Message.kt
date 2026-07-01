@@ -60,6 +60,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.twotone.FolderZip
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -110,6 +111,7 @@ import com.geeksville.mesh.model.Message
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.model.getChannel
+import com.geeksville.mesh.ui.ActiveChatTracker
 import com.geeksville.mesh.ui.USE_COMPRESSION_MESSAGES
 import com.geeksville.mesh.ui.activity.PlanMsgActivity
 import com.geeksville.mesh.ui.activity.PlanMsgActivity.NODE_ID_EXTRA_PARAM
@@ -195,6 +197,13 @@ internal fun MessageScreen(
     navigateToNodeDetails: (Int) -> Unit,
     onNavigateBack: () -> Unit
 ) {
+    DisposableEffect(contactKey) {
+        ActiveChatTracker.setActiveChat(contactKey)
+        onDispose {
+            ActiveChatTracker.clearActiveChat(contactKey)
+        }
+    }
+
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
