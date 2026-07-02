@@ -361,6 +361,38 @@
             app:layout_constraintTop_toBottomOf="@+id/showAirUtilChUtilAllNodesDesc"
             tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
 
+        <TextView
+            android:id="@+id/muteNodeInfoSound"
+            android:layout_width="220dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="20dp"
+            android:text="MUTE NODEINFO NOTIFICATIONS"
+            android:textColor="@color/colorAnnotation"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/showAirUtilChUtilAllNodesSwitch"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/muteNodeInfoSoundDesc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Disables sounds related to new nodes found across the mesh."
+            android:textSize="13sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/muteNodeInfoSound"
+            tools:ignore="HardcodedText" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/muteNodeInfoSoundSwitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Disable NodeInfo Notifications  "
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/muteNodeInfoSoundDesc"
+            tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

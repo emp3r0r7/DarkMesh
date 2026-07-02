@@ -78,6 +78,7 @@ import com.geeksville.mesh.service.GlobalRadioMesh.autoDeleteMap
 import com.geeksville.mesh.service.GlobalRadioMesh.ourNeighborRequests
 import com.geeksville.mesh.service.GlobalRadioMesh.ourTracerouteRequests
 import com.geeksville.mesh.ui.ActiveChatTracker
+import com.geeksville.mesh.ui.MUTE_NODEINFO_NOTIFICATIONS
 import com.geeksville.mesh.ui.SKIP_MQTT_ENTIRELY
 import com.geeksville.mesh.ui.TRACE_MAX_PRIORITY_PREF
 import com.geeksville.mesh.util.AppUtil
@@ -1288,7 +1289,9 @@ class MeshService : Service(), Logging {
                 it.isFavorite = false
             }
 
-            if (newNode && !dbImport) {
+            val muteNodeInfoPrefs = advancedPrefs.getBoolean(MUTE_NODEINFO_NOTIFICATIONS, false)
+
+            if (newNode && !dbImport && !muteNodeInfoPrefs) {
                 serviceNotifications.showNewNodeSeenNotification(it)
             }
         }

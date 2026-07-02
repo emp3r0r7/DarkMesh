@@ -34,6 +34,7 @@ const val USE_COMPRESSION_MESSAGES = "use_compression_messages"
 const val COMPRESSED_CHATS_PREFS = "compressed_chats_prefs"
 const val SHOW_AIRUTIL_CHUTIL = "show_airutil_chutil"
 const val SHOW_AIRUTIL_CHUTIL_ALL_NODES = "show_airutil_chutil_all_nodes"
+const val MUTE_NODEINFO_NOTIFICATIONS = "mute_nodeinfo_notifications"
 
 object AutoDeleteConfig {
 
@@ -93,6 +94,9 @@ class AdvancedSettings : AppCompatActivity() {
         val showAirUtilChUtilAllNodesSwitch =
             findViewById<SwitchCompat>(R.id.showAirUtilChUtilAllNodesSwitch)
 
+        val muteNodeInfoSoundSwitch =
+            findViewById<SwitchCompat>(R.id.muteNodeInfoSoundSwitch)
+
         val autoDeleteTimeSpinner = findViewById<Spinner>(R.id.autoDeleteTiming)
 
         val autoDeleteNodesHoursAdapter = ArrayAdapter(
@@ -112,6 +116,7 @@ class AdvancedSettings : AppCompatActivity() {
         val useMessageCompressionPrefs = advancedPrefs.getBoolean(USE_COMPRESSION_MESSAGES, false)
         val showAirUtilChUtilPrefs = advancedPrefs.getBoolean(SHOW_AIRUTIL_CHUTIL, false)
         val showAirUtilChUtilAllNodesPrefs = advancedPrefs.getBoolean(SHOW_AIRUTIL_CHUTIL_ALL_NODES, false)
+        val muteNodeInfoSoundPrefs = advancedPrefs.getBoolean(MUTE_NODEINFO_NOTIFICATIONS, false)
 
         val autoDeleteTimeHours = advancedPrefs.getInt(
             AUTO_DELETE_TIME_HOURS,
@@ -133,6 +138,7 @@ class AdvancedSettings : AppCompatActivity() {
         useCompressionSwitch.isChecked = useMessageCompressionPrefs
         showAirUtilChUtilSwitch.isChecked = showAirUtilChUtilPrefs
         showAirUtilChUtilAllNodesSwitch.isChecked = showAirUtilChUtilAllNodesPrefs
+        muteNodeInfoSoundSwitch.isChecked = muteNodeInfoSoundPrefs
 
         fun updateAirUtilChUtilSectionState() {
             val enabled = showAirUtilChUtilSwitch.isChecked
@@ -160,6 +166,7 @@ class AdvancedSettings : AppCompatActivity() {
             updateAirUtilChUtilSectionState()
         }
         setSwitchListener(showAirUtilChUtilAllNodesSwitch, SHOW_AIRUTIL_CHUTIL_ALL_NODES)
+        setSwitchListener(muteNodeInfoSoundSwitch, MUTE_NODEINFO_NOTIFICATIONS)
 
         autoDeleteTimeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
