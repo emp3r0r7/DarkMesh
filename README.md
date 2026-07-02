@@ -66,7 +66,7 @@ You can export the entire database or selectively export only nodes marked as fa
 ### 🗜️ Unicode Message Compression
 DarkMesh introduces message compression, reducing payload size (e.g. from ~30 to ~20 characters).  
 This results in lighter radio traffic, improved LoRa efficiency, and a higher probability of message delivery.  
-This feature is supported exclusively by the DarkMesh firmware.
+This feature is now supported App-Wise, it means DarkMesh App can compress and decompress payloads independently from the firmware, whether it is the official one or not!
 
 ---
 
