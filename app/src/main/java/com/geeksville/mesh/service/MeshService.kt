@@ -2745,6 +2745,7 @@ class MeshService : Service(), Logging {
             if (destNum != myNodeNum) {
                 sendToRadio(newMeshPacketTo(destNum
                 ).buildMeshPacket(
+                    wantAck = true,
                     channel = nodeDBbyNodeNum[destNum]?.channel ?: 0
                 ) {
                     portnumValue = Portnums.PortNum.NODEINFO_APP_VALUE
@@ -2755,6 +2756,7 @@ class MeshService : Service(), Logging {
         }
         override fun requestPosition(destNum: Int, position: Position) = toRemoteExceptions {
             sendToRadio(newMeshPacketTo(destNum).buildMeshPacket(
+                wantAck = true,
                 channel = nodeDBbyNodeNum[destNum]?.channel ?: 0,
                 priority = MeshPacket.Priority.BACKGROUND,
             ) {
