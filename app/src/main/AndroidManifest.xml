@@ -171,9 +171,8 @@
         </service>
 
         <activity android:name="com.geeksville.mesh.ui.activity.HuntActivity" />
-
+        <activity android:name="com.geeksville.mesh.ui.activity.MeshStatsActivity" />
         <activity android:name="com.geeksville.mesh.ui.activity.PlanMsgListActivity"/>
-
         <activity android:name="com.geeksville.mesh.ui.activity.PlanMsgActivity"/>
 
         <activity

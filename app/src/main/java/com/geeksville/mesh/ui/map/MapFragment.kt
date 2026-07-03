@@ -87,6 +87,7 @@ import com.geeksville.mesh.ui.ScreenFragment
 import com.geeksville.mesh.ui.components.NeighborDiscoveryDialog
 import com.geeksville.mesh.ui.theme.AppTheme
 import com.geeksville.mesh.util.AppUtil
+import com.geeksville.mesh.util.MeshStatsUtil
 import com.geeksville.mesh.util.SqlTileWriterExt
 import com.geeksville.mesh.util.addCopyright
 import com.geeksville.mesh.util.addScaleBarOverlay
@@ -495,6 +496,8 @@ fun MapView(
                     totalDistanceKm(mode.trace.traceBackList)
         }
         else -> null
+    } ?.also {
+        MeshStatsUtil.compareLongestTraceAndAdd(LocalContext.current, it)
     }
 
     var showNeighborDiscoveryList by remember { mutableStateOf(false) }

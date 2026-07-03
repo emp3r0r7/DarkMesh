@@ -125,6 +125,12 @@
         app:showAsAction="withText" />
 
     <item
+        android:id="@+id/mesh_stats"
+        android:title="Mesh Stats"
+        tools:ignore="HardcodedText"
+        app:showAsAction="withText" />
+
+    <item
         android:id="@+id/about"
         android:title="@string/about"
         app:showAsAction="withText" />

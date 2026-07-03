@@ -122,6 +122,7 @@ import com.geeksville.mesh.ui.QuickChatSettingsFragment
 import com.geeksville.mesh.ui.SettingsFragment
 import com.geeksville.mesh.ui.UsersFragment
 import com.geeksville.mesh.ui.activity.HuntActivity
+import com.geeksville.mesh.ui.activity.MeshStatsActivity
 import com.geeksville.mesh.ui.activity.PlanMsgListActivity
 import com.geeksville.mesh.ui.components.ScannedQrCodeDialog
 import com.geeksville.mesh.ui.map.MapFragment
@@ -1160,6 +1161,11 @@ class MainActivity : AppCompatActivity(), Logging {
 
             R.id.battery_alerts -> {
                 startActivity(Intent(this, BatteryNotification::class.java))
+                return true
+            }
+
+            R.id.mesh_stats -> {
+                startActivity(Intent(this, MeshStatsActivity::class.java))
                 return true
             }
 

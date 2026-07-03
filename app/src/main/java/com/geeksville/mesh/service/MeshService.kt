@@ -83,6 +83,9 @@ import com.geeksville.mesh.ui.SKIP_MQTT_ENTIRELY
 import com.geeksville.mesh.ui.TRACE_MAX_PRIORITY_PREF
 import com.geeksville.mesh.util.AppUtil
 import com.geeksville.mesh.util.AppUtil.hexIdToNodeNum
+import com.geeksville.mesh.util.MeshStatsUtil
+import com.geeksville.mesh.util.MeshStatsUtil.STATS_TRACE_SUCCESS
+import com.geeksville.mesh.util.MeshStatsUtil.STATS_TRACE_TOTAL
 import com.geeksville.mesh.util.NativeMessageCompression
 import com.geeksville.mesh.util.anonymize
 import com.geeksville.mesh.util.toOneLineString
@@ -1215,13 +1218,16 @@ class MeshService : Service(), Logging {
     private fun maybeShowTraceResultToast(fromUs: Boolean,
                                           packet: MeshPacket){
         if (!fromUs && packet.wantAck) {
-            val isOurTrace = ourTracerouteRequests.containsKey(packet.decoded.requestId)
+            val ourGeneratedTrace = ourTracerouteRequests.containsKey(packet.decoded.requestId)
 
+            val toastTrace = if(ourGeneratedTrace){
+                MeshStatsUtil.incrementStat(this, STATS_TRACE_SUCCESS)
+                "Traceroute SUCCESS to ${getUserName(packet.from)}"
+            } else {
+                "Traceroute detected towards us from ${getUserName(packet.from)}"
+            }
             mainLooperToast(
-                if (isOurTrace)
-                    "Traceroute SUCCESS to ${getUserName(packet.from)}"
-                else
-                    "Traceroute detected towards us from ${getUserName(packet.from)}",
+                toastTrace,
                 Toast.LENGTH_SHORT
             )
         }
@@ -2787,6 +2793,8 @@ class MeshService : Service(), Logging {
         }
 
         override fun requestTraceroute(requestId: Int, destNum: Int) = toRemoteExceptions {
+
+            MeshStatsUtil.incrementStat(this@MeshService, STATS_TRACE_TOTAL)
 
             var priority = MeshPacket.Priority.UNSET
 

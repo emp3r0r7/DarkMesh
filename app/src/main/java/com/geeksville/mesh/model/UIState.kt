@@ -66,6 +66,7 @@ import com.geeksville.mesh.ui.map.MAP_STYLE_ID
 import com.geeksville.mesh.ui.share.getSharedContactUrl
 import com.geeksville.mesh.ui.share.toSharedContact
 import com.geeksville.mesh.util.AppUtil
+import com.geeksville.mesh.util.MeshStatsUtil
 import com.geeksville.mesh.util.NativeMessageCompression
 import com.geeksville.mesh.util.getShortDate
 import com.geeksville.mesh.util.positionToMeter
@@ -645,7 +646,9 @@ class UIViewModel @Inject constructor(
                 } else {
                     //compress success
                     portnum = Portnums.PortNum.TEXT_MESSAGE_COMPRESSED_APP_VALUE
-                    Log.d("SEND", "compressed message is ${compressed.size} was $sourceMessageSize")
+                    val savedBytes = sourceMessageSize - compressed.size
+                    MeshStatsUtil.addSavedBytesAndSent(app, savedBytes)
+                    Log.d("SEND", "compressed message is ${compressed.size} was $sourceMessageSize , saved $savedBytes")
                     compressed
                 }
             } ?: run { //compression failed, rollback to standard message
