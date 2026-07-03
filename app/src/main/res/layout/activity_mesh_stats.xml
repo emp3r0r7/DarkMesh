@@ -322,7 +322,7 @@
                     android:paddingEnd="8dp">
 
                     <TextView
-                        android:id="@+id/compresedBytesSavedLabel"
+                        android:id="@+id/compressedBytesSavedLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="BYTES SAVED:"
@@ -330,7 +330,36 @@
                         tools:ignore="HardcodedText" />
 
                     <TextView
-                        android:id="@+id/compresedBytesSavedCount"
+                        android:id="@+id/compressedBytesSavedCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="0"
+                        android:textColor="?android:attr/textColorPrimary"
+                        tools:ignore="HardcodedText" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/compressedAirtimeSavedRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp">
+
+                    <TextView
+                        android:id="@+id/compressedAirtimeSavedLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="AIRTIME SAVED:"
+                        android:textColor="@color/colorAnnotation"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:id="@+id/compressedAirtimeCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"

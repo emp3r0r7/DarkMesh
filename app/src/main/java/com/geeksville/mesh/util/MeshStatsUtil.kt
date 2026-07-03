@@ -23,6 +23,7 @@ object MeshStatsUtil {
     //compression stats
     const val STATS_COMPRESSION_SENT_TOTAL = "stats_compression_sent_total"
     const val STATS_COMPRESSION_BYTES_SAVED = "stats_compression_bytes_saved"
+    const val STATS_COMPRESSION_AIRTIME_SAVED = "stats_compression_airtime_saved"
 
     private val semaphore = Semaphore(1)
 
@@ -58,7 +59,8 @@ object MeshStatsUtil {
 
     fun addSavedBytesAndSent(
         ctx: Context,
-        bytesLenght: Int
+        bytesLenght: Int,
+        savedAirtime: Double,
     ) = withStatsLock {
         ctx.statsPrefs.getString(STATS_COMPRESSION_BYTES_SAVED, "0")
             ?.toDouble()
@@ -70,6 +72,15 @@ object MeshStatsUtil {
             }
 
         incrementPrefs(ctx, STATS_COMPRESSION_SENT_TOTAL)
+
+        ctx.statsPrefs.getString(STATS_COMPRESSION_AIRTIME_SAVED, "0")
+            ?.toDouble()
+            ?.let {
+                val total = it + savedAirtime
+                ctx.statsPrefs.edit(commit = true) {
+                    putString(STATS_COMPRESSION_AIRTIME_SAVED, total.toString())
+                }
+            }
     }
 
     fun compareLongestTraceAndAdd(

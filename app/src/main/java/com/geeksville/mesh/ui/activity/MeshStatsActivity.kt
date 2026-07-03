@@ -38,7 +38,7 @@ class MeshStatsActivity : AppCompatActivity() {
             it.text = statsPrefs.getString(MeshStatsUtil.STATS_COMPRESSION_SENT_TOTAL, "0")
         }
 
-        val bytesSavedTv = findViewById<TextView>(R.id.compresedBytesSavedCount)?.also { view ->
+        val bytesSavedTv = findViewById<TextView>(R.id.compressedBytesSavedCount)?.also { view ->
 
             val savedBytes = statsPrefs.getString(MeshStatsUtil.STATS_COMPRESSION_BYTES_SAVED, "0")
 
@@ -53,6 +53,13 @@ class MeshStatsActivity : AppCompatActivity() {
             }
         }
 
+        val airtimeSavedTv = findViewById<TextView>(R.id.compressedAirtimeCount)?.also {
+            val savedMs = statsPrefs.getString(MeshStatsUtil.STATS_COMPRESSION_AIRTIME_SAVED, "0")?.toDouble()
+            val savedSec = savedMs?.div(1000)
+            it.text = "${"%.0f".format(savedMs)} " +
+                      "Ms - ${"%.2f".format(savedSec)} Secs"
+        }
+
         findViewById<Button>(R.id.resetCompressionStats).setOnClickListener{
             statsPrefs.edit{
                 putString(MeshStatsUtil.STATS_COMPRESSION_SENT_TOTAL, "0")
@@ -60,6 +67,9 @@ class MeshStatsActivity : AppCompatActivity() {
 
                 putString(MeshStatsUtil.STATS_COMPRESSION_BYTES_SAVED, "0")
                 bytesSavedTv?.text = "0"
+
+                putString(MeshStatsUtil.STATS_COMPRESSION_AIRTIME_SAVED, "0")
+                airtimeSavedTv?.text = "0"
             }
         }
     }

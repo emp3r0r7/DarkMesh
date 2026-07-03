@@ -66,6 +66,7 @@ import com.geeksville.mesh.ui.map.MAP_STYLE_ID
 import com.geeksville.mesh.ui.share.getSharedContactUrl
 import com.geeksville.mesh.ui.share.toSharedContact
 import com.geeksville.mesh.util.AppUtil
+import com.geeksville.mesh.util.LoRaAirtimeEstimator
 import com.geeksville.mesh.util.MeshStatsUtil
 import com.geeksville.mesh.util.NativeMessageCompression
 import com.geeksville.mesh.util.getShortDate
@@ -627,6 +628,27 @@ class UIViewModel @Inject constructor(
         }
     }
 
+    private fun logCompressedMessageStats(
+        sourceMessageSize: Int,
+        compressedSize: Int
+    ){
+        val savedBytes = sourceMessageSize - compressedSize
+        val savedAirtime = LoRaAirtimeEstimator.estimateAirtimeSaving(
+            sourceMessageSize,
+            compressedSize,
+            spreadingFactor
+        )
+        MeshStatsUtil.addSavedBytesAndSent(
+            app,
+            savedBytes,
+            savedAirtime.savedAirtimeMs
+        )
+        Log.d("SEND", "compressed message is $compressedSize byte was " +
+                "$sourceMessageSize byte , saved $savedBytes byte , " +
+                "saved airtime ${savedAirtime.savedAirtimeMs} ms"
+        )
+    }
+
     fun sendMessage(str: String, contactKey: String = "0${DataPacket.ID_BROADCAST}", replyId: Int? = null) {
         // contactKey: unique contact key filter (channel)+(nodeId)
         val channel = contactKey[0].digitToIntOrNull()
@@ -643,12 +665,14 @@ class UIViewModel @Inject constructor(
                     //compression not worth, fallback to standard
                     portnum = Portnums.PortNum.TEXT_MESSAGE_APP_VALUE
                     str
-                } else {
-                    //compress success
+                } else { //compress success
+
+                    logCompressedMessageStats(
+                        sourceMessageSize,
+                        compressed.size,
+                    )
+
                     portnum = Portnums.PortNum.TEXT_MESSAGE_COMPRESSED_APP_VALUE
-                    val savedBytes = sourceMessageSize - compressed.size
-                    MeshStatsUtil.addSavedBytesAndSent(app, savedBytes)
-                    Log.d("SEND", "compressed message is ${compressed.size} was $sourceMessageSize , saved $savedBytes")
                     compressed
                 }
             } ?: run { //compression failed, rollback to standard message
@@ -843,6 +867,9 @@ class UIViewModel @Inject constructor(
         set(value) {
             updateLoraConfig { it.copy { txEnabled = value } }
         }
+
+    val spreadingFactor: Int
+        get() = config.lora.spreadFactor
 
     var region: Config.LoRaConfig.RegionCode
         get() = config.lora.region
