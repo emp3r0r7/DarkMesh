@@ -631,7 +631,7 @@ class UIViewModel @Inject constructor(
     private fun logCompressedMessageStats(
         sourceMessageSize: Int,
         compressedSize: Int
-    ){
+    ) : LoRaAirtimeEstimator.AirtimeResult {
         val savedBytes = sourceMessageSize - compressedSize
         val savedAirtime = LoRaAirtimeEstimator.estimateAirtimeSaving(
             sourceMessageSize,
@@ -647,6 +647,7 @@ class UIViewModel @Inject constructor(
                 "$sourceMessageSize byte , saved $savedBytes byte , " +
                 "saved airtime ${savedAirtime.savedAirtimeMs} ms"
         )
+        return savedAirtime
     }
 
     fun sendMessage(str: String, contactKey: String = "0${DataPacket.ID_BROADCAST}", replyId: Int? = null) {
@@ -658,6 +659,7 @@ class UIViewModel @Inject constructor(
         val useCompressionOnContact = app.compressionPrefs.getBoolean(contactKey, false)
         val sourceMessageSize = str.encodeToByteArray().size
         var savedBytes: Int? = null
+        var savedAirtime: Double? = null
         var portnum: Int
 
         val payload = if(useCompressionOnContact && useCompression) {
@@ -670,10 +672,10 @@ class UIViewModel @Inject constructor(
                     //compression success
                     savedBytes = sourceMessageSize - compressedMessage.size
 
-                    logCompressedMessageStats(
+                    savedAirtime = logCompressedMessageStats(
                         sourceMessageSize,
                         compressedMessage.size,
-                    )
+                    ).savedAirtimeMs
 
                     portnum = Portnums.PortNum.TEXT_MESSAGE_COMPRESSED_APP_VALUE
                     compressedMessage
@@ -697,7 +699,8 @@ class UIViewModel @Inject constructor(
             byteArray = encoded,
             replyId = replyId,
             dataType = portnum,
-            savedBytes = savedBytes
+            savedBytes = savedBytes,
+            savedAirtime = savedAirtime
         )
 
         sendDataPacket(p)

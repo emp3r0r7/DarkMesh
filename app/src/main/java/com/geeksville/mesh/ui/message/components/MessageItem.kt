@@ -83,6 +83,7 @@ internal fun MessageItem(
     hopsAway: Int,
     compressed: Boolean,
     savedBytes: Int?,
+    savedAirtime: Double?,
     messageText: String?,
     messageTime: String,
     messageStatus: MessageStatus?,
@@ -246,16 +247,28 @@ internal fun MessageItem(
                             )
                         }
 
-                        if(fromLocal && compressed && savedBytes != null){
+                        if(
+                            fromLocal &&
+                            compressed &&
+                            savedBytes != null &&
+                            savedAirtime != null
+                        ) {
                             Text(
                                 text = "${savedBytes}B",
                                 color = MaterialTheme.colors.onSurface,
                                 fontSize = MaterialTheme.typography.caption.fontSize,
-                                modifier = Modifier
-                                    .padding(start = 8.dp)
-                                    .clickable {
-                                    Toast.makeText(ctx, "Compressed saved bytes: $savedBytes", Toast.LENGTH_SHORT).show()
-                                },
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+
+                            val normalizedAirtime = "%.2f".format(savedAirtime).let{
+                                if(it == "0.00") "N/A" else it + "ms"
+                            }
+
+                            Text(
+                                text = normalizedAirtime,
+                                color = MaterialTheme.colors.onSurface,
+                                fontSize = MaterialTheme.typography.caption.fontSize,
+                                modifier = Modifier.padding(start = 8.dp)
                             )
                         }
 
@@ -332,6 +345,7 @@ private fun MessageItemPreview() {
             hopsAway = 1,
             compressed = true,
             savedBytes = null,
+            savedAirtime = null,
             uiModel = hiltViewModel()
         )
     }

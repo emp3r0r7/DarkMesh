@@ -65,7 +65,8 @@ data class DataPacket(
     var replyId: Int? = null, // If this is a reply to a previous message, this is the ID of that message
     val clearText: String? = null,  //our messages, for our UI only
     val compressed: Boolean = false,
-    val savedBytes: Int? = null
+    val savedBytes: Int? = null,
+    val savedAirtime: Double? = null
     ) : Parcelable {
 
     /**
@@ -99,7 +100,8 @@ data class DataPacket(
                 clearText: String,
                 replyId: Int? = null,
                 dataType: Int,
-                savedBytes: Int?
+                savedBytes: Int?,
+                savedAirtime: Double?
     ) : this (
         to = to,
         clearText = clearText,
@@ -107,7 +109,8 @@ data class DataPacket(
         dataType = dataType,
         channel = channel,
         replyId = replyId ?: 0,
-        savedBytes = savedBytes
+        savedBytes = savedBytes,
+        savedAirtime = savedAirtime
     )
 
     /**
