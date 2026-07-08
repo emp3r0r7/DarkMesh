@@ -657,23 +657,26 @@ class UIViewModel @Inject constructor(
         val useCompression = app.advancedPrefs.getBoolean(USE_COMPRESSION_MESSAGES, false)
         val useCompressionOnContact = app.compressionPrefs.getBoolean(contactKey, false)
         val sourceMessageSize = str.encodeToByteArray().size
+        var savedBytes: Int? = null
         var portnum: Int
 
         val payload = if(useCompressionOnContact && useCompression) {
-            NativeMessageCompression.compressText(str)?.let { compressed ->
-                if(compressed.size >= sourceMessageSize){
+            NativeMessageCompression.compressText(str)?.let { compressedMessage ->
+                if(compressedMessage.size >= sourceMessageSize){
                     //compression not worth, fallback to standard
                     portnum = Portnums.PortNum.TEXT_MESSAGE_APP_VALUE
                     str
-                } else { //compress success
+                } else {
+                    //compression success
+                    savedBytes = sourceMessageSize - compressedMessage.size
 
                     logCompressedMessageStats(
                         sourceMessageSize,
-                        compressed.size,
+                        compressedMessage.size,
                     )
 
                     portnum = Portnums.PortNum.TEXT_MESSAGE_COMPRESSED_APP_VALUE
-                    compressed
+                    compressedMessage
                 }
             } ?: run { //compression failed, rollback to standard message
                 portnum = Portnums.PortNum.TEXT_MESSAGE_APP_VALUE
@@ -693,7 +696,8 @@ class UIViewModel @Inject constructor(
             clearText = str,
             byteArray = encoded,
             replyId = replyId,
-            dataType = portnum
+            dataType = portnum,
+            savedBytes = savedBytes
         )
 
         sendDataPacket(p)

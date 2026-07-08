@@ -60,6 +60,7 @@ data class Message(
     val replyId: Int?,
     val hopsAway: Int,
     val compressed: Boolean,
+    val savedBytes: Int? = null
     ) {
     fun getStatusStringRes(): Pair<Int, Int> {
         val title = if (routingError > 0) R.string.error else R.string.message_delivery_status

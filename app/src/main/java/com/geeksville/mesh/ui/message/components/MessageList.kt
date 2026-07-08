@@ -183,6 +183,7 @@ internal fun MessageList(
                             messageStatus = msg.status,
                             hopsAway = msg.hopsAway,
                             compressed = msg.compressed,
+                            savedBytes = msg.savedBytes,
                             selected = selected,
                             highlighted = isHighlighted,
                             repliedMessage = repliedMessage,

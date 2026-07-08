@@ -50,6 +50,7 @@ data class PacketEntity(
             replyId = data.replyId,
             hopsAway = data.hopStart - data.hopLimit,
             compressed = data.compressed,
+            savedBytes = data.savedBytes
         )
     }
 }

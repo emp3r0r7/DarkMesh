@@ -64,7 +64,8 @@ data class DataPacket(
     var relayNode: Int? = null,
     var replyId: Int? = null, // If this is a reply to a previous message, this is the ID of that message
     val clearText: String? = null,  //our messages, for our UI only
-    val compressed: Boolean = false
+    val compressed: Boolean = false,
+    val savedBytes: Int? = null
     ) : Parcelable {
 
     /**
@@ -97,7 +98,8 @@ data class DataPacket(
                 byteArray: ByteArray,
                 clearText: String,
                 replyId: Int? = null,
-                dataType: Int
+                dataType: Int,
+                savedBytes: Int?
     ) : this (
         to = to,
         clearText = clearText,
@@ -105,6 +107,7 @@ data class DataPacket(
         dataType = dataType,
         channel = channel,
         replyId = replyId ?: 0,
+        savedBytes = savedBytes
     )
 
     /**

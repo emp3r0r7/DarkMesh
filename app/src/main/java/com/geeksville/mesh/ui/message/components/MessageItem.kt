@@ -82,6 +82,7 @@ internal fun MessageItem(
     node: Node,
     hopsAway: Int,
     compressed: Boolean,
+    savedBytes: Int?,
     messageText: String?,
     messageTime: String,
     messageStatus: MessageStatus?,
@@ -245,6 +246,19 @@ internal fun MessageItem(
                             )
                         }
 
+                        if(fromLocal && compressed && savedBytes != null){
+                            Text(
+                                text = "${savedBytes}B",
+                                color = MaterialTheme.colors.onSurface,
+                                fontSize = MaterialTheme.typography.caption.fontSize,
+                                modifier = Modifier
+                                    .padding(start = 8.dp)
+                                    .clickable {
+                                    Toast.makeText(ctx, "Compressed saved bytes: $savedBytes", Toast.LENGTH_SHORT).show()
+                                },
+                            )
+                        }
+
                         AnimatedVisibility(visible = fromLocal) {
                             Icon(
                                 imageVector = when (messageStatus) {
@@ -317,6 +331,7 @@ private fun MessageItemPreview() {
             selected = false,
             hopsAway = 1,
             compressed = true,
+            savedBytes = null,
             uiModel = hiltViewModel()
         )
     }
