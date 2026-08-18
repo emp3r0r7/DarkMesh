@@ -420,6 +420,18 @@ class UIViewModel @Inject constructor(
     fun getUser(userId: String?) = nodeDB.getUser(userId ?: DataPacket.ID_BROADCAST)
     fun getByUserId(userId: String?) = nodeDB.nodeDBbyNum.value.values.firstOrNull{ it.user.id == userId }
 
+    fun deleteNodeRegistrById(id: String) {
+        viewModelScope.launch {
+            nodeRegistryRepository.deleteById(id)
+        }
+    }
+
+    fun clearNodeRegistry(){
+        viewModelScope.launch {
+            nodeRegistryRepository.deleteAll()
+        }
+    }
+
     private val _snackbarText = MutableLiveData<Any?>(null)
     val snackbarText: LiveData<Any?> get() = _snackbarText
 

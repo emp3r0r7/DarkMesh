@@ -9,6 +9,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import androidx.appcompat.widget.Toolbar
@@ -47,6 +48,8 @@ object AutoDeleteConfig {
 }
 
 class AdvancedSettings : AppCompatActivity() {
+
+    private val viewModel: UIViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -104,6 +107,8 @@ class AdvancedSettings : AppCompatActivity() {
             android.R.layout.simple_spinner_item,
             hoursValues
         )
+
+        val clearRegistryBackupButton = findViewById<Button>(R.id.clearNodeRegistryButton)
 
         autoDeleteNodesHoursAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         autoDeleteTimeSpinner.adapter = autoDeleteNodesHoursAdapter
@@ -213,6 +218,13 @@ class AdvancedSettings : AppCompatActivity() {
             ).show()
         }
 
+        clearRegistryBackupButton.setOnClickListener {
+            viewModel.clearNodeRegistry()
+            Toast.makeText(
+                this,
+                "Node backup registry cleared!", Toast.LENGTH_SHORT
+            ).show()
+        }
     }
 
     private fun setSwitchListener(

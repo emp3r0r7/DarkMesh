@@ -394,5 +394,40 @@
             app:layout_constraintTop_toBottomOf="@+id/muteNodeInfoSoundDesc"
             tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
 
+
+        <TextView
+            android:id="@+id/clearNodeRegistry"
+            android:layout_width="220dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="20dp"
+            android:text="CLEAR NODE REGISTRY BACKUP"
+            android:textColor="@color/colorAnnotation"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/muteNodeInfoSoundSwitch"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/clearNodeRegistryDesc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="If you happen to see wierd traceroute segments, clear the internal node registry here."
+            android:textSize="13sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/clearNodeRegistry"
+            tools:ignore="HardcodedText" />
+
+        <Button
+            android:id="@+id/clearNodeRegistryButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:backgroundTint="@color/colorAnnotation"
+            android:text="Clear Backup  "
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/clearNodeRegistryDesc"
+            tools:ignore="HardcodedText" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

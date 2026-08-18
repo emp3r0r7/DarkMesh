@@ -41,6 +41,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.ContentAlpha
@@ -147,7 +148,8 @@ fun NodeDetailScreen(
             modifier = modifier,
             nodeRegistry = nodeRegistry,
             ourStatus = ourStatusMessage,
-            onStatusClear = { uiViewModel.clearNodeStatus(node.num)}
+            onStatusClear = { uiViewModel.clearNodeStatus(node.num)},
+            onNodeRegistryDeletion = { uiViewModel.deleteNodeRegistrById(node.user.id) }
         )
     } else {
         Box(
@@ -169,6 +171,7 @@ private fun NodeDetailList(
     nodeRegistry: NodeRegistry?,
     onStatusClear:(Any) -> Unit = {},
     onNavigate: (Any) -> Unit = {},
+    onNodeRegistryDeletion: () -> Unit = {}
 ) {
 
     val statusMessage = maybeGetStatusMessage(
@@ -211,7 +214,11 @@ private fun NodeDetailList(
         if (metricsState.deviceHardware != null) {
             item {
                 PreferenceCategory("Device") {
-                    DeviceDetailsContent(metricsState, nodeRegistry)
+                    DeviceDetailsContent(
+                        metricsState,
+                        nodeRegistry,
+                        onNodeRegistryDeletion
+                    )
                 }
             }
         }
@@ -337,6 +344,7 @@ private fun NodeDetailRow(
 private fun DeviceDetailsContent(
     state: MetricsState,
     nodeRegistry: NodeRegistry?,
+    onNodeRegistryDeletion: () -> Unit = {}
 ) {
     val deviceHardware = state.deviceHardware ?: return
     val hwModelName = deviceHardware.displayName
@@ -372,6 +380,26 @@ private fun DeviceDetailsContent(
             value = "",
             iconTint = Color.Green
         )
+
+        Button(
+            onClick = {
+                onNodeRegistryDeletion()
+            },
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete backup"
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Text("Delete Backup")
+            }
+        }
     }
 }
 
