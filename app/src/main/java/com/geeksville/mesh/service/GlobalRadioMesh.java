@@ -26,7 +26,7 @@ public class GlobalRadioMesh {
     public static final Map<Integer, String> autoDeleteMap = new ConcurrentHashMap<>();
     public static final Map<Integer, Integer> ourTracerouteRequests = new ConcurrentHashMap<>();
     public static final Map<Integer, Long> ourNeighborRequests = new ConcurrentHashMap<>();
-    public static final Map<Long, MeshProtos.MeshPacket> packetsReceivedWindow = new ConcurrentHashMap<>();
+    public static final Map<Integer, MeshProtos.MeshPacket> packetsReceivedWindow = new ConcurrentHashMap<>();
 
     public static void sendMessage(String str, String contactKey, Integer replyId) {
 

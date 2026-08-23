@@ -190,6 +190,17 @@ class MeshService : Service(), Logging {
 
     private val tracerouteExpirationMs = 90_000L
 
+    private var rxActivityTimeoutJob: Job? = null
+
+    private fun restartRxActivityTimeout(scope: CoroutineScope) {
+        rxActivityTimeoutJob?.cancel()
+        rxActivityTimeoutJob = scope.launch {
+            delay(60_000)
+            GlobalRadioMesh.packetsReceivedWindow.clear()
+            radioConfigRepository.emitLastMinPacketCount(0)
+        }
+    }
+
     companion object : Logging {
 
         // Intents broadcast by MeshService
@@ -943,17 +954,17 @@ class MeshService : Service(), Logging {
     @Synchronized
     private fun elaboratePacketsReceivedRatio(packet: MeshPacket){
 
-        val now = System.currentTimeMillis()
-        val minute = 60_000
+        val nowSeconds = System.currentTimeMillis() / 1000
 
-        val toDelete: List<Long> = GlobalRadioMesh.packetsReceivedWindow.keys
-            .filter { now - it >= minute }
+        val toDelete: List<Int> = GlobalRadioMesh.packetsReceivedWindow.keys
+            .filter { nowSeconds - it >= 60 } //after 1 min will be removed
 
         toDelete.forEach { GlobalRadioMesh.packetsReceivedWindow.remove(it) }
 
-        GlobalRadioMesh.packetsReceivedWindow[now] = packet
+        GlobalRadioMesh.packetsReceivedWindow[packet.rxTime] = packet
         val count = GlobalRadioMesh.packetsReceivedWindow.size
         radioConfigRepository.emitLastMinPacketCount(count)
+        restartRxActivityTimeout(serviceScope)
     }
 
     private fun detectRelayNode(packet: MeshPacket, traceResponse:String?) {
