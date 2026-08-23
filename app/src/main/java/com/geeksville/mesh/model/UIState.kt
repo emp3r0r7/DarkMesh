@@ -223,6 +223,9 @@ class UIViewModel @Inject constructor(
     val lastRelayNode = _lastRelayNode.asStateFlow()
     private var relayNodeexpireJob: Job? = null
 
+    private val _lastMinPacketCount = MutableStateFlow<Int?>(null)
+    val lastMinPacketCount = _lastMinPacketCount.asStateFlow()
+
     var actionBarMenu: Menu? = null
     val meshService: IMeshService? get() = radioConfigRepository.meshService
 
@@ -530,6 +533,10 @@ class UIViewModel @Inject constructor(
                 }
             }
             .launchIn(viewModelScope)
+
+        radioConfigRepository.packetsReceived.onEach {
+            _lastMinPacketCount.value = it
+        }.launchIn(viewModelScope)
 
         viewModelScope.launch {
             DbImportState.importComplete.collect { epoch ->

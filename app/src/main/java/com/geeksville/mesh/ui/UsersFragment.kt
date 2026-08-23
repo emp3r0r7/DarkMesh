@@ -38,8 +38,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -65,6 +67,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
@@ -80,6 +83,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.DataPacket
 import com.geeksville.mesh.android.Logging
+import com.geeksville.mesh.android.advancedPrefs
 import com.geeksville.mesh.database.DbImportState
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.RelayEvent
@@ -95,12 +99,13 @@ import com.geeksville.mesh.ui.components.rememberTimeTickWithLifecycle
 import com.geeksville.mesh.ui.message.navigateToMessages
 import com.geeksville.mesh.ui.theme.AppTheme
 import com.geeksville.mesh.util.AppUtil
+import com.geeksville.mesh.util.ComposableUtil.rememberBooleanPreference
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
+import org.meshtastic.proto.TelemetryProtos.DeviceMetrics
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import org.meshtastic.proto.TelemetryProtos.DeviceMetrics
 
 @AndroidEntryPoint
 class UsersFragment : ScreenFragment("Users"), Logging {
@@ -156,9 +161,11 @@ fun NodesScreen(
     navigateToMessages: (Node) -> Unit,
     navigateToNodeDetails: (Int) -> Unit,
 ) {
+    val ctx = LocalContext.current
     val state by model.nodesUiState.collectAsStateWithLifecycle()
     val nodes by model.nodeList.collectAsStateWithLifecycle()
     val ourNode by model.ourNodeInfo.collectAsStateWithLifecycle()
+    val lastMinPacketCount by model.lastMinPacketCount.collectAsStateWithLifecycle()
 
     val listState = rememberLazyListState()
 
@@ -166,6 +173,12 @@ fun NodesScreen(
     val connectionState by model.connectionState.collectAsStateWithLifecycle()
     val nodeRegistry by model.nodeRegistryMap.collectAsStateWithLifecycle()
     val ourStatusMessage by model.statusMessage.collectAsStateWithLifecycle()
+
+    val showRxActivityBar by rememberBooleanPreference(
+        ctx.advancedPrefs,
+        RX_ACTIVITY_PREF,
+        true //enabled by default
+    )
 
 //    //filters nodes with same long name as ours which can occur when switching to SENSOR MODE
 //    //fixme maybe set arbitrary randomized name when db init occurs in FW!
@@ -187,6 +200,10 @@ fun NodesScreen(
             //we make sure this box is populated only for nodes != ournode
             if (relayNode != null && relayNode.relayNodeNum != ourNode?.num) {
                 RelayInfoBox(relayNode, model)
+            }
+
+            lastMinPacketCount?.let { count ->
+                if(showRxActivityBar){ MeshHealthBox(count) }
             }
 
             if(DbImportState.importInProgress()){
@@ -240,6 +257,86 @@ fun NodesScreen(
     }
 }
 
+@Composable
+fun MeshHealthBox(
+    lastMinPacketCount: Int
+) {
+    val maxProgressbarCap = 15
+    val progress = (lastMinPacketCount / maxProgressbarCap.toFloat()).coerceIn(0f, 1f)
+
+    val (label, quality) = when {
+        lastMinPacketCount == 0 -> "NO TRAFFIC" to Quality.BAD
+        lastMinPacketCount < 5 -> "POOR" to Quality.BAD
+        lastMinPacketCount < 8 -> "FAIR" to Quality.FAIR
+        lastMinPacketCount < maxProgressbarCap -> "GOOD" to Quality.GOOD
+        else -> "EXCEPTIONAL" to Quality.EXCEPTIONAL
+    }
+
+    androidx.compose.material.Surface(
+        elevation = 4.dp,
+        shape = RoundedCornerShape(10.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(7.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "RX Activity",
+                        fontSize = 14.sp
+                    )
+
+                    Text(
+                        text = "$lastMinPacketCount packets/min",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = quality.color,
+                            shape = RoundedCornerShape(6.dp)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = label,
+                        color = Color.Black,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(10.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(progress)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(quality.color)
+                )
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable

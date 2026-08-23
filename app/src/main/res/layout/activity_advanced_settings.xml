@@ -429,5 +429,39 @@
             app:layout_constraintTop_toBottomOf="@+id/clearNodeRegistryDesc"
             tools:ignore="HardcodedText" />
 
+
+        <TextView
+            android:id="@+id/rxActivity"
+            android:layout_width="220dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="20dp"
+            android:text="RX ACTIVITY STATUS"
+            android:textColor="@color/colorAnnotation"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/clearNodeRegistryButton"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/rxActivityDescription"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Useful status bar to evaluate current Mesh RX activity and device packet reception."
+            android:textSize="13sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/rxActivity"
+            tools:ignore="HardcodedText" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/rxActivitySwitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Toggle RX Activity Status  "
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/rxActivityDescription"
+            tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

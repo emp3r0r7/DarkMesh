@@ -36,6 +36,7 @@ const val COMPRESSED_CHATS_PREFS = "compressed_chats_prefs"
 const val SHOW_AIRUTIL_CHUTIL = "show_airutil_chutil"
 const val SHOW_AIRUTIL_CHUTIL_ALL_NODES = "show_airutil_chutil_all_nodes"
 const val MUTE_NODEINFO_NOTIFICATIONS = "mute_nodeinfo_notifications"
+const val RX_ACTIVITY_PREF = "show_rx_activity"
 
 object AutoDeleteConfig {
 
@@ -100,6 +101,9 @@ class AdvancedSettings : AppCompatActivity() {
         val muteNodeInfoSoundSwitch =
             findViewById<SwitchCompat>(R.id.muteNodeInfoSoundSwitch)
 
+        val rxActivitySwitch =
+            findViewById<SwitchCompat>(R.id.rxActivitySwitch)
+
         val autoDeleteTimeSpinner = findViewById<Spinner>(R.id.autoDeleteTiming)
 
         val autoDeleteNodesHoursAdapter = ArrayAdapter(
@@ -122,6 +126,7 @@ class AdvancedSettings : AppCompatActivity() {
         val showAirUtilChUtilPrefs = advancedPrefs.getBoolean(SHOW_AIRUTIL_CHUTIL, false)
         val showAirUtilChUtilAllNodesPrefs = advancedPrefs.getBoolean(SHOW_AIRUTIL_CHUTIL_ALL_NODES, false)
         val muteNodeInfoSoundPrefs = advancedPrefs.getBoolean(MUTE_NODEINFO_NOTIFICATIONS, false)
+        val rxActivityPrefs = advancedPrefs.getBoolean(RX_ACTIVITY_PREF, true) //enabled by default
 
         val autoDeleteTimeHours = advancedPrefs.getInt(
             AUTO_DELETE_TIME_HOURS,
@@ -144,6 +149,7 @@ class AdvancedSettings : AppCompatActivity() {
         showAirUtilChUtilSwitch.isChecked = showAirUtilChUtilPrefs
         showAirUtilChUtilAllNodesSwitch.isChecked = showAirUtilChUtilAllNodesPrefs
         muteNodeInfoSoundSwitch.isChecked = muteNodeInfoSoundPrefs
+        rxActivitySwitch.isChecked = rxActivityPrefs
 
         fun updateAirUtilChUtilSectionState() {
             val enabled = showAirUtilChUtilSwitch.isChecked
@@ -172,6 +178,7 @@ class AdvancedSettings : AppCompatActivity() {
         }
         setSwitchListener(showAirUtilChUtilAllNodesSwitch, SHOW_AIRUTIL_CHUTIL_ALL_NODES)
         setSwitchListener(muteNodeInfoSoundSwitch, MUTE_NODEINFO_NOTIFICATIONS)
+        setSwitchListener(rxActivitySwitch, RX_ACTIVITY_PREF)
 
         autoDeleteTimeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(

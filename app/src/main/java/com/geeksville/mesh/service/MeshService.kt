@@ -940,6 +940,22 @@ class MeshService : Service(), Logging {
         }
     }
 
+    @Synchronized
+    private fun elaboratePacketsReceivedRatio(packet: MeshPacket){
+
+        val now = System.currentTimeMillis()
+        val minute = 60_000
+
+        val toDelete: List<Long> = GlobalRadioMesh.packetsReceivedWindow.keys
+            .filter { now - it >= minute }
+
+        toDelete.forEach { GlobalRadioMesh.packetsReceivedWindow.remove(it) }
+
+        GlobalRadioMesh.packetsReceivedWindow[now] = packet
+        val count = GlobalRadioMesh.packetsReceivedWindow.size
+        radioConfigRepository.emitLastMinPacketCount(count)
+    }
+
     private fun detectRelayNode(packet: MeshPacket, traceResponse:String?) {
 
         //We prioritize relaynode from direct packets and traceroutes and if not found, we fallback relayNode field
@@ -1194,6 +1210,10 @@ class MeshService : Service(), Logging {
 
                 if(!fromUs){
                     detectRelayNode(packet,traceRouteResponse)
+                }
+
+                if(!fromUs || data.portnumValue == Portnums.PortNum.ROUTING_APP_VALUE){
+                    elaboratePacketsReceivedRatio(packet)
                 }
 
                 // We always tell other apps when new data packets arrive

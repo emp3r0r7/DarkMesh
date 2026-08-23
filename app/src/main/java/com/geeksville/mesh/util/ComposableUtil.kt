@@ -36,6 +36,4 @@ object ComposableUtil {
 
         return state
     }
-
-
 }

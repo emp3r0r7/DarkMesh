@@ -247,5 +247,15 @@ class RadioConfigRepository @Inject constructor(
        _relayEvents.tryEmit(event)
     }
 
+    private val _lastMinPacketCount = MutableSharedFlow<Int>(
+        replay = 0,
+        extraBufferCapacity = 1
+    )
+
+    val packetsReceived = _lastMinPacketCount.asSharedFlow()
+
+    fun emitLastMinPacketCount(lastMinPacketCount: Int){
+        _lastMinPacketCount.tryEmit(lastMinPacketCount)
+    }
 
 }
