@@ -17,16 +17,12 @@ import com.geeksville.mesh.model.RadioConfigViewModel
 import com.geeksville.mesh.ui.components.EditTextPreference
 import com.geeksville.mesh.ui.components.PreferenceCategory
 import com.geeksville.mesh.ui.components.PreferenceFooter
-import com.geeksville.mesh.ui.components.SwitchPreference
 import org.meshtastic.proto.ModuleConfigProtos
 import org.meshtastic.proto.copy
 import org.meshtastic.proto.moduleConfig
 
-
 @Composable
-@Suppress("AssignedValueIsNeverRead")
-fun TrafficManagementConfigScreen(viewModel: RadioConfigViewModel = hiltViewModel()
-) {
+fun TrafficManagementConfigScreen(viewModel: RadioConfigViewModel = hiltViewModel()) {
     val state by viewModel.radioConfigState.collectAsStateWithLifecycle()
     if (state.responseState.isWaiting()) {
         PacketResponseStateDialog(
@@ -61,59 +57,16 @@ fun TrafficManagementConfigItemList(
 
         item { PreferenceCategory(text = "Traffic Management Config") }
 
+        // Position Min Interval
         item {
-            SwitchPreference(title = "Traffic Management Enabled",
-                checked = trafficManagementInput.enabled,
-                enabled = enabled,
-                onCheckedChange = {
-                    trafficManagementInput = trafficManagementInput.copy { this.enabled = it }
-                })
-        }
-        item { Divider() }
-
-        item {
-            SwitchPreference(title = "Position Dedup",
-                checked = trafficManagementInput.positionDedupEnabled,
-                enabled = enabled,
-                onCheckedChange = {
-                    trafficManagementInput = trafficManagementInput.copy { this.positionDedupEnabled = it }
-                })
-        }
-
-        item { Divider() }
-
-        item {
-            EditTextPreference(title = "Position Precision",
-                value = trafficManagementInput.positionPrecisionBits,
-                enabled = enabled,
-                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                onValueChanged = {
-                    trafficManagementInput = trafficManagementInput.copy { positionPrecisionBits = it }
-                })
-        }
-
-        item { Divider() }
-
-        item {
-            EditTextPreference(title = "Position Min Interval",
+            EditTextPreference(
+                title = "Position Min Interval (secs)",
                 value = trafficManagementInput.positionMinIntervalSecs,
                 enabled = enabled,
                 keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 onValueChanged = {
-                    trafficManagementInput = trafficManagementInput.copy { positionMinIntervalSecs = it }
-                })
-        }
-
-        item { Divider() }
-
-        item {
-            SwitchPreference(
-                title = "NodeInfo Direct Response",
-                checked = trafficManagementInput.nodeinfoDirectResponse,
-                enabled = enabled,
-                onCheckedChange = {
                     trafficManagementInput = trafficManagementInput.copy {
-                        nodeinfoDirectResponse = it
+                        positionMinIntervalSecs = it
                     }
                 }
             )
@@ -121,6 +74,7 @@ fun TrafficManagementConfigItemList(
 
         item { Divider() }
 
+        // NodeInfo Direct Response Max Hops
         item {
             EditTextPreference(
                 title = "NodeInfo Direct Response Max Hops",
@@ -137,24 +91,10 @@ fun TrafficManagementConfigItemList(
 
         item { Divider() }
 
-        item {
-            SwitchPreference(
-                title = "Rate Limit Enabled",
-                checked = trafficManagementInput.rateLimitEnabled,
-                enabled = enabled,
-                onCheckedChange = {
-                    trafficManagementInput = trafficManagementInput.copy {
-                        rateLimitEnabled = it
-                    }
-                }
-            )
-        }
-
-        item { Divider() }
-
+        // Rate Limit Window
         item {
             EditTextPreference(
-                title = "Rate Limit Window",
+                title = "Rate Limit Window (secs)",
                 value = trafficManagementInput.rateLimitWindowSecs,
                 enabled = enabled,
                 keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
@@ -168,6 +108,7 @@ fun TrafficManagementConfigItemList(
 
         item { Divider() }
 
+        // Rate Limit Max Packets
         item {
             EditTextPreference(
                 title = "Rate Limit Max Packets",
@@ -184,21 +125,7 @@ fun TrafficManagementConfigItemList(
 
         item { Divider() }
 
-        item {
-            SwitchPreference(
-                title = "Drop Unknown Enabled",
-                checked = trafficManagementInput.dropUnknownEnabled,
-                enabled = enabled,
-                onCheckedChange = {
-                    trafficManagementInput = trafficManagementInput.copy {
-                        dropUnknownEnabled = it
-                    }
-                }
-            )
-        }
-
-        item { Divider() }
-
+        // Unknown Packet Threshold
         item {
             EditTextPreference(
                 title = "Unknown Packet Threshold",
@@ -215,49 +142,7 @@ fun TrafficManagementConfigItemList(
 
         item { Divider() }
 
-        item {
-            SwitchPreference(
-                title = "Exhaust Hop Telemetry",
-                checked = trafficManagementInput.exhaustHopTelemetry,
-                enabled = enabled,
-                onCheckedChange = {
-                    trafficManagementInput = trafficManagementInput.copy {
-                        exhaustHopTelemetry = it
-                    }
-                }
-            )
-        }
-
-        item { Divider() }
-
-        item {
-            SwitchPreference(
-                title = "Exhaust Hop Position",
-                checked = trafficManagementInput.exhaustHopPosition,
-                enabled = enabled,
-                onCheckedChange = {
-                    trafficManagementInput = trafficManagementInput.copy {
-                        exhaustHopPosition = it
-                    }
-                }
-            )
-        }
-
-        item { Divider() }
-
-        item {
-            SwitchPreference(
-                title = "Router Preserve Hops",
-                checked = trafficManagementInput.routerPreserveHops,
-                enabled = enabled,
-                onCheckedChange = {
-                    trafficManagementInput = trafficManagementInput.copy {
-                        routerPreserveHops = it
-                    }
-                }
-            )
-        }
-
+        // Footer con pulsanti Save/Cancel
         item {
             PreferenceFooter(
                 enabled = enabled && trafficManagementInput != trafficManagementConfig,
@@ -273,7 +158,3 @@ fun TrafficManagementConfigItemList(
         }
     }
 }
-
-
-
-
