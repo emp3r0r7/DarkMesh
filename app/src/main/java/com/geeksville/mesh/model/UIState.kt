@@ -177,6 +177,13 @@ data class RelayEvent (
     val isDirect: Boolean = false
 )
 
+data class PacketActivityEvent(
+    val timestamp: Long,
+    val rxSnr: Float,
+    val rxRssi: Int,
+    val portNum: Int,
+)
+
 
 data class NodesUiState(
     val sort: NodeSortOption = NodeSortOption.LAST_HEARD,
@@ -225,6 +232,7 @@ class UIViewModel @Inject constructor(
 
     private val _lastMinPacketCount = MutableStateFlow<Int?>(null)
     val lastMinPacketCount = _lastMinPacketCount.asStateFlow()
+    val packetActivityEvents = radioConfigRepository.packetActivityEvents
 
     var actionBarMenu: Menu? = null
     val meshService: IMeshService? get() = radioConfigRepository.meshService

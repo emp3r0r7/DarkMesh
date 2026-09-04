@@ -30,15 +30,16 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -56,19 +57,26 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -86,6 +94,7 @@ import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.android.advancedPrefs
 import com.geeksville.mesh.database.DbImportState
 import com.geeksville.mesh.model.Node
+import com.geeksville.mesh.model.PacketActivityEvent
 import com.geeksville.mesh.model.RelayEvent
 import com.geeksville.mesh.model.SNR_FAIR_THRESHOLD
 import com.geeksville.mesh.model.SNR_GOOD_THRESHOLD
@@ -95,6 +104,7 @@ import com.geeksville.mesh.ui.components.NodeMenuAction
 import com.geeksville.mesh.ui.components.Quality
 import com.geeksville.mesh.ui.components.RSSI_FAIR_THRESHOLD
 import com.geeksville.mesh.ui.components.RSSI_GOOD_THRESHOLD
+import com.geeksville.mesh.ui.components.determineSignalQuality
 import com.geeksville.mesh.ui.components.rememberTimeTickWithLifecycle
 import com.geeksville.mesh.ui.message.navigateToMessages
 import com.geeksville.mesh.ui.theme.AppTheme
@@ -102,6 +112,7 @@ import com.geeksville.mesh.util.AppUtil
 import com.geeksville.mesh.util.ComposableUtil.rememberBooleanPreference
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
+import org.meshtastic.proto.Portnums
 import org.meshtastic.proto.TelemetryProtos.DeviceMetrics
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -166,6 +177,14 @@ fun NodesScreen(
     val nodes by model.nodeList.collectAsStateWithLifecycle()
     val ourNode by model.ourNodeInfo.collectAsStateWithLifecycle()
     val lastMinPacketCount by model.lastMinPacketCount.collectAsStateWithLifecycle()
+    val packetHits = remember { mutableStateListOf<PacketActivityEvent>() }
+
+    LaunchedEffect(model) {
+        model.packetActivityEvents.collect { event ->
+            packetHits.removeAll { event.timestamp - it.timestamp > 60_000 }
+            packetHits.add(event)
+        }
+    }
 
     val listState = rememberLazyListState()
 
@@ -203,7 +222,7 @@ fun NodesScreen(
             }
 
             lastMinPacketCount?.let { count ->
-                if(showRxActivityBar){ MeshHealthBox(count) }
+                if(showRxActivityBar){ MeshHealthBox(count, packetHits) }
             }
 
             if(DbImportState.importInProgress()){
@@ -259,10 +278,11 @@ fun NodesScreen(
 
 @Composable
 fun MeshHealthBox(
-    lastMinPacketCount: Int
+    lastMinPacketCount: Int,
+    packetHits: List<PacketActivityEvent> = emptyList()
 ) {
     val maxProgressbarCap = 15
-    val progress = (lastMinPacketCount / maxProgressbarCap.toFloat()).coerceIn(0f, 1f)
+    var showLegend by remember { mutableStateOf(false) }
 
     val (label, quality) = when {
         lastMinPacketCount == 0 -> "NO TRAFFIC" to Quality.BAD
@@ -290,10 +310,24 @@ fun MeshHealthBox(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text(
-                        text = "RX Activity",
-                        fontSize = 14.sp
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "RX Activity",
+                            fontSize = 14.sp
+                        )
+
+                        IconButton(
+                            onClick = { showLegend = true },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Info,
+                                contentDescription = "Packet activity legend",
+                                tint = colorResource(id = R.color.colorAnnotation),
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
 
                     Text(
                         text = "$lastMinPacketCount packets/min",
@@ -319,23 +353,280 @@ fun MeshHealthBox(
                 }
             }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(10.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .fillMaxWidth(progress)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(quality.color)
+            PacketActivityTimeline(
+                packetHits = packetHits,
+                color = quality.color
+            )
+        }
+    }
+
+    if (showLegend) {
+        PacketActivityLegend(onDismiss = { showLegend = false })
+    }
+}
+
+@Composable
+private fun PacketActivityTimeline(
+    packetHits: List<PacketActivityEvent>,
+    color: Color,
+) {
+    var nowMillis by remember { mutableStateOf(System.currentTimeMillis()) }
+    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
+    val darkOverlayAlpha = if (surfaceVariant.luminance() > 0.5f) 0.52f else 0.28f
+    val timelineBackground = Color.Black
+        .copy(alpha = darkOverlayAlpha)
+        .compositeOver(surfaceVariant)
+    val timelineBackgroundEnd = Color.Black
+        .copy(alpha = 0.12f)
+        .compositeOver(timelineBackground)
+    val timelineShape = RoundedCornerShape(50)
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            nowMillis = System.currentTimeMillis()
+            delay(100)
+        }
+    }
+
+    Canvas(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(22.dp)
+            .clip(timelineShape)
+            .background(
+                brush = Brush.horizontalGradient(
+                    colors = listOf(timelineBackground, timelineBackgroundEnd)
                 )
+            )
+            .border(1.dp, color.copy(alpha = 0.18f), timelineShape)
+    ) {
+        repeat(5) { index ->
+            drawCircle(
+                color = Color.White.copy(alpha = 0.10f),
+                radius = 1.dp.toPx(),
+                center = androidx.compose.ui.geometry.Offset(
+                    x = size.width * (index + 1) / 6f,
+                    y = size.height / 2f
+                )
+            )
+        }
+
+        val edgePadding = 2.dp.toPx()
+        val minimumHitSpacing = 9.dp.toPx()
+        var nextAvailableX = size.width - edgePadding
+
+        packetHits.asReversed().forEach { event ->
+            val ageMillis = nowMillis - event.timestamp
+            if (ageMillis in 0..60_000) {
+                val desiredX = edgePadding +
+                    (size.width - edgePadding * 2) * (1f - ageMillis / 60_000f)
+                val x = minOf(desiredX, nextAvailableX)
+                nextAvailableX = x - minimumHitSpacing
+
+                if (x < edgePadding) return@forEach
+
+                val intensity = 1f - ageMillis / 60_000f
+                val signalQuality = determineSignalQuality(event.rxSnr, event.rxRssi)
+                val hitColor = signalQuality.color
+                val hitHeight = size.height * 0.70f
+                val type = packetVisualType(event.portNum)
+
+                drawPacketHit(
+                    type = type,
+                    centerX = x,
+                    height = hitHeight + 2.dp.toPx(),
+                    width = 8.dp.toPx(),
+                    color = hitColor.copy(alpha = 0.08f + intensity * 0.16f),
+                )
+                drawPacketHit(
+                    type = type,
+                    centerX = x,
+                    height = hitHeight,
+                    width = 5.dp.toPx(),
+                    color = hitColor.copy(alpha = 0.35f + intensity * 0.65f),
+                )
+
+                if (ageMillis < 1_200) {
+                    val pulseProgress = ageMillis / 1_200f
+                    drawCircle(
+                        color = hitColor.copy(alpha = (1f - pulseProgress) * 0.35f),
+                        radius = (3.dp + 5.dp * pulseProgress).toPx(),
+                        center = androidx.compose.ui.geometry.Offset(x, size.height / 2f),
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(
+                            width = 1.dp.toPx()
+                        )
+                    )
+                }
             }
         }
     }
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawPacketHit(
+    type: PacketVisualType,
+    centerX: Float,
+    height: Float,
+    width: Float,
+    color: Color,
+) {
+    val top = (size.height - height) / 2f
+    val left = centerX - width / 2f
+
+    when (type) {
+        PacketVisualType.MESSAGE -> drawCircle(
+            color = color,
+            radius = height * 0.275f,
+            center = androidx.compose.ui.geometry.Offset(centerX, size.height / 2f)
+        )
+
+        PacketVisualType.POSITION -> drawPath(
+            path = Path().apply {
+                moveTo(centerX, top)
+                lineTo(centerX + width / 2f, size.height / 2f)
+                lineTo(centerX, top + height)
+                lineTo(centerX - width / 2f, size.height / 2f)
+                close()
+            },
+            color = color
+        )
+
+        PacketVisualType.TELEMETRY -> drawRect(
+            color = color,
+            topLeft = androidx.compose.ui.geometry.Offset(left, top),
+            size = androidx.compose.ui.geometry.Size(width, height)
+        )
+
+        PacketVisualType.ROUTING -> drawPath(
+            path = Path().apply {
+                moveTo(centerX, top)
+                lineTo(centerX + width / 2f, top + height)
+                lineTo(centerX - width / 2f, top + height)
+                close()
+            },
+            color = color
+        )
+
+        PacketVisualType.OTHER -> drawLine(
+            color = color,
+            start = androidx.compose.ui.geometry.Offset(centerX, top),
+            end = androidx.compose.ui.geometry.Offset(centerX, top + height),
+            strokeWidth = width / 2f,
+            cap = StrokeCap.Round
+        )
+    }
+}
+
+@Composable
+private fun PacketActivityLegend(onDismiss: () -> Unit) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = Icons.Outlined.Info,
+                contentDescription = null,
+                tint = colorResource(id = R.color.colorAnnotation)
+            )
+        },
+        title = { Text("RX Timeline") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "Shape indicates packet type",
+                    style = MaterialTheme.typography.labelMedium
+                )
+                PacketTypeLegendItem(PacketVisualType.MESSAGE, "Message")
+                PacketTypeLegendItem(PacketVisualType.POSITION, "Position / Waypoint")
+                PacketTypeLegendItem(PacketVisualType.TELEMETRY, "Telemetry / Node Info")
+                PacketTypeLegendItem(PacketVisualType.ROUTING, "Routing / Mesh Control")
+                PacketTypeLegendItem(PacketVisualType.OTHER, "Other")
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                Text(
+                    text = "Color indicates signal quality",
+                    style = MaterialTheme.typography.labelMedium
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    SignalLegendItem("Good", Quality.GOOD.color)
+                    SignalLegendItem("Fair", Quality.FAIR.color)
+                    SignalLegendItem("Poor", Quality.BAD.color)
+                    SignalLegendItem("None", Quality.NONE.color)
+                }
+            }
+        },
+        confirmButton = {
+            androidx.compose.material3.TextButton(onClick = onDismiss) {
+                Text("OK")
+            }
+        }
+    )
+}
+
+@Composable
+private fun PacketTypeLegendItem(type: PacketVisualType, label: String) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Canvas(modifier = Modifier.size(width = 18.dp, height = 20.dp)) {
+            drawPacketHit(
+                type = type,
+                centerX = size.width / 2f,
+                height = size.height * 0.82f,
+                width = 7.dp.toPx(),
+                color = Quality.GOOD.color
+            )
+        }
+        Text(text = label, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
+private fun SignalLegendItem(label: String, color: Color) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(7.dp)
+                .background(color, RoundedCornerShape(50))
+        )
+        Text(text = label, style = MaterialTheme.typography.labelSmall)
+    }
+}
+
+private enum class PacketVisualType {
+    MESSAGE,
+    POSITION,
+    TELEMETRY,
+    ROUTING,
+    OTHER,
+}
+
+private fun packetVisualType(portNum: Int): PacketVisualType = when (portNum) {
+    Portnums.PortNum.TEXT_MESSAGE_APP_VALUE,
+    Portnums.PortNum.TEXT_MESSAGE_COMPRESSED_APP_VALUE,
+    Portnums.PortNum.REPLY_APP_VALUE -> PacketVisualType.MESSAGE
+
+    Portnums.PortNum.POSITION_APP_VALUE,
+    Portnums.PortNum.WAYPOINT_APP_VALUE,
+    Portnums.PortNum.MAP_REPORT_APP_VALUE -> PacketVisualType.POSITION
+
+    Portnums.PortNum.TELEMETRY_APP_VALUE,
+    Portnums.PortNum.NODEINFO_APP_VALUE,
+    Portnums.PortNum.NODE_STATUS_APP_VALUE,
+    Portnums.PortNum.PAXCOUNTER_APP_VALUE -> PacketVisualType.TELEMETRY
+
+    Portnums.PortNum.ROUTING_APP_VALUE,
+    Portnums.PortNum.TRACEROUTE_APP_VALUE,
+    Portnums.PortNum.NEIGHBORINFO_APP_VALUE,
+    Portnums.PortNum.ADMIN_APP_VALUE -> PacketVisualType.ROUTING
+
+    else -> PacketVisualType.OTHER
 }
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)

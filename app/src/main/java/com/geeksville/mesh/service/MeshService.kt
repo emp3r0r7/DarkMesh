@@ -62,6 +62,7 @@ import com.geeksville.mesh.database.entity.ReactionEntity
 import com.geeksville.mesh.model.DeviceVersion
 import com.geeksville.mesh.model.NeighborDiscoveryNode
 import com.geeksville.mesh.model.Node
+import com.geeksville.mesh.model.PacketActivityEvent
 import com.geeksville.mesh.model.RelayEvent
 import com.geeksville.mesh.model.UIViewModel.Companion.getPreferences
 import com.geeksville.mesh.model.getNeighborDiscoveryResult
@@ -964,6 +965,14 @@ class MeshService : Service(), Logging {
         GlobalRadioMesh.packetsReceivedWindow[packet.rxTime] = packet
         val count = GlobalRadioMesh.packetsReceivedWindow.size
         radioConfigRepository.emitLastMinPacketCount(count)
+        radioConfigRepository.emitPacketActivityEvent(
+            PacketActivityEvent(
+                timestamp = System.currentTimeMillis(),
+                rxSnr = packet.rxSnr,
+                rxRssi = packet.rxRssi,
+                portNum = packet.decoded.portnumValue,
+            )
+        )
         restartRxActivityTimeout(serviceScope)
     }
 

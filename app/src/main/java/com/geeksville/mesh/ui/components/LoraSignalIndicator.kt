@@ -164,7 +164,7 @@ private fun Rssi(rssi: Int) {
     )
 }
 
-private fun determineSignalQuality(snr: Float, rssi: Int): Quality = when {
+internal fun determineSignalQuality(snr: Float, rssi: Int): Quality = when {
     snr > SNR_GOOD_THRESHOLD && rssi > RSSI_GOOD_THRESHOLD -> Quality.GOOD
     snr > SNR_GOOD_THRESHOLD && rssi > RSSI_FAIR_THRESHOLD -> Quality.FAIR
     snr > SNR_FAIR_THRESHOLD && rssi > RSSI_GOOD_THRESHOLD -> Quality.FAIR

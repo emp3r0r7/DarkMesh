@@ -24,6 +24,7 @@ import com.geeksville.mesh.database.entity.MyNodeEntity
 import com.geeksville.mesh.database.entity.NodeEntity
 import com.geeksville.mesh.model.NeighborDiscoveryResult
 import com.geeksville.mesh.model.Node
+import com.geeksville.mesh.model.PacketActivityEvent
 import com.geeksville.mesh.model.RelayEvent
 import com.geeksville.mesh.model.getChannelUrl
 import com.geeksville.mesh.service.MeshService.ConnectionState
@@ -254,8 +255,19 @@ class RadioConfigRepository @Inject constructor(
 
     val packetsReceived = _lastMinPacketCount.asSharedFlow()
 
+    private val _packetActivityEvents = MutableSharedFlow<PacketActivityEvent>(
+        replay = 0,
+        extraBufferCapacity = 64
+    )
+
+    val packetActivityEvents = _packetActivityEvents.asSharedFlow()
+
     fun emitLastMinPacketCount(lastMinPacketCount: Int){
         _lastMinPacketCount.tryEmit(lastMinPacketCount)
+    }
+
+    fun emitPacketActivityEvent(event: PacketActivityEvent) {
+        _packetActivityEvents.tryEmit(event)
     }
 
 }
