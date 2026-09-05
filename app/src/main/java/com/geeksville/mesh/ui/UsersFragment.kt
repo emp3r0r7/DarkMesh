@@ -215,6 +215,11 @@ fun NodesScreen(
         modifier = Modifier.fillMaxSize(),
     ) {
         stickyHeader {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(androidx.compose.material.MaterialTheme.colors.background)
+            ) {
 
             //we make sure this box is populated only for nodes != ournode
             if (relayNode != null && relayNode.relayNodeNum != ourNode?.num) {
@@ -232,7 +237,7 @@ fun NodesScreen(
             NodeFilterTextField(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp),
+                    .padding(horizontal = 8.dp, vertical = 3.dp),
                 filterText = state.filter,
                 onTextChange = model::setNodeFilterText,
                 currentSortOption = state.sort,
@@ -242,6 +247,7 @@ fun NodesScreen(
                 showDetails = state.showDetails,
                 onToggleShowDetails = model::toggleShowDetails,
             )
+            }
 
         }
 
@@ -297,7 +303,7 @@ fun MeshHealthBox(
         shape = RoundedCornerShape(10.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
+            .padding(horizontal = 8.dp, vertical = 3.dp)
     ) {
         Column(
             modifier = Modifier
@@ -697,7 +703,7 @@ fun RelayInfoBox(relayNode: RelayEvent, model: UIViewModel) {
         border = BorderStroke(2.dp, borderColor),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
+            .padding(horizontal = 8.dp, vertical = 3.dp)
             .combinedClickable(
                 onClick = {
                     Toast.makeText(
@@ -863,7 +869,7 @@ fun DbImportInfoBox(
             ),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp)
+                .padding(horizontal = 8.dp, vertical = 3.dp)
         ) {
             Row(
                 modifier = Modifier
