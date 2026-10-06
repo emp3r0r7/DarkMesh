@@ -52,7 +52,7 @@ fun <T : Enum<T>> DropDownPreference(
         title = title,
         enabled = enabled,
         items = selectedItem.declaringJavaClass.enumConstants
-            ?.filter { it.name != "UNRECOGNIZED" }?.map { it to it.name } ?: emptyList(),
+            ?.filter { it.name != "UNRECOGNIZED" }?.map { it to it.name }.orEmpty(),
         selectedItem = selectedItem,
         onItemSelected = onItemSelected,
         modifier = modifier,
@@ -61,6 +61,7 @@ fun <T : Enum<T>> DropDownPreference(
 }
 
 @Composable
+@Suppress("LongMethod")
 fun <T> DropDownPreference(
     title: String,
     enabled: Boolean,
@@ -69,6 +70,7 @@ fun <T> DropDownPreference(
     onItemSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
     summary: String? = null,
+    itemEnabled: (T) -> Boolean = { true },
 ) {
     var dropDownExpanded by remember { mutableStateOf(value = false) }
 
@@ -78,9 +80,9 @@ fun <T> DropDownPreference(
             val descriptor = (selectedItem as ProtocolMessageEnum).descriptorForType
 
             @Suppress("UNCHECKED_CAST")
-            enum?.filter { entries ->
+            (enum?.filter { entries ->
                 descriptor.values.any { it.name == entries.name && it.options.deprecated }
-            } as? List<T> ?: emptyList() // Safe cast to List<T> or return emptyList if cast fails
+            } as? List<T>).orEmpty()
         } else {
             emptyList()
         }
@@ -109,6 +111,7 @@ fun <T> DropDownPreference(
         ) {
             items.filterNot { it.first in deprecatedItems }.forEach { item ->
                 DropdownMenuItem(
+                    enabled = itemEnabled(item.first),
                     onClick = {
                         dropDownExpanded = false
                         onItemSelected(item.first)

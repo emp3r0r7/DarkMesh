@@ -116,13 +116,26 @@ enum class ChannelOption(
     val configRes: Int,
     val bandwidth: Float,
 ) {
-    SHORT_TURBO(ModemPreset.SHORT_TURBO, R.string.modem_config_turbo, bandwidth = .500f),
-    SHORT_FAST(ModemPreset.SHORT_FAST, R.string.modem_config_short, .250f),
-    SHORT_SLOW(ModemPreset.SHORT_SLOW, R.string.modem_config_slow_short, .250f),
-    MEDIUM_FAST(ModemPreset.MEDIUM_FAST, R.string.modem_config_medium, .250f),
-    MEDIUM_SLOW(ModemPreset.MEDIUM_SLOW, R.string.modem_config_slow_medium, .250f),
+    VERY_LONG_SLOW(ModemPreset.VERY_LONG_SLOW, R.string.modem_config_very_long, .0625f),
+    LONG_TURBO(ModemPreset.LONG_TURBO, R.string.modem_config_long_turbo, BANDWIDTH_WIDE),
     LONG_FAST(ModemPreset.LONG_FAST, R.string.modem_config_long, .250f),
     LONG_MODERATE(ModemPreset.LONG_MODERATE, R.string.modem_config_mod_long, .125f),
     LONG_SLOW(ModemPreset.LONG_SLOW, R.string.modem_config_slow_long, .125f),
-    VERY_LONG_SLOW(ModemPreset.VERY_LONG_SLOW, R.string.modem_config_very_long, .0625f),
+    MEDIUM_FAST(ModemPreset.MEDIUM_FAST, R.string.modem_config_medium, .250f),
+    MEDIUM_SLOW(ModemPreset.MEDIUM_SLOW, R.string.modem_config_slow_medium, .250f),
+    MEDIUM_TURBO(ModemPreset.MEDIUM_TURBO, R.string.modem_config_medium_turbo, BANDWIDTH_WIDE),
+    SHORT_FAST(ModemPreset.SHORT_FAST, R.string.modem_config_short, .250f),
+    SHORT_SLOW(ModemPreset.SHORT_SLOW, R.string.modem_config_slow_short, .250f),
+    SHORT_TURBO(ModemPreset.SHORT_TURBO, R.string.modem_config_turbo, bandwidth = .500f),
+    LITE_FAST(ModemPreset.LITE_FAST, R.string.modem_config_lite_fast, BANDWIDTH_MEDIUM_NARROW),
+    LITE_SLOW(ModemPreset.LITE_SLOW, R.string.modem_config_lite_slow, BANDWIDTH_MEDIUM_NARROW),
+    NARROW_FAST(ModemPreset.NARROW_FAST, R.string.modem_config_narrow_fast, BANDWIDTH_NARROW),
+    NARROW_SLOW(ModemPreset.NARROW_SLOW, R.string.modem_config_narrow_slow, BANDWIDTH_NARROW),
+    TINY_FAST(ModemPreset.TINY_FAST, R.string.modem_config_tiny_fast, BANDWIDTH_TINY),
+    TINY_SLOW(ModemPreset.TINY_SLOW, R.string.modem_config_tiny_slow, BANDWIDTH_TINY),
 }
+
+private const val BANDWIDTH_WIDE = .500f
+private const val BANDWIDTH_MEDIUM_NARROW = .125f
+private const val BANDWIDTH_NARROW = .0625f
+private const val BANDWIDTH_TINY = .015625f

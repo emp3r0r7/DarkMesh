@@ -98,6 +98,14 @@
     <string name="modem_config_medium">Distanza Media / Veloce</string>
     <string name="modem_config_long">Distanza Grande / Veloce</string>
     <string name="modem_config_mod_long">Distanza Grande / Velocità Moderata</string>
+    <string name="modem_config_long_turbo">Distanza Grande / Turbo</string>
+    <string name="modem_config_medium_turbo">Distanza Media / Turbo</string>
+    <string name="modem_config_lite_fast">Lite / Veloce</string>
+    <string name="modem_config_lite_slow">Lite / Lento</string>
+    <string name="modem_config_narrow_fast">Narrow / Veloce</string>
+    <string name="modem_config_narrow_slow">Narrow / Lento</string>
+    <string name="modem_config_tiny_fast">Tiny / Veloce</string>
+    <string name="modem_config_tiny_slow">Tiny / Lento</string>
     <string name="modem_config_very_long">Distanza Molto Grande / Lento</string>
     <string name="modem_config_unrecognized">NON RICONOSCIUTO</string>
     <string name="meshtastic_service_notifications">Notifiche di servizio</string>

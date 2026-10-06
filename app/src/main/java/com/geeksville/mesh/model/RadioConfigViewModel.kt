@@ -26,6 +26,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.emp3r0r7.darkmesh.R
+import com.geeksville.mesh.CoroutineDispatchers
 import com.geeksville.mesh.IMeshService
 import com.geeksville.mesh.Position
 import com.geeksville.mesh.android.Logging
@@ -41,10 +42,10 @@ import com.geeksville.mesh.ui.Route
 import com.geeksville.mesh.util.UiText
 import com.google.protobuf.MessageLite
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -52,6 +53,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -91,7 +93,8 @@ class RadioConfigViewModel @Inject constructor(
     private val app: Application,
     private val radioConfigRepository: RadioConfigRepository,
     private val nodeRepository: NodeRepository,
-    ) : ViewModel(), Logging {
+    private val dispatchers: CoroutineDispatchers,
+) : ViewModel(), Logging {
     private val meshService: IMeshService? get() = radioConfigRepository.meshService
 
     private val destNum = savedStateHandle.toRoute<Route.RadioConfig>().destNum
@@ -101,6 +104,12 @@ class RadioConfigViewModel @Inject constructor(
     private val requestIds = MutableStateFlow(hashSetOf<Int>())
     private val _radioConfigState = MutableStateFlow(RadioConfigState())
     val radioConfigState: StateFlow<RadioConfigState> = _radioConfigState
+    val modemPresetCapabilities: StateFlow<ModemPresetCapabilities> =
+        radioConfigRepository.modemPresetCapabilities.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = ModemPresetCapabilities.unknown(),
+        )
 
     private val _currentDeviceProfile = MutableStateFlow(deviceProfile {})
     val currentDeviceProfile get() = _currentDeviceProfile.value
@@ -349,7 +358,7 @@ class RadioConfigViewModel @Inject constructor(
 
             AdminRoute.FACTORY_RESET.name -> requestFactoryReset(destNum)
             AdminRoute.NODEDB_RESET.name -> {
-                viewModelScope.launch(Dispatchers.IO) {
+                viewModelScope.launch(dispatchers.io) {
                     myNodeNum?.let {
                         nodeRepository.clearAllExceptOurs(it)
                     }
@@ -373,7 +382,7 @@ class RadioConfigViewModel @Inject constructor(
     fun importProfile(
         uri: Uri,
         onResult: (DeviceProfile) -> Unit,
-    ) = viewModelScope.launch(Dispatchers.IO) {
+    ) = viewModelScope.launch(dispatchers.io) {
         try {
             app.contentResolver.openInputStream(uri).use { inputStream ->
                 val bytes = inputStream?.readBytes()
@@ -390,7 +399,7 @@ class RadioConfigViewModel @Inject constructor(
         writeToUri(uri, profile)
     }
 
-    private suspend fun writeToUri(uri: Uri, message: MessageLite) = withContext(Dispatchers.IO) {
+    private suspend fun writeToUri(uri: Uri, message: MessageLite) = withContext(dispatchers.io) {
         try {
             app.contentResolver.openFileDescriptor(uri, "wt")?.use { parcelFileDescriptor ->
                 FileOutputStream(parcelFileDescriptor.fileDescriptor).use { outputStream ->

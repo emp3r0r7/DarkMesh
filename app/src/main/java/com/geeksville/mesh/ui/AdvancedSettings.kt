@@ -25,6 +25,7 @@ import com.geeksville.mesh.ui.AutoDeleteConfig.hoursValues
 
 const val ADV_SETTINGS_PREFS = "darkmesh_advanced_settings"
 const val TRACE_MAX_PRIORITY_PREF = "trace_max_priority"
+const val SYNC_TIME_WITH_DEVICE_PREF = "sync_time_with_device"
 const val SKIP_MQTT_ENTIRELY = "skip_mqtt_entirely"
 const val OVERRIDE_TELEMETRY_ALL_VERSIONS = "override_telemetry_all_versions"
 const val AUTO_DELETE_OLD_NODES = "auto_delete_old_nodes"
@@ -67,6 +68,9 @@ class AdvancedSettings : AppCompatActivity() {
 
         val tracerouteSwitch =
             findViewById<SwitchCompat>(R.id.tracerouteMaxPriority)
+
+        val syncTimeWithDeviceSwitch =
+            findViewById<SwitchCompat>(R.id.syncTimeWithDeviceSwitch)
 
         val skipMqttSwitch =
             findViewById<SwitchCompat>(R.id.skipMqttEntirelySwitch)
@@ -118,6 +122,7 @@ class AdvancedSettings : AppCompatActivity() {
         autoDeleteTimeSpinner.adapter = autoDeleteNodesHoursAdapter
 
         val traceMaxPref = advancedPrefs.getBoolean(TRACE_MAX_PRIORITY_PREF, false)
+        val syncTimeWithDevicePref = advancedPrefs.getBoolean(SYNC_TIME_WITH_DEVICE_PREF, true)
         val skipMqttPref = advancedPrefs.getBoolean(SKIP_MQTT_ENTIRELY, false)
         val autoDeleteNodesPref = advancedPrefs.getBoolean(AUTO_DELETE_OLD_NODES, false)
         val autoDeletePreserveFavPref = advancedPrefs.getBoolean(AUTO_DELETE_PRESERVE_FAVOURITES, false)
@@ -130,7 +135,7 @@ class AdvancedSettings : AppCompatActivity() {
 
         val autoDeleteTimeHours = advancedPrefs.getInt(
             AUTO_DELETE_TIME_HOURS,
-            hoursValues.maxOrNull()!!
+            hoursValues.last()
         )
 
         val distressPrefix = uiModelPrefs.getString(
@@ -141,6 +146,7 @@ class AdvancedSettings : AppCompatActivity() {
         distressBeaconPrefix.setText(distressPrefix)
 
         tracerouteSwitch.isChecked = traceMaxPref
+        syncTimeWithDeviceSwitch.isChecked = syncTimeWithDevicePref
         skipMqttSwitch.isChecked = skipMqttPref
         autoDeleteNodesSwitch.isChecked = autoDeleteNodesPref
         autoDeletePreserveFav.isChecked = autoDeletePreserveFavPref
@@ -167,6 +173,7 @@ class AdvancedSettings : AppCompatActivity() {
         autoDeleteTimeSpinner.setSelection(autoDeleteSpinnerIndex)
 
         setSwitchListener(tracerouteSwitch, TRACE_MAX_PRIORITY_PREF)
+        setSwitchListener(syncTimeWithDeviceSwitch, SYNC_TIME_WITH_DEVICE_PREF)
         setSwitchListener(skipMqttSwitch, SKIP_MQTT_ENTIRELY)
         setSwitchListener(overrideTelemetrySwitch, OVERRIDE_TELEMETRY_ALL_VERSIONS)
         setSwitchListener(autoDeleteNodesSwitch, AUTO_DELETE_OLD_NODES)

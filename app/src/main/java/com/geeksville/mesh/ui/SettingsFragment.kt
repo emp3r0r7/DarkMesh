@@ -71,7 +71,7 @@ class SettingsFragment : ScreenFragment("Settings"), Logging {
     private var _binding: SettingsFragmentBinding? = null
 
     // This property is only valid between onCreateView and onDestroyView.
-    private val binding get() = _binding!!
+    private val binding get() = requireNotNull(_binding)
 
     private val scanModel: BTScanModel by activityViewModels()
     private val bluetoothViewModel: BluetoothViewModel by activityViewModels()

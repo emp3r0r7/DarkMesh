@@ -17,12 +17,12 @@
 
 package com.geeksville.mesh.repository.radio
 
+import com.geeksville.mesh.CoroutineDispatchers
 import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.util.Exceptions
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.BufferedInputStream
@@ -34,6 +34,7 @@ import java.net.Socket
 import java.net.SocketTimeoutException
 
 class TCPInterface @AssistedInject constructor(
+    private val dispatchers: CoroutineDispatchers,
     service: RadioInterfaceService,
     @Assisted private val address: String,
 ) : StreamInterface(service), Logging {
@@ -98,7 +99,7 @@ class TCPInterface @AssistedInject constructor(
     }
 
     // Create a socket to make the connection with the server
-    private suspend fun startConnect() = withContext(Dispatchers.IO) {
+    private suspend fun startConnect() = withContext(dispatchers.io) {
         debug("TCP connecting to $address")
         Socket(InetAddress.getByName(address), 4403).use { socket ->
             socket.tcpNoDelay = true

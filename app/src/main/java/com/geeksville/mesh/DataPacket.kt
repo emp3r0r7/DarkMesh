@@ -177,7 +177,11 @@ data class DataPacket(
         if (time != other.time) return false
         if (id != other.id) return false
         if (dataType != other.dataType) return false
-        if (!bytes!!.contentEquals(other.bytes!!)) return false
+        if (bytes == null || other.bytes == null) {
+            if (bytes != other.bytes) return false
+        } else if (!bytes.contentEquals(other.bytes)) {
+            return false
+        }
         if (status != other.status) return false
         if (hopLimit != other.hopLimit) return false
         if (hopStart != other.hopStart) return false
@@ -193,7 +197,7 @@ data class DataPacket(
         result = 31 * result + time.hashCode()
         result = 31 * result + id
         result = 31 * result + dataType
-        result = 31 * result + bytes!!.contentHashCode()
+        result = 31 * result + (bytes?.contentHashCode() ?: 0)
         result = 31 * result + status.hashCode()
         result = 31 * result + hopLimit
         result = 31 * result + hopStart

@@ -119,6 +119,10 @@ class NodeRepository @Inject constructor(
         nodeInfoDao.putAll(nodes)
     }
 
+    suspend fun clearNodeDB() = withContext(dispatchers.io) {
+        nodeInfoDao.clearNodeDB()
+    }
+
     suspend fun deleteNode(num: Int) = withContext(dispatchers.io) {
         nodeInfoDao.deleteNode(num)
         nodeInfoDao.deleteMetadata(num)

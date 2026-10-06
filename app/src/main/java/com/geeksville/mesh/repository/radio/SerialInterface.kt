@@ -34,7 +34,7 @@ class SerialInterface @AssistedInject constructor(
     private val usbRepository: UsbRepository,
     @Assisted private val address: String,
 ) : StreamInterface(service), Logging {
-    private var connRef = AtomicReference<SerialConnection?>()
+    private val connRef = AtomicReference<SerialConnection?>()
 
     init {
         connect()

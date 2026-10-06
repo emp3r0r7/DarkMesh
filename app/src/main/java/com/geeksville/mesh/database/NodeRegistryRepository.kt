@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2025 Meshtastic LLC
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package com.geeksville.mesh.database
 
 import com.geeksville.mesh.CoroutineDispatchers
@@ -41,11 +58,13 @@ class NodeRegistryRepository @Inject constructor(
         nodeRegistryDao.updatePosition(nodeId, latitude, longitude)
     }
 
-    suspend fun updateNodeInfo(nodeId: String,
-                               nodeNum: Int?,
-                               longName: String?,
-                               shortName: String?,
-                               lastSeen: Long
+    suspend fun updateNodeInfo(
+        nodeId: String,
+        nodeNum: Int?,
+        longName: String?,
+        shortName: String?,
+        publicKey: ByteArray? = null,
+        lastSeen: Long
     ) = withContext(dispatchers.io) {
 
         nodeRegistryDao.updateNodeInfo(
@@ -53,16 +72,19 @@ class NodeRegistryRepository @Inject constructor(
             nodeNum,
             longName,
             shortName,
+            publicKey,
             lastSeen
         )
     }
 
-    suspend fun insertNodeInfo(nodeId: String,
-                               nodeNum: Int?,
-                               longName: String?,
-                               shortName: String?,
-                               defaultName: String?,
-                               lastSeen: Long
+    suspend fun insertNodeInfo(
+        nodeId: String,
+        nodeNum: Int?,
+        longName: String?,
+        shortName: String?,
+        defaultName: String?,
+        publicKey: ByteArray? = null,
+        lastSeen: Long
     ) = withContext(dispatchers.io) {
 
         nodeRegistryDao.insertNodeInfo(
@@ -71,6 +93,7 @@ class NodeRegistryRepository @Inject constructor(
             longName,
             shortName,
             defaultName,
+            publicKey,
             lastSeen
         )
     }

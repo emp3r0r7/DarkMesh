@@ -68,18 +68,30 @@ data class Channel(
     val name: String
         get() = settings.name.ifEmpty {
             // We have a new style 'empty' channel name.  Use the same logic from the device to convert that to a human readable name
-            if (loraConfig.usePreset) when (loraConfig.modemPreset) {
-                ModemPreset.SHORT_TURBO -> "ShortTurbo"
-                ModemPreset.SHORT_FAST -> "ShortFast"
-                ModemPreset.SHORT_SLOW -> "ShortSlow"
-                ModemPreset.MEDIUM_FAST -> "MediumFast"
-                ModemPreset.MEDIUM_SLOW -> "MediumSlow"
-                ModemPreset.LONG_FAST -> "LongFast"
-                ModemPreset.LONG_SLOW -> "LongSlow"
-                ModemPreset.LONG_MODERATE -> "LongMod"
-                ModemPreset.VERY_LONG_SLOW -> "VLongSlow"
-                else -> "Invalid"
-            } else "Custom"
+            if (loraConfig.usePreset) {
+                when (loraConfig.modemPreset) {
+                    ModemPreset.SHORT_TURBO -> "ShortTurbo"
+                    ModemPreset.SHORT_FAST -> "ShortFast"
+                    ModemPreset.SHORT_SLOW -> "ShortSlow"
+                    ModemPreset.MEDIUM_FAST -> "MediumFast"
+                    ModemPreset.MEDIUM_SLOW -> "MediumSlow"
+                    ModemPreset.MEDIUM_TURBO -> "MediumTurbo"
+                    ModemPreset.LONG_FAST -> "LongFast"
+                    ModemPreset.LONG_SLOW -> "LongSlow"
+                    ModemPreset.LONG_MODERATE -> "LongMod"
+                    ModemPreset.VERY_LONG_SLOW -> "VLongSlow"
+                    ModemPreset.LONG_TURBO -> "LongTurbo"
+                    ModemPreset.LITE_FAST -> "LiteFast"
+                    ModemPreset.LITE_SLOW -> "LiteSlow"
+                    ModemPreset.NARROW_FAST -> "NarrowFast"
+                    ModemPreset.NARROW_SLOW -> "NarrowSlow"
+                    ModemPreset.TINY_FAST -> "TinyFast"
+                    ModemPreset.TINY_SLOW -> "TinySlow"
+                    else -> "Invalid"
+                }
+            } else {
+                "Custom"
+            }
         }
 
     val psk: ByteString

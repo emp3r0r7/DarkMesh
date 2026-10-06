@@ -18,6 +18,7 @@
 package com.geeksville.mesh.database
 
 import android.app.Application
+import com.geeksville.mesh.database.dao.DiscoveryDao
 import com.geeksville.mesh.database.dao.MeshLogDao
 import com.geeksville.mesh.database.dao.NodeInfoDao
 import com.geeksville.mesh.database.dao.NodeRegistryDao
@@ -60,6 +61,11 @@ class DatabaseModule {
     @Provides
     fun provideNodeRegistryDao(database: MeshtasticDatabase): NodeRegistryDao {
         return database.nodeRegistryDao()
+    }
+
+    @Provides
+    fun provideDiscoveryDao(database: MeshtasticDatabase): DiscoveryDao {
+        return database.discoveryDao()
     }
 
 }

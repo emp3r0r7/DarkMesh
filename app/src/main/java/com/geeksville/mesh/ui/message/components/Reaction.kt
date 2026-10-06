@@ -180,7 +180,7 @@ fun ReactionDialog(
 ) {
     val groupedEmojis = reactions.groupBy { it.emoji }
     var selectedEmoji by remember { mutableStateOf<String?>(null) }
-    val filteredReactions = selectedEmoji?.let { groupedEmojis[it] ?: emptyList() } ?: reactions
+    val filteredReactions = selectedEmoji?.let { groupedEmojis[it].orEmpty() } ?: reactions
     val nodeRegistry by viewModel.nodeRegistryMap.collectAsStateWithLifecycle()
     val nodes by viewModel.unfilteredNodeList.collectAsStateWithLifecycle()
 

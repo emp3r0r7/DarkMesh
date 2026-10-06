@@ -64,11 +64,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.model.MetricsViewModel
+import com.geeksville.mesh.model.NeighborDiscoveryLink
 import com.geeksville.mesh.model.NeighborDiscoveryResult
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.model.formatNeighborDiscoverySnr
 import com.geeksville.mesh.model.getNeighborDiscoveryResult
 import com.geeksville.mesh.model.neighborDiscoverySnrColor
+import com.geeksville.mesh.model.withDistances
+import com.geeksville.mesh.ui.discovery.formatDistanceMeters
 import java.text.DateFormat
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -80,6 +83,9 @@ fun NeighborDiscoveryLogScreen(
     onClose: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val nodes by uiViewModel.unfilteredNodeList.collectAsStateWithLifecycle()
+    val nodeRegistryMap by uiViewModel.nodeRegistryMap.collectAsStateWithLifecycle()
+    val nodesByNum = remember(nodes) { nodes.associateBy { it.num } }
     val dateFormat = remember {
         DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM)
     }
@@ -122,6 +128,7 @@ fun NeighborDiscoveryLogScreen(
     showDialog?.let { discovery ->
         NeighborDiscoveryDialog(
             discovery = discovery,
+            distanceUnits = state.displayUnits.number,
             onDismiss = {
                 showDialog = null
                 uiViewModel.clearNeighborDiscoveryResponse()
@@ -148,7 +155,10 @@ fun NeighborDiscoveryLogScreen(
             val result = remember(state.neighborDiscoveryResults) {
                 state.neighborDiscoveryResults.find { it.decoded.requestId == log.fromRadio.packet.id }
             }
-            val discovery = remember(result) { result?.getNeighborDiscoveryResult(viewModel::getUser) }
+            val discovery = remember(result, nodesByNum, nodeRegistryMap) {
+                result?.getNeighborDiscoveryResult(viewModel::getUser)
+                    ?.withDistances(nodesByNum, nodeRegistryMap)
+            }
             val time = dateFormat.format(log.received_date)
             val text = discoverySummary(discovery)
             val icon = if (discovery == null) Icons.Default.PersonOff else Icons.Default.People
@@ -183,6 +193,7 @@ fun NeighborDiscoveryLogScreen(
 @Composable
 fun NeighborDiscoveryDialog(
     discovery: NeighborDiscoveryResult,
+    distanceUnits: Int = 0,
     onDismiss: () -> Unit,
     onViewOnMap: (() -> Unit)? = null,
 ) {
@@ -190,7 +201,7 @@ fun NeighborDiscoveryDialog(
         onDismissRequest = onDismiss,
         title = {},
         text = {
-            NeighborDiscoveryContent(discovery = discovery)
+            NeighborDiscoveryContent(discovery = discovery, distanceUnits = distanceUnits)
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
@@ -216,6 +227,7 @@ fun NeighborDiscoveryDialog(
 @Composable
 fun NeighborDiscoveryContent(
     discovery: NeighborDiscoveryResult,
+    distanceUnits: Int = 0,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -249,25 +261,41 @@ fun NeighborDiscoveryContent(
                 )
             } else {
                 discovery.discovered.forEach { link ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = link.node.longName,
-                            modifier = Modifier.weight(1f),
-                            style = MaterialTheme.typography.body1,
-                        )
-                        Text(
-                            text = formatNeighborDiscoverySnr(link.snr),
-                            color = Color(neighborDiscoverySnrColor(link.snr)),
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.body1,
-                        )
-                    }
+                    NeighborDiscoveryRow(link = link, distanceUnits = distanceUnits)
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun NeighborDiscoveryRow(
+    link: NeighborDiscoveryLink,
+    distanceUnits: Int,
+) {
+    val distanceText = link.distanceMeters.formatDistanceMeters(distanceUnits)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = link.node.longName,
+                style = MaterialTheme.typography.body1,
+            )
+            distanceText?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.caption,
+                )
+            }
+        }
+        Text(
+            text = formatNeighborDiscoverySnr(link.snr),
+            color = Color(neighborDiscoverySnrColor(link.snr)),
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.body1,
+        )
     }
 }
 

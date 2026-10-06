@@ -117,7 +117,7 @@ class BluetoothRepository @Inject constructor(
         val hasPerms = application.hasBluetoothPermission()
         val newState: BluetoothState = bluetoothAdapterLazy.get()?.let { adapter ->
             val enabled = adapter.isEnabled
-            val bondedDevices = adapter.takeIf { hasPerms }?.bondedDevices ?: emptySet()
+            val bondedDevices = adapter.takeIf { hasPerms }?.bondedDevices.orEmpty()
 
             BluetoothState(
                 hasPermissions = hasPerms,

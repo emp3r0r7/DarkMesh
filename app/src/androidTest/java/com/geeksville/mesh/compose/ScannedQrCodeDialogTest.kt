@@ -88,13 +88,12 @@ class ScannedQrCodeDialogTest {
     }
 
     @Test
-    fun testScannedQrCodeDialog_showsAddAndReplaceButtons() {
+    fun testScannedQrCodeDialog_showsAddButton() {
         composeTestRule.apply {
             testScannedQrCodeDialog()
 
-            // Verify that the "Add" and "Replace" buttons are displayed
+            // Verify that the "Add" button is displayed
             onNodeWithText(getString(R.string.add)).assertIsDisplayed()
-            onNodeWithText(getString(R.string.replace)).assertIsDisplayed()
         }
     }
 

@@ -22,13 +22,13 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStoreFile
+import com.geeksville.mesh.CoroutineDispatchers
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.meshtastic.proto.AppOnlyProtos.ChannelSet
 import org.meshtastic.proto.LocalOnlyProtos.LocalConfig
@@ -41,40 +41,49 @@ object DataStoreModule {
 
     @Singleton
     @Provides
-    fun provideLocalConfigDataStore(@ApplicationContext appContext: Context): DataStore<LocalConfig> {
+    fun provideLocalConfigDataStore(
+        @ApplicationContext appContext: Context,
+        dispatchers: CoroutineDispatchers,
+    ): DataStore<LocalConfig> {
         return DataStoreFactory.create(
             serializer = LocalConfigSerializer,
             produceFile = { appContext.dataStoreFile("local_config.pb") },
             corruptionHandler = ReplaceFileCorruptionHandler(
                 produceNewData = { LocalConfig.getDefaultInstance() }
             ),
-            scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+            scope = CoroutineScope(dispatchers.io + SupervisorJob())
         )
     }
 
     @Singleton
     @Provides
-    fun provideModuleConfigDataStore(@ApplicationContext appContext: Context): DataStore<LocalModuleConfig> {
+    fun provideModuleConfigDataStore(
+        @ApplicationContext appContext: Context,
+        dispatchers: CoroutineDispatchers,
+    ): DataStore<LocalModuleConfig> {
         return DataStoreFactory.create(
             serializer = ModuleConfigSerializer,
             produceFile = { appContext.dataStoreFile("module_config.pb") },
             corruptionHandler = ReplaceFileCorruptionHandler(
                 produceNewData = { LocalModuleConfig.getDefaultInstance() }
             ),
-            scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+            scope = CoroutineScope(dispatchers.io + SupervisorJob())
         )
     }
 
     @Singleton
     @Provides
-    fun provideChannelSetDataStore(@ApplicationContext appContext: Context): DataStore<ChannelSet> {
+    fun provideChannelSetDataStore(
+        @ApplicationContext appContext: Context,
+        dispatchers: CoroutineDispatchers,
+    ): DataStore<ChannelSet> {
         return DataStoreFactory.create(
             serializer = ChannelSetSerializer,
             produceFile = { appContext.dataStoreFile("channel_set.pb") },
             corruptionHandler = ReplaceFileCorruptionHandler(
                 produceNewData = { ChannelSet.getDefaultInstance() }
             ),
-            scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+            scope = CoroutineScope(dispatchers.io + SupervisorJob())
         )
     }
 }

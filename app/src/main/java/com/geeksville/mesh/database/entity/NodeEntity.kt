@@ -29,6 +29,7 @@ import com.geeksville.mesh.MeshUser
 import com.geeksville.mesh.NodeInfo
 import com.geeksville.mesh.Position
 import com.geeksville.mesh.model.Node
+import com.geeksville.mesh.util.PkiUtils
 import com.google.protobuf.ByteString
 import org.meshtastic.proto.MeshProtos
 import org.meshtastic.proto.PaxcountProtos
@@ -161,8 +162,8 @@ data class NodeEntity(
         get() = environmentTelemetry.environmentMetrics
 
     val isUnknownUser get() = user.hwModel == MeshProtos.HardwareModel.UNSET
-    val hasPKC get() = !user.publicKey.isEmpty
-    val errorByteString: ByteString get() = ByteString.copyFrom(ByteArray(32) { 0 })
+    val hasPKC get() = PkiUtils.hasUsablePublicKey(user.publicKey)
+    val errorByteString: ByteString get() = PkiUtils.MISMATCH_PUBLIC_KEY
 
     fun setPosition(p: MeshProtos.Position, defaultTime: Int = currentTime()) {
         position = p.copy { time = if (p.time != 0) p.time else defaultTime }

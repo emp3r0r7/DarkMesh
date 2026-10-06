@@ -142,7 +142,7 @@ class NavGraphFragment : ScreenFragment("NavGraph"), Logging {
     ): View {
         @Suppress("DEPRECATION") val destNum = arguments?.getSerializable("destNum") as? Int
         val startDestination: Any = when (arguments?.getString("startDestination")) {
-            "NodeDetails" -> Route.NodeDetail(destNum!!)
+            "NodeDetails" -> destNum?.let { Route.NodeDetail(it) } ?: Route.RadioConfig()
             else -> Route.RadioConfig(destNum)
         }
 
@@ -455,7 +455,9 @@ fun NavGraph(
         modifier = modifier,
     ) {
         composable<Route.NodeDetail> {
-            NodeDetailScreen(uiViewModel = uiModel) { navController.navigate(route = it)}
+            NodeDetailScreen(uiViewModel = uiModel) { route ->
+                navController.navigate(route = route)
+            }
         }
         composable<Route.DeviceMetrics> {
             val parentEntry = remember { navController.getBackStackEntry<Route.NodeDetail>() }
@@ -498,7 +500,9 @@ fun NavGraph(
             )
         }
         composable<Route.RadioConfig> {
-            RadioConfigScreen { navController.navigate(route = it) }
+            RadioConfigScreen { route ->
+                navController.navigate(route = route)
+            }
         }
         composable<Route.User> {
             val parentEntry = remember { navController.getBackStackEntry<Route.RadioConfig>() }

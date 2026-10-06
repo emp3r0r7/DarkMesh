@@ -61,6 +61,41 @@
             tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
 
         <TextView
+            android:id="@+id/syncTimeWithDeviceLabel"
+            android:layout_width="220dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="20dp"
+            android:text="DEVICE TIME SYNC"
+            android:textColor="@color/colorAnnotation"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tracerouteMaxPriority"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/syncTimeWithDeviceDescription"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:text="Synchronizes the radio clock from this Android device after the initial config download."
+            android:textSize="13sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/syncTimeWithDeviceLabel"
+            tools:ignore="HardcodedText" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/syncTimeWithDeviceSwitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Sync Time with Device  "
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/syncTimeWithDeviceDescription"
+            tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
+
+        <TextView
             android:textColor="@color/colorAnnotation"
             android:id="@+id/textView"
             android:layout_width="168dp"
@@ -69,7 +104,7 @@
             android:layout_marginTop="20dp"
             android:text="SKIP MQTT RECEIVED DATA"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tracerouteMaxPriority"
+            app:layout_constraintTop_toBottomOf="@+id/syncTimeWithDeviceSwitch"
             tools:ignore="HardcodedText" />
 
         <TextView

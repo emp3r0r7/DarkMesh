@@ -1,0 +1,1191 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 26,
+    "identityHash": "1d4d036a2212486944c75d5a3cf54a45",
+    "entities": [
+      {
+        "tableName": "my_node",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`myNodeNum` INTEGER NOT NULL, `model` TEXT, `firmwareVersion` TEXT, `couldUpdate` INTEGER NOT NULL, `shouldUpdate` INTEGER NOT NULL, `currentPacketId` INTEGER NOT NULL, `messageTimeoutMsec` INTEGER NOT NULL, `minAppVersion` INTEGER NOT NULL, `maxChannels` INTEGER NOT NULL, `hasWifi` INTEGER NOT NULL, PRIMARY KEY(`myNodeNum`))",
+        "fields": [
+          {
+            "fieldPath": "myNodeNum",
+            "columnName": "myNodeNum",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "model",
+            "columnName": "model",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "firmwareVersion",
+            "columnName": "firmwareVersion",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "couldUpdate",
+            "columnName": "couldUpdate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "shouldUpdate",
+            "columnName": "shouldUpdate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currentPacketId",
+            "columnName": "currentPacketId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "messageTimeoutMsec",
+            "columnName": "messageTimeoutMsec",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "minAppVersion",
+            "columnName": "minAppVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "maxChannels",
+            "columnName": "maxChannels",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hasWifi",
+            "columnName": "hasWifi",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "myNodeNum"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "nodes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`num` INTEGER NOT NULL, `user` BLOB NOT NULL, `long_name` TEXT, `short_name` TEXT, `position` BLOB NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `snr` REAL NOT NULL, `rssi` INTEGER NOT NULL, `last_heard` INTEGER NOT NULL, `device_metrics` BLOB NOT NULL, `channel` INTEGER NOT NULL, `via_mqtt` INTEGER NOT NULL, `hops_away` INTEGER NOT NULL, `is_favorite` INTEGER NOT NULL, `is_ignored` INTEGER NOT NULL DEFAULT 0, `environment_metrics` BLOB NOT NULL, `power_metrics` BLOB NOT NULL, `paxcounter` BLOB NOT NULL, `role` TEXT, `node_status` TEXT, PRIMARY KEY(`num`))",
+        "fields": [
+          {
+            "fieldPath": "num",
+            "columnName": "num",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "user",
+            "columnName": "user",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "longName",
+            "columnName": "long_name",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "shortName",
+            "columnName": "short_name",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "position",
+            "columnName": "position",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "snr",
+            "columnName": "snr",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rssi",
+            "columnName": "rssi",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastHeard",
+            "columnName": "last_heard",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deviceTelemetry",
+            "columnName": "device_metrics",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "channel",
+            "columnName": "channel",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "viaMqtt",
+            "columnName": "via_mqtt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hopsAway",
+            "columnName": "hops_away",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isFavorite",
+            "columnName": "is_favorite",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isIgnored",
+            "columnName": "is_ignored",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "environmentTelemetry",
+            "columnName": "environment_metrics",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "powerTelemetry",
+            "columnName": "power_metrics",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "paxcounter",
+            "columnName": "paxcounter",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "role",
+            "columnName": "role",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "nodeStatus",
+            "columnName": "node_status",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "num"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "packet",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uuid` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `myNodeNum` INTEGER NOT NULL DEFAULT 0, `port_num` INTEGER NOT NULL, `contact_key` TEXT NOT NULL, `received_time` INTEGER NOT NULL, `read` INTEGER NOT NULL DEFAULT 1, `data` TEXT NOT NULL, `packet_id` INTEGER NOT NULL DEFAULT 0, `routing_error` INTEGER NOT NULL DEFAULT -1, `reply_id` INTEGER NOT NULL DEFAULT 0)",
+        "fields": [
+          {
+            "fieldPath": "uuid",
+            "columnName": "uuid",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "myNodeNum",
+            "columnName": "myNodeNum",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "port_num",
+            "columnName": "port_num",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contact_key",
+            "columnName": "contact_key",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "received_time",
+            "columnName": "received_time",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "read",
+            "columnName": "read",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "1"
+          },
+          {
+            "fieldPath": "data",
+            "columnName": "data",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "packetId",
+            "columnName": "packet_id",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "routingError",
+            "columnName": "routing_error",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "-1"
+          },
+          {
+            "fieldPath": "replyId",
+            "columnName": "reply_id",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "uuid"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_packet_myNodeNum",
+            "unique": false,
+            "columnNames": [
+              "myNodeNum"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_packet_myNodeNum` ON `${TABLE_NAME}` (`myNodeNum`)"
+          },
+          {
+            "name": "index_packet_port_num",
+            "unique": false,
+            "columnNames": [
+              "port_num"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_packet_port_num` ON `${TABLE_NAME}` (`port_num`)"
+          },
+          {
+            "name": "index_packet_contact_key",
+            "unique": false,
+            "columnNames": [
+              "contact_key"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_packet_contact_key` ON `${TABLE_NAME}` (`contact_key`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "contact_settings",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`contact_key` TEXT NOT NULL, `muteUntil` INTEGER NOT NULL, PRIMARY KEY(`contact_key`))",
+        "fields": [
+          {
+            "fieldPath": "contact_key",
+            "columnName": "contact_key",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "muteUntil",
+            "columnName": "muteUntil",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "contact_key"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "log",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uuid` TEXT NOT NULL, `type` TEXT NOT NULL, `received_date` INTEGER NOT NULL, `message` TEXT NOT NULL, `from_num` INTEGER NOT NULL DEFAULT 0, `port_num` INTEGER NOT NULL DEFAULT 0, `from_radio` BLOB NOT NULL DEFAULT x'', PRIMARY KEY(`uuid`))",
+        "fields": [
+          {
+            "fieldPath": "uuid",
+            "columnName": "uuid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "message_type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "received_date",
+            "columnName": "received_date",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "raw_message",
+            "columnName": "message",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fromNum",
+            "columnName": "from_num",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "portNum",
+            "columnName": "port_num",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "fromRadio",
+            "columnName": "from_radio",
+            "affinity": "BLOB",
+            "notNull": true,
+            "defaultValue": "x''"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "uuid"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_log_from_num",
+            "unique": false,
+            "columnNames": [
+              "from_num"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_log_from_num` ON `${TABLE_NAME}` (`from_num`)"
+          },
+          {
+            "name": "index_log_port_num",
+            "unique": false,
+            "columnNames": [
+              "port_num"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_log_port_num` ON `${TABLE_NAME}` (`port_num`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "quick_chat",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uuid` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `message` TEXT NOT NULL, `mode` TEXT NOT NULL, `position` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "uuid",
+            "columnName": "uuid",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "message",
+            "columnName": "message",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mode",
+            "columnName": "mode",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "position",
+            "columnName": "position",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "uuid"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "reactions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`reply_id` INTEGER NOT NULL, `user_id` TEXT NOT NULL, `emoji` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, PRIMARY KEY(`reply_id`, `user_id`, `emoji`))",
+        "fields": [
+          {
+            "fieldPath": "replyId",
+            "columnName": "reply_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "user_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "emoji",
+            "columnName": "emoji",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "reply_id",
+            "user_id",
+            "emoji"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_reactions_reply_id",
+            "unique": false,
+            "columnNames": [
+              "reply_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_reactions_reply_id` ON `${TABLE_NAME}` (`reply_id`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "metadata",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`num` INTEGER NOT NULL, `proto` BLOB NOT NULL, `timestamp` INTEGER NOT NULL, PRIMARY KEY(`num`))",
+        "fields": [
+          {
+            "fieldPath": "num",
+            "columnName": "num",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "proto",
+            "columnName": "proto",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "num"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_metadata_num",
+            "unique": false,
+            "columnNames": [
+              "num"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_metadata_num` ON `${TABLE_NAME}` (`num`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "node_registry",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`nodeId` TEXT NOT NULL, `shortName` TEXT, `defaultName` TEXT, `longName` TEXT, `nodeNum` INTEGER, `publicKey` BLOB, `latitudeI` INTEGER, `longitudeI` INTEGER, `lastSeen` INTEGER NOT NULL, `hopCount` INTEGER, `lastRssi` INTEGER, PRIMARY KEY(`nodeId`))",
+        "fields": [
+          {
+            "fieldPath": "nodeId",
+            "columnName": "nodeId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "shortName",
+            "columnName": "shortName",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "defaultName",
+            "columnName": "defaultName",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "longName",
+            "columnName": "longName",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "nodeNum",
+            "columnName": "nodeNum",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "publicKey",
+            "columnName": "publicKey",
+            "affinity": "BLOB",
+            "notNull": false
+          },
+          {
+            "fieldPath": "latitudeI",
+            "columnName": "latitudeI",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "longitudeI",
+            "columnName": "longitudeI",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "lastSeen",
+            "columnName": "lastSeen",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hopCount",
+            "columnName": "hopCount",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "lastRssi",
+            "columnName": "lastRssi",
+            "affinity": "INTEGER",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "nodeId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_node_registry_nodeId",
+            "unique": false,
+            "columnNames": [
+              "nodeId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_node_registry_nodeId` ON `${TABLE_NAME}` (`nodeId`)"
+          },
+          {
+            "name": "index_node_registry_lastSeen",
+            "unique": false,
+            "columnNames": [
+              "lastSeen"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_node_registry_lastSeen` ON `${TABLE_NAME}` (`lastSeen`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "discovery_session",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `timestamp` INTEGER NOT NULL, `presets_scanned` TEXT NOT NULL, `home_preset` TEXT, `unique_nodes` INTEGER NOT NULL, `direct_neighbors` INTEGER NOT NULL, `mesh_neighbors` INTEGER NOT NULL, `message_count` INTEGER NOT NULL, `sensor_count` INTEGER NOT NULL, `infrastructure_count` INTEGER NOT NULL, `completion_status` TEXT NOT NULL DEFAULT 'in_progress', `failure_message` TEXT, `total_dwell_seconds` INTEGER NOT NULL, `device_address` TEXT, `user_latitude` REAL, `user_longitude` REAL, `home_lora_config` BLOB, `home_primary_channel` BLOB)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "presetsScanned",
+            "columnName": "presets_scanned",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "homePreset",
+            "columnName": "home_preset",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "uniqueNodes",
+            "columnName": "unique_nodes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "directNeighbors",
+            "columnName": "direct_neighbors",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "meshNeighbors",
+            "columnName": "mesh_neighbors",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "messageCount",
+            "columnName": "message_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sensorCount",
+            "columnName": "sensor_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "infrastructureCount",
+            "columnName": "infrastructure_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completionStatus",
+            "columnName": "completion_status",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'in_progress'"
+          },
+          {
+            "fieldPath": "failureMessage",
+            "columnName": "failure_message",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "totalDwellSeconds",
+            "columnName": "total_dwell_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deviceAddress",
+            "columnName": "device_address",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "userLatitude",
+            "columnName": "user_latitude",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "userLongitude",
+            "columnName": "user_longitude",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "homeLoraConfig",
+            "columnName": "home_lora_config",
+            "affinity": "BLOB",
+            "notNull": false
+          },
+          {
+            "fieldPath": "homePrimaryChannel",
+            "columnName": "home_primary_channel",
+            "affinity": "BLOB",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_discovery_session_timestamp",
+            "unique": false,
+            "columnNames": [
+              "timestamp"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_discovery_session_timestamp` ON `${TABLE_NAME}` (`timestamp`)"
+          },
+          {
+            "name": "index_discovery_session_device_address",
+            "unique": false,
+            "columnNames": [
+              "device_address"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_discovery_session_device_address` ON `${TABLE_NAME}` (`device_address`)"
+          },
+          {
+            "name": "index_discovery_session_completion_status",
+            "unique": false,
+            "columnNames": [
+              "completion_status"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_discovery_session_completion_status` ON `${TABLE_NAME}` (`completion_status`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "discovery_preset_result",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `session_id` INTEGER NOT NULL, `preset_name` TEXT NOT NULL, `modem_preset_value` INTEGER NOT NULL, `started_at` INTEGER NOT NULL, `ended_at` INTEGER NOT NULL, `dwell_seconds` INTEGER NOT NULL, `unique_nodes` INTEGER NOT NULL, `direct_neighbors` INTEGER NOT NULL, `mesh_neighbors` INTEGER NOT NULL, `message_count` INTEGER NOT NULL, `sensor_count` INTEGER NOT NULL, `infrastructure_count` INTEGER NOT NULL, `packet_count` INTEGER NOT NULL, `average_snr` REAL, `average_rssi` REAL, `average_channel_utilization` REAL, `average_air_util_tx` REAL, `local_num_packets_tx` INTEGER, `local_num_packets_rx` INTEGER, `local_num_packets_rx_bad` INTEGER, `local_num_online_nodes` INTEGER, `ranking_score` REAL NOT NULL, FOREIGN KEY(`session_id`) REFERENCES `discovery_session`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "session_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "presetName",
+            "columnName": "preset_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modemPresetValue",
+            "columnName": "modem_preset_value",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startedAt",
+            "columnName": "started_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endedAt",
+            "columnName": "ended_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dwellSeconds",
+            "columnName": "dwell_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uniqueNodes",
+            "columnName": "unique_nodes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "directNeighbors",
+            "columnName": "direct_neighbors",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "meshNeighbors",
+            "columnName": "mesh_neighbors",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "messageCount",
+            "columnName": "message_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sensorCount",
+            "columnName": "sensor_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "infrastructureCount",
+            "columnName": "infrastructure_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "packetCount",
+            "columnName": "packet_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "averageSnr",
+            "columnName": "average_snr",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "averageRssi",
+            "columnName": "average_rssi",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "averageChannelUtilization",
+            "columnName": "average_channel_utilization",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "averageAirUtilTx",
+            "columnName": "average_air_util_tx",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "localNumPacketsTx",
+            "columnName": "local_num_packets_tx",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "localNumPacketsRx",
+            "columnName": "local_num_packets_rx",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "localNumPacketsRxBad",
+            "columnName": "local_num_packets_rx_bad",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "localNumOnlineNodes",
+            "columnName": "local_num_online_nodes",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "rankingScore",
+            "columnName": "ranking_score",
+            "affinity": "REAL",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_discovery_preset_result_session_id",
+            "unique": false,
+            "columnNames": [
+              "session_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_discovery_preset_result_session_id` ON `${TABLE_NAME}` (`session_id`)"
+          },
+          {
+            "name": "index_discovery_preset_result_session_id_preset_name",
+            "unique": true,
+            "columnNames": [
+              "session_id",
+              "preset_name"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_discovery_preset_result_session_id_preset_name` ON `${TABLE_NAME}` (`session_id`, `preset_name`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "discovery_session",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "session_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "discovered_node",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `preset_result_id` INTEGER NOT NULL, `node_num` INTEGER NOT NULL, `node_id` TEXT NOT NULL, `long_name` TEXT, `short_name` TEXT, `default_name` TEXT, `neighbor_type` TEXT NOT NULL, `latitude` REAL, `longitude` REAL, `distance_meters` REAL, `hop_count` INTEGER, `snr` REAL, `rssi` INTEGER, `message_count` INTEGER NOT NULL, `sensor_packet_count` INTEGER NOT NULL, `packet_count` INTEGER NOT NULL, `is_infrastructure` INTEGER NOT NULL, `via_node_num` INTEGER, `neighbor_snr` REAL, `last_seen` INTEGER NOT NULL, FOREIGN KEY(`preset_result_id`) REFERENCES `discovery_preset_result`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "presetResultId",
+            "columnName": "preset_result_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nodeNum",
+            "columnName": "node_num",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nodeId",
+            "columnName": "node_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "longName",
+            "columnName": "long_name",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "shortName",
+            "columnName": "short_name",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "defaultName",
+            "columnName": "default_name",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "neighborType",
+            "columnName": "neighbor_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "distanceMeters",
+            "columnName": "distance_meters",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "hopCount",
+            "columnName": "hop_count",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "snr",
+            "columnName": "snr",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "rssi",
+            "columnName": "rssi",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "messageCount",
+            "columnName": "message_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sensorPacketCount",
+            "columnName": "sensor_packet_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "packetCount",
+            "columnName": "packet_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isInfrastructure",
+            "columnName": "is_infrastructure",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "viaNodeNum",
+            "columnName": "via_node_num",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "neighborSnr",
+            "columnName": "neighbor_snr",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "lastSeen",
+            "columnName": "last_seen",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_discovered_node_preset_result_id",
+            "unique": false,
+            "columnNames": [
+              "preset_result_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_discovered_node_preset_result_id` ON `${TABLE_NAME}` (`preset_result_id`)"
+          },
+          {
+            "name": "index_discovered_node_preset_result_id_node_num",
+            "unique": true,
+            "columnNames": [
+              "preset_result_id",
+              "node_num"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_discovered_node_preset_result_id_node_num` ON `${TABLE_NAME}` (`preset_result_id`, `node_num`)"
+          },
+          {
+            "name": "index_discovered_node_via_node_num",
+            "unique": false,
+            "columnNames": [
+              "via_node_num"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_discovered_node_via_node_num` ON `${TABLE_NAME}` (`via_node_num`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "discovery_preset_result",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "preset_result_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1d4d036a2212486944c75d5a3cf54a45')"
+    ]
+  }
+}

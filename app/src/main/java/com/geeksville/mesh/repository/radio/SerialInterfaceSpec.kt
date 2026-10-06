@@ -49,7 +49,7 @@ class SerialInterfaceSpec @Inject constructor(
     internal fun findSerial(rest: String): UsbSerialDriver? {
         val deviceMap = usbRepository.serialDevicesWithDrivers.value
         return if (deviceMap.containsKey(rest)) {
-            deviceMap[rest]!!
+            deviceMap[rest]
         } else {
             deviceMap.map { (_, driver) -> driver }.firstOrNull()
         }

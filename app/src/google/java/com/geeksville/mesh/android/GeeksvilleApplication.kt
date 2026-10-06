@@ -36,16 +36,22 @@ import com.suddenh4x.ratingdialog.AppRating
 open class GeeksvilleApplication : Application(), Logging {
 
     companion object {
+        private const val RATE_DIALOG_MIN_LAUNCH_TIMES = 10
+        private const val RATE_DIALOG_MIN_DAYS = 10
+        private const val RATE_DIALOG_MIN_LAUNCH_TIMES_TO_SHOW_AGAIN = 5
+        private const val RATE_DIALOG_MIN_DAYS_TO_SHOW_AGAIN = 14
+
         lateinit var analytics: AnalyticsProvider
     }
 
-    /// Are we running inside the testlab?
+    // Are we running inside the testlab?
     val isInTestLab: Boolean
         get() {
             val testLabSetting =
-                Settings.System.getString(contentResolver, "firebase.test.lab") ?: null
-            if(testLabSetting != null)
+                Settings.System.getString(contentResolver, "firebase.test.lab")
+            if (testLabSetting != null) {
                 info("Testlab is $testLabSetting")
+            }
             return "true" == testLabSetting
         }
 
@@ -70,10 +76,10 @@ open class GeeksvilleApplication : Application(), Logging {
 
         exceptionReporter { // we don't want to crash our app because of bugs in this optional feature
             AppRating.Builder(activity)
-                .setMinimumLaunchTimes(10) // default is 5, 3 means app is launched 3 or more times
-                .setMinimumDays(10) // default is 5, 0 means install day, 10 means app is launched 10 or more days later than installation
-                .setMinimumLaunchTimesToShowAgain(5) // default is 5, 1 means app is launched 1 or more times after neutral button clicked
-                .setMinimumDaysToShowAgain(14) // default is 14, 1 means app is launched 1 or more days after neutral button clicked
+                .setMinimumLaunchTimes(RATE_DIALOG_MIN_LAUNCH_TIMES)
+                .setMinimumDays(RATE_DIALOG_MIN_DAYS)
+                .setMinimumLaunchTimesToShowAgain(RATE_DIALOG_MIN_LAUNCH_TIMES_TO_SHOW_AGAIN)
+                .setMinimumDaysToShowAgain(RATE_DIALOG_MIN_DAYS_TO_SHOW_AGAIN)
                 .showIfMeetsConditions()
         }
     }

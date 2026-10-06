@@ -51,7 +51,7 @@ class BatteryNotification : AppCompatActivity() {
 
     private var _binding: ActivityBatteryNotificationBinding? = null
 
-    private val binding get() = _binding!!
+    private val binding get() = requireNotNull(_binding)
 
     private var updatingBatteryAlertUi = false
     private var batteryAlertScopeOptions: List<BatteryAlertScopeOption> = emptyList()

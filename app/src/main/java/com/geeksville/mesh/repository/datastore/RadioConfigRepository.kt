@@ -23,6 +23,8 @@ import com.geeksville.mesh.database.entity.MetadataEntity
 import com.geeksville.mesh.database.entity.MyNodeEntity
 import com.geeksville.mesh.database.entity.NodeEntity
 import com.geeksville.mesh.model.NeighborDiscoveryResult
+import com.geeksville.mesh.model.ModemPresetCapabilities
+import com.geeksville.mesh.model.ModemPresetCapabilityAuthority
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.PacketActivityEvent
 import com.geeksville.mesh.model.RelayEvent
@@ -63,6 +65,7 @@ class RadioConfigRepository @Inject constructor(
     private val channelSetRepository: ChannelSetRepository,
     private val localConfigRepository: LocalConfigRepository,
     private val moduleConfigRepository: ModuleConfigRepository,
+    private val modemPresetCapabilityAuthority: ModemPresetCapabilityAuthority,
 ) {
     val meshService: IMeshService? get() = serviceRepository.meshService
 
@@ -92,6 +95,14 @@ class RadioConfigRepository @Inject constructor(
     suspend fun installNodeDB(mi: MyNodeEntity, nodes: List<NodeEntity>) {
         nodeDB.installNodeDB(mi, nodes)
     }
+
+    suspend fun clearCachedDeviceState() {
+        nodeDB.clearNodeDB()
+        clearChannelSet()
+        clearLocalConfig()
+        clearLocalModuleConfig()
+    }
+
     suspend fun insertMetadata(fromNum: Int, metadata: DeviceMetadata) {
         nodeDB.insertMetadata(MetadataEntity(fromNum, metadata))
     }
@@ -130,6 +141,21 @@ class RadioConfigRepository @Inject constructor(
      * Flow representing the [LocalConfig] data store.
      */
     val localConfigFlow: Flow<LocalConfig> = localConfigRepository.localConfigFlow
+
+    /** Shared connected-device modem-preset capability source for Settings and Discovery. */
+    val modemPresetCapabilities: Flow<ModemPresetCapabilities> = combine(
+        connectionState,
+        nodeDB.myNodeInfo,
+        nodeDB.nodeDBbyNum,
+        localConfigFlow,
+    ) { state, myNodeInfo, nodes, localConfig ->
+        val metadata = myNodeInfo?.myNodeNum?.let(nodes::get)?.metadata
+        modemPresetCapabilityAuthority.resolve(
+            connected = state == ConnectionState.CONNECTED,
+            metadata = metadata,
+            loraConfig = localConfig.takeIf { it.hasLora() }?.lora,
+        )
+    }
 
     /**
      * Clears the [LocalConfig] data in the data store.

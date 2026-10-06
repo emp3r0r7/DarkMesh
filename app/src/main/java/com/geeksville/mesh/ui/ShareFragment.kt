@@ -60,10 +60,10 @@ class ShareFragment : ScreenFragment("Messages"), Logging {
     private var _binding: ShareFragmentBinding? = null
 
     // This property is only valid between onCreateView and onDestroyView.
-    private val binding get() = _binding!!
+    private val binding get() = requireNotNull(_binding)
 
     private val contacts get() = model.contactList.value
-    private var selectedContact = mutableStateOf("")
+    private val selectedContact = mutableStateOf("")
 
     private fun shareMessage(contact: Contact) {
         debug("calling MessagesFragment filter:${contact.contactKey}")

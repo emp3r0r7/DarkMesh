@@ -130,6 +130,14 @@
     <string name="modem_config_medium">Medium Range / Fast</string>
     <string name="modem_config_long">Long Range / Fast</string>
     <string name="modem_config_mod_long">Long Range / Moderate</string>
+    <string name="modem_config_long_turbo">Long Range / Turbo</string>
+    <string name="modem_config_medium_turbo">Medium Range / Turbo</string>
+    <string name="modem_config_lite_fast">Lite / Fast</string>
+    <string name="modem_config_lite_slow">Lite / Slow</string>
+    <string name="modem_config_narrow_fast">Narrow / Fast</string>
+    <string name="modem_config_narrow_slow">Narrow / Slow</string>
+    <string name="modem_config_tiny_fast">Tiny / Fast</string>
+    <string name="modem_config_tiny_slow">Tiny / Slow</string>
     <string name="modem_config_very_long">Very Long Range / Slow</string>
     <string name="modem_config_unrecognized">UNRECOGNIZED</string>
     <string name="meshtastic_service_notifications">Service notifications</string>

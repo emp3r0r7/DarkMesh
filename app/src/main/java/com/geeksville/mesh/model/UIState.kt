@@ -33,6 +33,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.emp3r0r7.darkmesh.R
+import com.geeksville.mesh.CoroutineDispatchers
 import com.geeksville.mesh.DataPacket
 import com.geeksville.mesh.IMeshService
 import com.geeksville.mesh.Position
@@ -55,6 +56,7 @@ import com.geeksville.mesh.database.entity.MyNodeEntity
 import com.geeksville.mesh.database.entity.NodeRegistry
 import com.geeksville.mesh.database.entity.Packet
 import com.geeksville.mesh.database.entity.QuickChatAction
+import com.geeksville.mesh.discovery.DiscoveryMap
 import com.geeksville.mesh.repository.datastore.RadioConfigRepository
 import com.geeksville.mesh.repository.radio.RadioInterfaceService
 import com.geeksville.mesh.service.GlobalRadioMesh.ourNeighborRequests
@@ -223,8 +225,9 @@ class UIViewModel @Inject constructor(
     private val quickChatActionRepository: QuickChatActionRepository,
     private val preferences: SharedPreferences,
     private val serviceRepository: ServiceRepository,
-    private val nodeRegistryRepository: NodeRegistryRepository
-    ) : ViewModel(), Logging {
+    private val nodeRegistryRepository: NodeRegistryRepository,
+    private val dispatchers: CoroutineDispatchers,
+) : ViewModel(), Logging {
 
     private val _lastRelayNode = MutableStateFlow<RelayEvent?>(null)
     val lastRelayNode = _lastRelayNode.asStateFlow()
@@ -272,11 +275,11 @@ class UIViewModel @Inject constructor(
 
     val statusMessage: StateFlow<String> =
         moduleConfig
-            .map { it.statusmessage.nodeStatus ?: "" }
+            .map { it.statusmessage.nodeStatus.orEmpty() }
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = moduleConfig.value.statusmessage.nodeStatus ?: ""
+                initialValue = moduleConfig.value.statusmessage.nodeStatus.orEmpty()
             )
 
     private val nodeFilterText = MutableStateFlow("")
@@ -325,11 +328,20 @@ class UIViewModel @Inject constructor(
         setCurrentTab(2)
     }
 
+    fun showDiscoveryMap(discovery: DiscoveryMap) {
+        _mapMode.value = MapMode.Discovery(discovery)
+        setCurrentTab(2)
+    }
+
     fun exitTracerouteMode() {
         _mapMode.value = MapMode.Normal
     }
 
     fun exitNeighborDiscoveryMode() {
+        _mapMode.value = MapMode.Normal
+    }
+
+    fun exitDiscoveryMode() {
         _mapMode.value = MapMode.Normal
     }
 
@@ -642,8 +654,14 @@ class UIViewModel @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val waypoints = packetRepository.getWaypoints().mapLatest { list ->
-        list.associateBy { packet -> packet.data.waypoint!!.id }
-            .filterValues { it.data.waypoint!!.expire > System.currentTimeMillis() / 1000 }
+        list.mapNotNull { packet ->
+            packet.data.waypoint?.id?.let { waypointId -> waypointId to packet }
+        }.toMap()
+            .filterValues { packet ->
+                packet.data.waypoint?.expire?.let {
+                    it > System.currentTimeMillis() / 1000
+                } == true
+            }
     }
 
     fun generatePacketId(): Int? {
@@ -794,7 +812,7 @@ class UIViewModel @Inject constructor(
         showSnackbar(R.string.neighbor_discovery_requesting_gps)
     }
 
-    fun removeNode(nodeNum: Int) = viewModelScope.launch(Dispatchers.IO) {
+    fun removeNode(nodeNum: Int) = viewModelScope.launch(dispatchers.io) {
         info("Removing node '$nodeNum'")
         try {
             val packetId = meshService?.packetId ?: return@launch
@@ -805,11 +823,11 @@ class UIViewModel @Inject constructor(
         }
     }
 
-    fun clearNodeStatus(nodeNum: Int) = viewModelScope.launch(Dispatchers.IO) {
+    fun clearNodeStatus(nodeNum: Int) = viewModelScope.launch(dispatchers.io) {
         nodeDB.clearNodeStatus(nodeNum)
     }
 
-    fun deleteNode(nodeNum: Int) = viewModelScope.launch(Dispatchers.IO) {
+    fun deleteNode(nodeNum: Int) = viewModelScope.launch(dispatchers.io) {
         nodeDB.deleteNode(nodeNum)
     }
 
@@ -839,23 +857,23 @@ class UIViewModel @Inject constructor(
         }
     }
 
-    fun setMuteUntil(contacts: List<String>, until: Long) = viewModelScope.launch(Dispatchers.IO) {
+    fun setMuteUntil(contacts: List<String>, until: Long) = viewModelScope.launch(dispatchers.io) {
         packetRepository.setMuteUntil(contacts, until)
     }
 
-    fun deleteContacts(contacts: List<String>) = viewModelScope.launch(Dispatchers.IO) {
+    fun deleteContacts(contacts: List<String>) = viewModelScope.launch(dispatchers.io) {
         packetRepository.deleteContacts(contacts)
     }
 
-    fun deleteMessages(uuidList: List<Long>) = viewModelScope.launch(Dispatchers.IO) {
+    fun deleteMessages(uuidList: List<Long>) = viewModelScope.launch(dispatchers.io) {
         packetRepository.deleteMessages(uuidList)
     }
 
-    fun deleteWaypoint(id: Int) = viewModelScope.launch(Dispatchers.IO) {
+    fun deleteWaypoint(id: Int) = viewModelScope.launch(dispatchers.io) {
         packetRepository.deleteWaypoint(id)
     }
 
-    fun clearUnreadCount(contact: String, timestamp: Long) = viewModelScope.launch(Dispatchers.IO) {
+    fun clearUnreadCount(contact: String, timestamp: Long) = viewModelScope.launch(dispatchers.io) {
         packetRepository.clearUnreadCount(contact, timestamp)
     }
 
@@ -1137,7 +1155,7 @@ class UIViewModel @Inject constructor(
         //do not move this to another place!
         DbImportState.emitFirst()
 
-        viewModelScope.launch (Dispatchers.IO){
+        viewModelScope.launch(dispatchers.io) {
 
             var insert = 0
 
@@ -1304,7 +1322,7 @@ class UIViewModel @Inject constructor(
                 meshLogRepository.getAllLogsInReceiveOrder(Int.MAX_VALUE).first().forEach { packet ->
                     // If we get a NodeInfo packet, use it to update our position data (if valid)
                     packet.nodeInfo?.let { nodeInfo ->
-                        positionToPos.invoke(nodeInfo.position)?.let {
+                        if (positionToPos.invoke(nodeInfo.position) != null) {
                             nodePositions[nodeInfo.num] = nodeInfo.position
                         }
                     }
@@ -1312,8 +1330,10 @@ class UIViewModel @Inject constructor(
                     packet.meshPacket?.let { proto ->
                         // If the packet contains position data then use it to update, if valid
                         packet.position?.let { position ->
-                            positionToPos.invoke(position)?.let {
-                                nodePositions[proto.from.takeIf { it != 0 } ?: myNodeNum] = position
+                            if (positionToPos.invoke(position) != null) {
+                                val fromNode = proto.from
+                                    .takeIf { packetFrom -> packetFrom != 0 } ?: myNodeNum
+                                nodePositions[fromNode] = position
                             }
                         }
 
@@ -1322,7 +1342,7 @@ class UIViewModel @Inject constructor(
                         if (proto.rxSnr != 0.0f) {
                             val rxDateTime = dateFormat.format(packet.received_date)
                             val rxFrom = proto.from.toUInt()
-                            val senderName = nodes[proto.from]?.user?.longName ?: ""
+                            val senderName = nodes[proto.from]?.user?.longName.orEmpty()
 
                             // sender lat & long
                             val senderPosition = nodePositions[proto.from]
@@ -1340,13 +1360,15 @@ class UIViewModel @Inject constructor(
 
                             // Calculate the distance if both positions are valid
 
-                            val dist = if (senderPos == null || rxPos == null) {
-                                ""
-                            } else {
+                            val validSenderPosition = senderPosition?.takeIf { senderPos != null }
+                            val validRxPosition = rxPosition?.takeIf { rxPos != null }
+                            val dist = if (validSenderPosition != null && validRxPosition != null) {
                                 positionToMeter(
-                                    rxPosition!!, // Use rxPosition but only if rxPos was valid
-                                    senderPosition!! // Use senderPosition but only if senderPos was valid
+                                    validRxPosition,
+                                    validSenderPosition
                                 ).roundToInt().toString()
+                            } else {
+                                ""
                             }
 
                             val hopLimit = proto.hopLimit
@@ -1372,7 +1394,7 @@ class UIViewModel @Inject constructor(
     }
 
     private suspend inline fun writeToUri(uri: Uri, crossinline block: suspend (BufferedWriter) -> Unit) {
-        withContext(Dispatchers.IO) {
+        withContext(dispatchers.io) {
             try {
                 app.contentResolver.openFileDescriptor(uri, "wt")?.use { parcelFileDescriptor ->
                     FileWriter(parcelFileDescriptor.fileDescriptor).use { fileWriter ->
@@ -1387,16 +1409,16 @@ class UIViewModel @Inject constructor(
         }
     }
 
-    fun addQuickChatAction(action: QuickChatAction) = viewModelScope.launch(Dispatchers.IO) {
+    fun addQuickChatAction(action: QuickChatAction) = viewModelScope.launch(dispatchers.io) {
         quickChatActionRepository.upsert(action)
     }
 
-    fun deleteQuickChatAction(action: QuickChatAction) = viewModelScope.launch(Dispatchers.IO) {
+    fun deleteQuickChatAction(action: QuickChatAction) = viewModelScope.launch(dispatchers.io) {
         quickChatActionRepository.delete(action)
     }
 
     fun updateActionPositions(actions: List<QuickChatAction>) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(dispatchers.io) {
             for (position in actions.indices) {
                 quickChatActionRepository.setItemPosition(actions[position].uuid, position)
             }

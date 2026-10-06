@@ -34,7 +34,6 @@ import com.geeksville.mesh.util.anonymize
 import com.geeksville.mesh.util.ignoreException
 import com.geeksville.mesh.util.toRemoteExceptions
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -86,7 +85,9 @@ class RadioInterfaceService @Inject constructor(
     /**
      * We recreate this scope each time we stop an interface
      */
-    var serviceScope = CoroutineScope(Dispatchers.IO + Job())
+    var serviceScope = newServiceScope()
+
+    private fun newServiceScope() = CoroutineScope(dispatchers.io + Job())
 
     private var radioIf: IRadioInterface = NopInterface("")
 
@@ -255,7 +256,7 @@ class RadioInterfaceService @Inject constructor(
 
         // cancel any old jobs and get ready for the new ones
         serviceScope.cancel("stopping interface")
-        serviceScope = CoroutineScope(Dispatchers.IO + Job())
+        serviceScope = newServiceScope()
 
         if (logSends) {
             sentPacketsLog.close()

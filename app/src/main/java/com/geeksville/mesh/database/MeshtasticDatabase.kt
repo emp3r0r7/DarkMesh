@@ -20,17 +20,22 @@ package com.geeksville.mesh.database
 import android.content.Context
 import androidx.room.AutoMigration
 import androidx.room.Database
+import androidx.room.DeleteColumn
 import androidx.room.DeleteTable
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.AutoMigrationSpec
+import com.geeksville.mesh.database.dao.DiscoveryDao
 import com.geeksville.mesh.database.dao.MeshLogDao
 import com.geeksville.mesh.database.dao.NodeInfoDao
 import com.geeksville.mesh.database.dao.NodeRegistryDao
 import com.geeksville.mesh.database.dao.PacketDao
 import com.geeksville.mesh.database.dao.QuickChatActionDao
 import com.geeksville.mesh.database.entity.ContactSettings
+import com.geeksville.mesh.database.entity.DiscoveredNodeEntity
+import com.geeksville.mesh.database.entity.DiscoveryPresetResultEntity
+import com.geeksville.mesh.database.entity.DiscoverySessionEntity
 import com.geeksville.mesh.database.entity.MeshLog
 import com.geeksville.mesh.database.entity.MetadataEntity
 import com.geeksville.mesh.database.entity.MyNodeEntity
@@ -50,7 +55,10 @@ import com.geeksville.mesh.database.entity.ReactionEntity
         QuickChatAction::class,
         ReactionEntity::class,
         MetadataEntity::class,
-        NodeRegistry::class
+        NodeRegistry::class,
+        DiscoverySessionEntity::class,
+        DiscoveryPresetResultEntity::class,
+        DiscoveredNodeEntity::class,
     ],
     autoMigrations = [
         AutoMigration(from = 3, to = 4),
@@ -66,8 +74,18 @@ import com.geeksville.mesh.database.entity.ReactionEntity
         AutoMigration(from = 13, to = 14),
         AutoMigration(from = 14, to = 15),
         AutoMigration(from = 15, to = 16),
+        AutoMigration(from = 16, to = 17),
+        AutoMigration(from = 17, to = 18),
+        AutoMigration(from = 18, to = 19),
+        AutoMigration(from = 19, to = 20),
+        AutoMigration(from = 20, to = 21),
+        AutoMigration(from = 21, to = 22, spec = AutoMigration21to22::class),
+        AutoMigration(from = 22, to = 23),
+        AutoMigration(from = 23, to = 24),
+        AutoMigration(from = 24, to = 25),
+        AutoMigration(from = 25, to = 26),
     ],
-    version = 24,
+    version = 26,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -77,6 +95,7 @@ abstract class MeshtasticDatabase : RoomDatabase() {
     abstract fun meshLogDao(): MeshLogDao
     abstract fun quickChatActionDao(): QuickChatActionDao
     abstract fun nodeRegistryDao(): NodeRegistryDao
+    abstract fun discoveryDao(): DiscoveryDao
 
     companion object {
         fun getDatabase(context: Context): MeshtasticDatabase {
@@ -97,3 +116,9 @@ abstract class MeshtasticDatabase : RoomDatabase() {
     DeleteTable(tableName = "MyNodeInfo")
 )
 class AutoMigration12to13 : AutoMigrationSpec
+
+@DeleteColumn(
+    tableName = "node_registry",
+    columnName = "firstSeen"
+)
+class AutoMigration21to22 : AutoMigrationSpec

@@ -246,6 +246,7 @@ class MetricsViewModel @Inject constructor(
                 state.copy(
                     isManaged = profile.config.security.isManaged,
                     isFahrenheit = moduleConfig.telemetry.environmentDisplayFahrenheit,
+                    displayUnits = profile.config.display.units,
                 )
             }
         }.launchIn(viewModelScope)

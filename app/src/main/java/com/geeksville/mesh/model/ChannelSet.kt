@@ -47,9 +47,10 @@ fun Uri.toChannelSet(): ChannelSet {
 
     // Older versions of Meshtastic clients (Apple/web) included `?add=true` within the URL fragment.
     // This gracefully handles those cases until the newer version are generally available/used.
-    val url = ChannelSet.parseFrom(Base64.decode(fragment!!.substringBefore('?'), BASE64FLAGS))
-    val shouldAdd = fragment?.substringAfter('?', "")
-        ?.takeUnless { it.isBlank() }
+    val encodedChannelSet = fragment ?: throw MalformedURLException("Missing channel set payload")
+    val url = ChannelSet.parseFrom(Base64.decode(encodedChannelSet.substringBefore('?'), BASE64FLAGS))
+    val shouldAdd = encodedChannelSet.substringAfter('?', "")
+        .takeUnless { it.isBlank() }
         ?.equals("add=true")
         ?: getBooleanQueryParameter("add", false)
 

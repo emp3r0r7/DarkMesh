@@ -130,6 +130,9 @@ interface IMeshService {
     /// Send neighbor discovery packet with wantResponse to nodeNum
     void requestNeighborInfo(in int requestId, in int destNum);
 
+    /// Send local stats telemetry packet with wantResponse to local node
+    void requestLocalStats(in int requestId);
+
     /// Send Shutdown admin packet to nodeNum
     void requestShutdown(in int requestId, in int destNum);
 

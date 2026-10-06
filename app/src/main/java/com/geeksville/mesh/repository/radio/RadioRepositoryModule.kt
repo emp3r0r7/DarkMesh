@@ -28,7 +28,7 @@ import dagger.hilt.components.SingletonComponent
 import dagger.multibindings.IntoMap
 import dagger.multibindings.Multibinds
 
-@Suppress("unused") // Used by hilt
+@Suppress("unused", "UnnecessaryAbstractClass") // Used by hilt
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RadioRepositoryModule {

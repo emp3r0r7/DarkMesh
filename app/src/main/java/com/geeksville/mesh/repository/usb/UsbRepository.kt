@@ -73,7 +73,7 @@ class UsbRepository @Inject constructor(
                 serialDevices.filterValues { device ->
                     usbManager.hasPermission(device)
                 }
-            } ?: emptyMap()
+            }.orEmpty()
         }.stateIn(processLifecycle.coroutineScope, SharingStarted.Eagerly, emptyMap())
 
     init {
@@ -103,6 +103,6 @@ class UsbRepository @Inject constructor(
     }
 
     private suspend fun refreshStateInternal() = withContext(dispatchers.default) {
-        _serialDevices.emit(usbManagerLazy.get()?.deviceList ?: emptyMap())
+        _serialDevices.emit(usbManagerLazy.get()?.deviceList.orEmpty())
     }
 }

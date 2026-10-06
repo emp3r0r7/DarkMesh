@@ -19,6 +19,7 @@ package com.geeksville.mesh.model
 
 import android.graphics.Color
 
+import com.geeksville.mesh.util.PkiUtils
 import com.geeksville.mesh.util.GPSFormat
 import com.geeksville.mesh.util.latLongToMeter
 import com.geeksville.mesh.util.toDistanceString
@@ -74,9 +75,9 @@ data class Node(
         }
 
     val isUnknownUser get() = user.hwModel == MeshProtos.HardwareModel.UNSET
-    val hasPKC get() = !user.publicKey.isEmpty
-    val errorByteString: ByteString get() = ByteString.copyFrom(ByteArray(32) { 0 })
-    val mismatchKey get() = user.publicKey == errorByteString
+    val hasPKC get() = PkiUtils.hasUsablePublicKey(user.publicKey)
+    val errorByteString: ByteString get() = PkiUtils.MISMATCH_PUBLIC_KEY
+    val mismatchKey get() = PkiUtils.isMismatchPublicKey(user.publicKey)
 
     val hasEnvironmentMetrics: Boolean
         get() = environmentMetrics != EnvironmentMetrics.getDefaultInstance()
@@ -102,8 +103,12 @@ data class Node(
 
     // @return distance in meters to some other node (or null if unknown)
     fun distance(o: Node): Int? = when {
-        validPosition == null || o.validPosition == null -> null
-        else -> latLongToMeter(latitude, longitude, o.latitude, o.longitude).toInt()
+        distancePosition() == null || o.distancePosition() == null -> null
+        else -> {
+            val from = requireNotNull(distancePosition())
+            val to = requireNotNull(o.distancePosition())
+            latLongToMeter(from.first, from.second, to.first, to.second).toInt()
+        }
     }
 
     // @return a nice human readable string for the distance, or null for unknown
@@ -114,8 +119,18 @@ data class Node(
 
     // @return bearing to the other position in degrees
     fun bearing(o: Node?): Int? = when {
-        validPosition == null || o?.validPosition == null -> null
-        else -> com.geeksville.mesh.util.bearing(latitude, longitude, o.latitude, o.longitude).toInt()
+        distancePosition() == null || o?.distancePosition() == null -> null
+        else -> {
+            val from = requireNotNull(distancePosition())
+            val to = requireNotNull(o.distancePosition())
+            com.geeksville.mesh.util.bearing(from.first, from.second, to.first, to.second).toInt()
+        }
+    }
+
+    private fun distancePosition(): Pair<Double, Double>? = when {
+        validPosition != null -> latitude to longitude
+        validLiteNode && liteLatitude != null && liteLongitude != null -> liteLatitude to liteLongitude
+        else -> null
     }
 
     fun gpsString(gpsFormat: Int): String {

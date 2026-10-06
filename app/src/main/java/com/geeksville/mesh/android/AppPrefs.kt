@@ -42,7 +42,9 @@ class FloatPref {
  * A delegate for "foo by StringPref"
  */
 class StringPref(val default: String) {
-    fun get(thisRef: AppPrefs, prop: KProperty<String>): String = thisRef.getPrefs().getString(thisRef.makeName(prop.name), default)!!
+    fun get(thisRef: AppPrefs, prop: KProperty<String>): String {
+        return thisRef.getPrefs().getString(thisRef.makeName(prop.name), default) ?: default
+    }
 
     fun set(thisRef: AppPrefs, prop: KProperty<String>, value: String) {
         thisRef.setPrefs { e ->
@@ -60,9 +62,9 @@ public open class AppPrefs(val context: Context) {
         private val baseName = "appPrefs_"
     }
 
-    fun makeName(s: String) = baseName + s
+    fun makeName(s: String): String = baseName + s
 
-    fun getPrefs() = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+    fun getPrefs(): SharedPreferences = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
 
     fun setPrefs(body: (SharedPreferences.Editor) -> Unit) {
         val e = getPrefs().edit()
@@ -116,8 +118,8 @@ public open class AppPrefs(val context: Context) {
      * Return a persistent installation ID
      */
     fun getInstallId(): String {
-        var r = getPrefs().getString(makeName("installId"), "")!!
-        if(r == "") {
+        var r = getPrefs().getString(makeName("installId"), "").orEmpty()
+        if (r == "") {
             r = UUID.randomUUID().toString()
             putPref(makeName("installId"), r)
         }

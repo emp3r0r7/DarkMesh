@@ -54,7 +54,7 @@ fun StatusMessageConfigScreen(radioViewModel: RadioConfigViewModel = hiltViewMod
         item {
 
             TextField(
-                value = statusMessageInput.nodeStatus ?: "",
+                value = statusMessageInput.nodeStatus.orEmpty(),
                 onValueChange = {
                     val trimmed = it.take(79)
                     statusMessageInput = statusMessageInput.copy {

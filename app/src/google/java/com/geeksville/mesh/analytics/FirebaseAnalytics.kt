@@ -21,17 +21,18 @@ import android.content.Context
 import android.os.Bundle
 import com.geeksville.mesh.android.AppPrefs
 import com.geeksville.mesh.android.Logging
-import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.Firebase
+import com.google.firebase.FirebaseApp
 import com.google.firebase.analytics.analytics
 import com.google.firebase.analytics.logEvent
-import com.google.firebase.Firebase
+import com.google.firebase.analytics.FirebaseAnalytics as FirebaseAnalyticsSdk
 
 class DataPair(val name: String, valueIn: Any?) {
     val value = valueIn ?: "null"
 
-    /// An accumulating firebase event - only one allowed per event
-    constructor(d: Double) : this(FirebaseAnalytics.Param.VALUE, d)
-    constructor(d: Int) : this(FirebaseAnalytics.Param.VALUE, d)
+    // An accumulating firebase event - only one allowed per event
+    constructor(d: Double) : this(FirebaseAnalyticsSdk.Param.VALUE, d)
+    constructor(d: Int) : this(FirebaseAnalyticsSdk.Param.VALUE, d)
 }
 
 /**
@@ -39,15 +40,34 @@ class DataPair(val name: String, valueIn: Any?) {
  */
 class FirebaseAnalytics(context: Context) : AnalyticsProvider, Logging {
 
-    val t = Firebase.analytics
+    private val sdk: FirebaseAnalyticsSdk? = createAnalytics(context)
 
     init {
         val pref = AppPrefs(context)
-        t.setUserId(pref.getInstallId())
+        sdk?.setUserId(pref.getInstallId())
+    }
+
+    private fun createAnalytics(context: Context): FirebaseAnalyticsSdk? {
+        val app = runCatching {
+            FirebaseApp.getApps(context).firstOrNull() ?: FirebaseApp.initializeApp(context)
+        }.onFailure { ex ->
+            warn("Firebase initialization failed: ${ex.message}")
+        }.getOrNull()
+
+        if (app == null) {
+            warn("Firebase analytics disabled: missing Firebase configuration")
+            return null
+        }
+
+        return runCatching {
+            Firebase.analytics
+        }.onFailure { ex ->
+            warn("Firebase analytics unavailable: ${ex.message}")
+        }.getOrNull()
     }
 
     override fun setEnabled(on: Boolean) {
-        t.setAnalyticsCollectionEnabled(on)
+        sdk?.setAnalyticsCollectionEnabled(on)
     }
 
     override fun endSession() {
@@ -72,7 +92,7 @@ class FirebaseAnalytics(context: Context) : AnalyticsProvider, Logging {
                 else -> bundle.putString(it.name, it.value.toString())
             }
         }
-        t.logEvent(event, bundle)
+        sdk?.logEvent(event, bundle)
     }
 
     override fun startSession() {
@@ -81,11 +101,11 @@ class FirebaseAnalytics(context: Context) : AnalyticsProvider, Logging {
     }
 
     override fun setUserInfo(vararg p: DataPair) {
-        p.forEach { t.setUserProperty(it.name, it.value.toString()) }
+        p.forEach { sdk?.setUserProperty(it.name, it.value.toString()) }
     }
 
     override fun increment(name: String, amount: Double) {
-        //Mint.logEvent("$name increment")
+        // Mint.logEvent("$name increment")
     }
 
     /**
@@ -93,9 +113,9 @@ class FirebaseAnalytics(context: Context) : AnalyticsProvider, Logging {
      */
     override fun sendScreenView(name: String) {
         debug("Analytics: start screen $name")
-        t.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW) {
-            param(FirebaseAnalytics.Param.SCREEN_NAME, name)
-            param(FirebaseAnalytics.Param.SCREEN_CLASS, "MainActivity")
+        sdk?.logEvent(FirebaseAnalyticsSdk.Event.SCREEN_VIEW) {
+            param(FirebaseAnalyticsSdk.Param.SCREEN_NAME, name)
+            param(FirebaseAnalyticsSdk.Param.SCREEN_CLASS, "MainActivity")
         }
     }
 

@@ -38,6 +38,7 @@ data class NeighborDiscoveryNode(
 data class NeighborDiscoveryLink(
     val node: NeighborDiscoveryNode,
     val snr: Float,
+    val distanceMeters: Int? = null,
 )
 
 data class NeighborDiscoveryResult(
@@ -91,29 +92,10 @@ fun evaluateNeighborDiscoveryMapAvailability(
     nodeDb: NodeRepository,
     nodeRegistryMap: Map<String, NodeRegistry>,
 ): NeighborDiscoveryMap? {
-    val source = discovery ?: return null
-    val origin = resolveNodeForNeighborMap(source.origin, nodeDb, nodeRegistryMap) ?: return null
-    if (!origin.hasNeighborMapPosition()) return null
-
-    val links = source.discovered.mapNotNull { link ->
-        val discovered = resolveNodeForNeighborMap(link.node, nodeDb, nodeRegistryMap)
-            ?: return@mapNotNull null
-        if (!discovered.hasNeighborMapPosition()) return@mapNotNull null
-
-        NeighborDiscoveryMapLink(
-            origin = origin,
-            discovered = discovered,
-            snr = link.snr,
-        )
-    }.distinctBy { it.discovered.num }
-
-    if (links.isEmpty()) return null
-
-    return NeighborDiscoveryMap(
-        origin = origin,
-        discovered = links.map { it.discovered },
-        links = links,
-        source = source,
+    return evaluateNeighborDiscoveryMapAvailability(
+        discovery = discovery,
+        nodesByNum = nodeDb.nodeDBbyNum.value,
+        nodeRegistryMap = nodeRegistryMap,
     )
 }
 
@@ -145,30 +127,3 @@ private fun resolveNeighborDiscoveryNode(
         shortName = shortName,
     )
 }
-
-private fun resolveNodeForNeighborMap(
-    node: NeighborDiscoveryNode,
-    nodeDb: NodeRepository,
-    nodeRegistryMap: Map<String, NodeRegistry>,
-): Node? {
-    nodeDb.nodeDBbyNum.value[node.nodeNum]?.let { knownNode ->
-        if (knownNode.hasNeighborMapPosition()) return knownNode
-    }
-
-    val registryNode = nodeRegistryMap[node.userId] ?: return null
-    val latitudeI = registryNode.latitudeI ?: return null
-    val longitudeI = registryNode.longitudeI ?: return null
-    val defaultName = registryNode.defaultName ?: "Meshtastic ${node.userId.takeLast(4)}"
-
-    return Node(
-        num = registryNode.nodeNum ?: node.nodeNum,
-        liteNodeId = registryNode.nodeId,
-        liteDefaultName = defaultName,
-        liteLongName = registryNode.longName ?: node.longName,
-        liteShortName = registryNode.shortName ?: node.shortName,
-        liteLatitude = latitudeI * 1e-7,
-        liteLongitude = longitudeI * 1e-7,
-    )
-}
-
-private fun Node.hasNeighborMapPosition(): Boolean = validPosition != null || validLiteNode

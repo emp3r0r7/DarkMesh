@@ -121,7 +121,9 @@ fun RadioConfigScreen(
         ActivityResultContracts.StartActivityForResult()
     ) {
         if (it.resultCode == Activity.RESULT_OK) {
-            it.data?.data?.let { uri -> viewModel.exportProfile(uri, deviceProfile!!) }
+            it.data?.data?.let { uri ->
+                deviceProfile?.let { profile -> viewModel.exportProfile(uri, profile) }
+            }
         }
     }
 

@@ -22,6 +22,8 @@ import com.geeksville.mesh.DataPacket
 import com.geeksville.mesh.android.Logging
 import com.google.protobuf.InvalidProtocolBufferException
 import kotlinx.serialization.json.Json
+import org.meshtastic.proto.ChannelProtos
+import org.meshtastic.proto.ConfigProtos
 import org.meshtastic.proto.MeshProtos
 import org.meshtastic.proto.PaxcountProtos
 import org.meshtastic.proto.TelemetryProtos
@@ -128,5 +130,39 @@ class Converters : Logging {
     @TypeConverter
     fun metadataToBytes(value: MeshProtos.DeviceMetadata): ByteArray? {
         return value.toByteArray()
+    }
+
+    @TypeConverter
+    fun bytesToLoRaConfig(bytes: ByteArray?): ConfigProtos.Config.LoRaConfig? {
+        return bytes?.let {
+            try {
+                ConfigProtos.Config.LoRaConfig.parseFrom(it)
+            } catch (ex: InvalidProtocolBufferException) {
+                errormsg("bytesToLoRaConfig TypeConverter error:", ex)
+                null
+            }
+        }
+    }
+
+    @TypeConverter
+    fun loRaConfigToBytes(value: ConfigProtos.Config.LoRaConfig?): ByteArray? {
+        return value?.toByteArray()
+    }
+
+    @TypeConverter
+    fun bytesToChannelSettings(bytes: ByteArray?): ChannelProtos.ChannelSettings? {
+        return bytes?.let {
+            try {
+                ChannelProtos.ChannelSettings.parseFrom(it)
+            } catch (ex: InvalidProtocolBufferException) {
+                errormsg("bytesToChannelSettings TypeConverter error:", ex)
+                null
+            }
+        }
+    }
+
+    @TypeConverter
+    fun channelSettingsToBytes(value: ChannelProtos.ChannelSettings?): ByteArray? {
+        return value?.toByteArray()
     }
 }

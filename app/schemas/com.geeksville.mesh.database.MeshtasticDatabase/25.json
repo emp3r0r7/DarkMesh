@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 25,
-    "identityHash": "7b54fb29061723ffa176e83dc7d70d59",
+    "identityHash": "e68cc9714f81d16cfc0a50956ccd1642",
     "entities": [
       {
         "tableName": "my_node",
@@ -568,7 +568,7 @@
       },
       {
         "tableName": "node_registry",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`nodeId` TEXT NOT NULL, `shortName` TEXT, `defaultName` TEXT, `longName` TEXT, `nodeNum` INTEGER, `latitudeI` INTEGER, `longitudeI` INTEGER, `lastSeen` INTEGER NOT NULL, `hopCount` INTEGER, `lastRssi` INTEGER, PRIMARY KEY(`nodeId`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`nodeId` TEXT NOT NULL, `shortName` TEXT, `defaultName` TEXT, `longName` TEXT, `nodeNum` INTEGER, `publicKey` BLOB, `latitudeI` INTEGER, `longitudeI` INTEGER, `lastSeen` INTEGER NOT NULL, `hopCount` INTEGER, `lastRssi` INTEGER, PRIMARY KEY(`nodeId`))",
         "fields": [
           {
             "fieldPath": "nodeId",
@@ -598,6 +598,12 @@
             "fieldPath": "nodeNum",
             "columnName": "nodeNum",
             "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "publicKey",
+            "columnName": "publicKey",
+            "affinity": "BLOB",
             "notNull": false
           },
           {
@@ -663,7 +669,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7b54fb29061723ffa176e83dc7d70d59')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e68cc9714f81d16cfc0a50956ccd1642')"
     ]
   }
 }

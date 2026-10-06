@@ -33,8 +33,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geeksville.mesh.model.Channel
+import com.geeksville.mesh.model.ModemPresetCapabilities
+import com.geeksville.mesh.model.ModemPresetSupport
 import com.geeksville.mesh.model.RadioConfigViewModel
 import com.geeksville.mesh.model.RegionInfo
+import com.geeksville.mesh.model.allowsLoRaSave
 import com.geeksville.mesh.model.numChannels
 import com.geeksville.mesh.ui.components.DropDownPreference
 import com.geeksville.mesh.ui.components.EditListPreference
@@ -52,6 +55,7 @@ fun LoRaConfigScreen(
     viewModel: RadioConfigViewModel = hiltViewModel(),
 ) {
     val state by viewModel.radioConfigState.collectAsStateWithLifecycle()
+    val presetCapabilities by viewModel.modemPresetCapabilities.collectAsStateWithLifecycle()
 
     if (state.responseState.isWaiting()) {
         PacketResponseStateDialog(
@@ -65,14 +69,17 @@ fun LoRaConfigScreen(
         primarySettings = state.channelList.getOrNull(0) ?: return,
         enabled = state.connected,
         onSaveClicked = { loraInput ->
-            val config = config { lora = loraInput }
-            viewModel.setConfig(config)
+            if (presetCapabilities.allowsLoRaSave(state.radioConfig.lora, loraInput)) {
+                val config = config { lora = loraInput }
+                viewModel.setConfig(config)
+            }
         },
         hasPaFan = viewModel.hasPaFan,
+        presetCapabilities = presetCapabilities,
     )
 }
 
-@Suppress("LongMethod")
+@Suppress("CyclomaticComplexMethod", "LongMethod")
 @Composable
 fun LoRaConfigItemList(
     loraConfig: LoRaConfig,
@@ -80,6 +87,7 @@ fun LoRaConfigItemList(
     enabled: Boolean,
     onSaveClicked: (LoRaConfig) -> Unit,
     hasPaFan: Boolean = false,
+    presetCapabilities: ModemPresetCapabilities,
 ) {
     val focusManager = LocalFocusManager.current
     var loraInput by rememberSaveable { mutableStateOf(loraConfig) }
@@ -103,12 +111,29 @@ fun LoRaConfigItemList(
         if (loraInput.usePreset) {
             item {
                 DropDownPreference(title = "Modem preset",
-                    enabled = enabled && loraInput.usePreset,
-                    items = LoRaConfig.ModemPreset.entries
-                        .filter { it != LoRaConfig.ModemPreset.UNRECOGNIZED }
-                        .map { it to it.name },
-                    selectedItem = loraInput.modemPreset,
-                    onItemSelected = { loraInput = loraInput.copy { modemPreset = it } })
+                    enabled = enabled && loraInput.usePreset &&
+                        presetCapabilities.selectablePresets.isNotEmpty(),
+                    items = presetCapabilities.settingsPresetChoices()
+                        .map { preset ->
+                            val support = presetCapabilities.supportFor(preset)
+                            val label = if (support == ModemPresetSupport.SUPPORTED) {
+                                preset.name
+                            } else {
+                                "${preset.name} (Current - ${support.name.lowercase()})"
+                            }
+                            preset.number to label
+                        },
+                    selectedItem = loraInput.modemPreset.number,
+                    onItemSelected = { presetNumber ->
+                        LoRaConfig.ModemPreset.forNumber(presetNumber)?.let { preset ->
+                            loraInput = loraInput.copy { modemPreset = preset }
+                        }
+                    },
+                    itemEnabled = { presetNumber ->
+                        LoRaConfig.ModemPreset.forNumber(presetNumber)?.let {
+                            presetCapabilities.isSelectable(it)
+                        } == true
+                    })
             }
             item { Divider() }
         } else {
@@ -283,5 +308,6 @@ private fun LoRaConfigPreview() {
         primarySettings = Channel.default.settings,
         enabled = true,
         onSaveClicked = { },
+        presetCapabilities = ModemPresetCapabilities.unknown(Channel.default.loraConfig.modemPreset),
     )
 }

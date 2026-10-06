@@ -70,10 +70,8 @@ fun Uri.toSharedContact(): AdminProtos.SharedContact {
         throw MalformedURLException("Not a valid Meshtastic URL: ${toString().take(40)}")
     }
 
-    val bytes = Base64.decode(
-        fragment!!,
-        BASE64FLAGS
-    )
+    val encodedContact = fragment ?: throw MalformedURLException("Missing contact payload")
+    val bytes = Base64.decode(encodedContact, BASE64FLAGS)
 
     return AdminProtos.SharedContact.parseFrom(bytes)
 }

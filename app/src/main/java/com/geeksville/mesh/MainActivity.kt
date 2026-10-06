@@ -84,6 +84,7 @@ import com.geeksville.mesh.android.rationaleDialog
 import com.geeksville.mesh.android.shouldShowRequestPermissionRationale
 import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.database.DbImportState
+import com.geeksville.mesh.discovery.LocalMeshDiscoveryEngine
 import com.geeksville.mesh.model.BluetoothViewModel
 import com.geeksville.mesh.model.Contact
 import com.geeksville.mesh.model.DeviceVersion
@@ -125,6 +126,7 @@ import com.geeksville.mesh.ui.activity.HuntActivity
 import com.geeksville.mesh.ui.activity.MeshStatsActivity
 import com.geeksville.mesh.ui.activity.PlanMsgListActivity
 import com.geeksville.mesh.ui.components.ScannedQrCodeDialog
+import com.geeksville.mesh.ui.discovery.DiscoveryFragment
 import com.geeksville.mesh.ui.map.MapFragment
 import com.geeksville.mesh.ui.message.navigateToMessages
 import com.geeksville.mesh.ui.navigateToNavGraph
@@ -223,6 +225,9 @@ class MainActivity : AppCompatActivity(), Logging {
     @Inject
     internal lateinit var serviceRepository: ServiceRepository
 
+    @Inject
+    internal lateinit var localMeshDiscoveryEngine: LocalMeshDiscoveryEngine
+
     private val bluetoothPermissionsLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
             if (result.entries.all { it.value }) {
@@ -273,6 +278,11 @@ class MainActivity : AppCompatActivity(), Logging {
             "Map",
             R.drawable.ic_twotone_map_24,
             MapFragment()
+        ),
+        TabInfo(
+            "Discovery",
+            R.drawable.ic_antenna_24,
+            DiscoveryFragment()
         ),
         TabInfo(
             "Channel",
@@ -352,10 +362,10 @@ class MainActivity : AppCompatActivity(), Logging {
 
             AppTheme {
                 if (connState.isConnected()) {
-                    if (requestChannelSet != null) {
+                    requestChannelSet?.let { incomingChannelSet ->
                         ScannedQrCodeDialog(
                             channels = channels,
-                            incoming = requestChannelSet!!,
+                            incoming = incomingChannelSet,
                             onDismiss = model::clearRequestChannelUrl,
                             onConfirm = model::setChannels,
                         )
@@ -367,6 +377,7 @@ class MainActivity : AppCompatActivity(), Logging {
         // Handle any intent
         checkIfDeviceIsSensor()
         checkIfDeviceIsHidden()
+        localMeshDiscoveryEngine.startRecoveryWatcher()
         observeUnreadState()
         handleIntent(intent)
     }
@@ -491,9 +502,9 @@ class MainActivity : AppCompatActivity(), Logging {
         val dialog = builder.show()
 
         // Make the textview clickable. Must be called after show()
-        val view = (dialog.findViewById<TextView>(android.R.id.message))!!
+        val view = dialog.findViewById<TextView>(android.R.id.message)
         // Linkify.addLinks(view, Linkify.ALL) // not needed with this method
-        view.movementMethod = LinkMovementMethod.getInstance()
+        view?.movementMethod = LinkMovementMethod.getInstance()
 
         showSettingsPage() // Default to the settings page in this case
     }
@@ -963,11 +974,9 @@ class MainActivity : AppCompatActivity(), Logging {
                 if (!item.isChecked) {
 
                     item.isChecked = true
-                    var broadcastChannels = ArrayList<Contact>()
-
                     lifecycleScope.launch {
                         val contacts = model.contactList.value
-                        broadcastChannels = contacts.filter {
+                        val broadcastChannels = contacts.filter {
                             it.contactKey.contains(ID_BROADCAST)
                         }.toCollection(ArrayList())
 
@@ -1289,13 +1298,14 @@ class MainActivity : AppCompatActivity(), Logging {
             .setTitle("Select Broadcast Channel")
             .setView(layout)
             .setPositiveButton("START") { _, _ ->
-                if (selectedChannel != null) {
+                val channel = selectedChannel
+                if (channel != null) {
 
                     val userInput = inputField.text.toString()
                     val interval = inputSeconds.text.toString()
 
                     distressBeaconServiceIntent.apply {
-                        putExtra("contactKey", selectedChannel!!.contactKey)
+                        putExtra("contactKey", channel.contactKey)
                         putExtra("userInput", userInput)
                         putExtra("interval", interval)
                         putExtra("myLongName", myLongName.toString())

@@ -30,9 +30,9 @@ import androidx.core.location.LocationListenerCompat
 import androidx.core.location.LocationManagerCompat
 import androidx.core.location.LocationRequestCompat
 import androidx.core.location.altitude.AltitudeConverterCompat
+import com.geeksville.mesh.CoroutineDispatchers
 import com.geeksville.mesh.android.GeeksvilleApplication
 import com.geeksville.mesh.android.Logging
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -145,6 +145,7 @@ internal class LocationDebouncer(private val policy: LocationEmitPolicy) {
 class LocationRepository @Inject constructor(
     private val context: Application,
     private val locationManager: dagger.Lazy<LocationManager>,
+    private val dispatchers: CoroutineDispatchers,
 ) : Logging {
 
     /**
@@ -165,7 +166,7 @@ class LocationRepository @Inject constructor(
         val debouncer = LocationDebouncer(policy)
 
         // Serializza i callback di più provider: evita race sullo stato del debouncer
-        val callbackExecutor = Dispatchers.IO.asExecutor()
+        val callbackExecutor = dispatchers.io.asExecutor()
 
         fun nowElapsedMs(): Long = SystemClock.elapsedRealtime()
 

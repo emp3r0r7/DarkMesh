@@ -20,6 +20,7 @@ package com.geeksville.mesh.repository.radio
 import android.app.Application
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
+import com.geeksville.mesh.CoroutineDispatchers
 import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.repository.bluetooth.BluetoothRepository
@@ -97,6 +98,7 @@ A variable keepAllPackets, if set to true will suppress this behavior and instea
 class BluetoothInterface @AssistedInject constructor(
     context: Application,
     bluetoothRepository: BluetoothRepository,
+    private val dispatchers: CoroutineDispatchers,
     private val service: RadioInterfaceService,
     @Assisted val address: String,
 ) : IRadioInterface, Logging {
@@ -118,6 +120,9 @@ class BluetoothInterface @AssistedInject constructor(
          */
         @Volatile
         var safe: SafeBluetooth? = null
+
+        private const val RECONNECT_DELAY_MILLIS = 1500L
+        private const val CONNECT_ATTEMPT_TIMEOUT_MILLIS = 30_000L
     }
 
 
@@ -143,7 +148,7 @@ class BluetoothInterface @AssistedInject constructor(
     // BLE handles stable.  So turn the hack off for these devices.  FIXME - find a better way to know that the board is NRF52 based
     // and Amazon fire devices seem to not need this hack either
     // Build.MANUFACTURER != "Amazon" &&
-    private var needForceRefresh = !address.startsWith("FD:10:04")
+    private val needForceRefresh = !address.startsWith("FD:10:04")
 
     init {
         // Note: this call does no comms, it just creates the device object (even if the
@@ -153,7 +158,7 @@ class BluetoothInterface @AssistedInject constructor(
             info("Creating radio interface service.  device=${address.anonymize}")
 
             // Note this constructor also does no comm
-            val s = SafeBluetooth(context, device)
+            val s = SafeBluetooth(context, device, dispatchers.io)
             safe = s
 
             startConnect()
@@ -250,9 +255,6 @@ class BluetoothInterface @AssistedInject constructor(
         }
     }
 
-    /// We only force service refresh the _first_ time we connect to the device.  Thereafter it is assumed the firmware didn't change
-    private var hasForcedRefresh = false
-
     @Volatile
     var fromNumChanged = false
 
@@ -279,44 +281,40 @@ class BluetoothInterface @AssistedInject constructor(
      * Some buggy BLE stacks can fail on initial connect, with either missing services or missing characteristics.  If that happens we
      * disconnect and try again when the device reenumerates.
      */
-    private suspend fun retryDueToException() = try {
-        /// We gracefully handle safe being null because this can occur if someone has unpaired from our device - just abandon the reconnect attempt
-        val s = safe
-        if (s != null) {
-            warn("Forcing disconnect and hopefully device will comeback (disabling forced refresh)")
-
-            // The following optimization is not currently correct - because the device might be sleeping and come back with different BLE handles
-            // hasForcedRefresh = true // We've already tossed any old service caches, no need to do it again
-
-            // Make sure the old connection was killed
-            ignoreException {
-                s.closeConnection()
+    private suspend fun retryDueToException() {
+        try {
+            /// We gracefully handle safe being null because this can occur if someone has unpaired from our device - just abandon the reconnect attempt
+            val s = safe
+            if (s != null) {
+                reconnectUntilQueued(s)
+            } else {
+                warn("Abandoning reconnect because safe==null, someone must have closed the device")
             }
-
-            service.onDisconnect(false) // assume we will fail
-            delay(1500) // Give some nasty time for buggy BLE stacks to shutdown (500ms was not enough)
-            reconnectJob = null // Any new reconnect requests after this will be allowed to run
-            warn("Attempting reconnect")
-            if (safe != null) // check again, because we just slept for 1sec, and someone might have closed our interface
-                startConnect()
-            else
-                warn("Not connecting, because safe==null, someone must have closed us")
-        } else {
-            warn("Abandoning reconnect because safe==null, someone must have closed the device")
+        } catch (ex: CancellationException) {
+            warn("retryDueToException was cancelled")
+        } finally {
+            reconnectJob = null
         }
-    } catch (ex: CancellationException) {
-        warn("retryDueToException was cancelled")
-    } finally {
-        reconnectJob = null
+    }
+
+    private suspend fun reconnectUntilQueued(safeBluetooth: SafeBluetooth) {
+        while (safe === safeBluetooth) {
+            warn("Forcing disconnect and hopefully device will comeback (disabling forced refresh)")
+            ignoreException {
+                safeBluetooth.resetGattForReconnect()
+            }
+            service.onDisconnect(false) // assume we will fail
+            delay(RECONNECT_DELAY_MILLIS)
+            warn("Attempting reconnect")
+            if (startConnect()) return
+            warn("Reconnect attempt could not be queued, retrying")
+        }
+        warn("Not connecting, because safe changed or someone must have closed us")
     }
 
     /// We only try to set MTU once, because some buggy implementations fail
     @Volatile
     private var shouldSetMtu = true
-
-    /// For testing
-    @Volatile
-    private var isFirstTime = true
 
     private fun doDiscoverServicesAndInit() {
         val s = safe
@@ -367,8 +365,10 @@ class BluetoothInterface @AssistedInject constructor(
 
     private fun onConnect(connRes: Result<Unit>) {
         // This callback is invoked after we are connected
-
-        connRes.getOrThrow()
+        connRes.onFailure {
+            scheduleReconnect("connect failed, ${it.message}")
+            return
+        }
 
         service.serviceScope.handledLaunch {
             info("Connected to radio!")
@@ -424,14 +424,23 @@ class BluetoothInterface @AssistedInject constructor(
     }
 
     /// Start a connection attempt
-    private fun startConnect() {
+    private fun startConnect(): Boolean {
         // we pass in true for autoconnect - so we will autoconnect whenever the radio
         // comes in range (even if we made this connect call long ago when we got powered on)
         // see https://stackoverflow.com/questions/40156699/which-correct-flag-of-autoconnect-in-connectgatt-of-ble for
         // more info
-        safe!!.asyncConnect(true,
-            cb = ::onConnect,
-            lostConnectCb = { scheduleReconnect("connection dropped") })
+        val safeBluetooth = safe ?: return false
+        return runCatching {
+            safeBluetooth.asyncConnect(
+                autoConnect = true,
+                timeout = CONNECT_ATTEMPT_TIMEOUT_MILLIS,
+                cb = ::onConnect,
+                lostConnectCb = { scheduleReconnect("connection dropped") },
+            )
+            true
+        }.onFailure {
+            warn("Could not start connect, ${it.message}")
+        }.getOrDefault(false)
     }
 
 

@@ -37,6 +37,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.LocationDisabled
 import androidx.compose.material.icons.filled.People
@@ -73,6 +74,7 @@ import com.geeksville.mesh.android.gpsDisabled
 import com.geeksville.mesh.android.hasGps
 import com.geeksville.mesh.android.hasLocationPermission
 import com.geeksville.mesh.database.entity.Packet
+import com.geeksville.mesh.discovery.DiscoveryMap
 import com.geeksville.mesh.model.MapMode
 import com.geeksville.mesh.model.NeighborDiscoveryMap
 import com.geeksville.mesh.model.Node
@@ -85,6 +87,7 @@ import com.geeksville.mesh.model.map.clustering.RadiusMarkerClusterer
 import com.geeksville.mesh.model.neighborDiscoverySnrColor
 import com.geeksville.mesh.ui.ScreenFragment
 import com.geeksville.mesh.ui.components.NeighborDiscoveryDialog
+import com.geeksville.mesh.ui.discovery.DiscoveryNodeListDialog
 import com.geeksville.mesh.ui.theme.AppTheme
 import com.geeksville.mesh.util.AppUtil
 import com.geeksville.mesh.util.MeshStatsUtil
@@ -121,14 +124,10 @@ import org.osmdroid.views.overlay.infowindow.InfoWindow
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.io.File
 import java.text.DateFormat
-import kotlin.math.asin
-import kotlin.math.cos
-import kotlin.math.pow
-import kotlin.math.sin
-import kotlin.math.sqrt
 
 private const val TRACE_COLOR_FORWARD = android.graphics.Color.BLUE
 private const val TRACE_COLOR_BACK = android.graphics.Color.RED
+private val DISCOVERY_DIRECT_COLOR = android.graphics.Color.rgb(0, 128, 0)
 private const val DEFAULT_SPACING_POLYLINE_TRACE = 100.0
 
 @AndroidEntryPoint
@@ -213,64 +212,6 @@ private fun cacheManagerCallback(
     }
 }
 
-data class MapSegment(
-    val from: GeoPoint,
-    val to: GeoPoint,
-    val lineColor: Int
-)
-
-@Suppress("DEPRECATION", "UsePropertyAccessSyntax")
-fun MapSegment.toPolyline(): Polyline =
-    Polyline().apply {
-        setPoints(listOf(from, to))
-        setColor(lineColor)
-        width = 6f
-        isGeodesic = true
-    }
-
-
-@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-fun GeoPoint.offsetMeters(
-    meters: Double,
-    bearingDegrees: Double
-): GeoPoint {
-    val earthRadius = 6_378_137.0 // metri
-    val bearingRad = Math.toRadians(bearingDegrees)
-
-    val latRad = Math.toRadians(latitude)
-    val lonRad = Math.toRadians(longitude)
-
-    val newLat = Math.asin(
-        Math.sin(latRad) * Math.cos(meters / earthRadius) +
-                Math.cos(latRad) * Math.sin(meters / earthRadius) * Math.cos(bearingRad)
-    )
-
-    val newLon = lonRad + Math.atan2(
-        Math.sin(bearingRad) * Math.sin(meters / earthRadius) * Math.cos(latRad),
-        Math.cos(meters / earthRadius) - Math.sin(latRad) * Math.sin(newLat)
-    )
-
-    return GeoPoint(
-        Math.toDegrees(newLat),
-        Math.toDegrees(newLon)
-    )
-}
-
-@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-fun bearing(from: GeoPoint, to: GeoPoint): Double {
-    val lat1 = Math.toRadians(from.latitude)
-    val lat2 = Math.toRadians(to.latitude)
-    val dLon = Math.toRadians(to.longitude - from.longitude)
-
-    val y = Math.sin(dLon) * Math.cos(lat2)
-    val x = Math.cos(lat1) * Math.sin(lat2) -
-            Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon)
-
-    return (Math.toDegrees(Math.atan2(y, x)) + 360) % 360
-}
-
-
-
 fun MapView.drawTraceroute(trace: TraceRouteMap) {
     overlays.removeAll { it is Polyline || it is Marker }
 
@@ -316,130 +257,27 @@ fun MapView.drawNeighborDiscovery(discovery: NeighborDiscoveryMap) {
     invalidate()
 }
 
+fun MapView.drawDiscovery(discovery: DiscoveryMap) {
+    overlays.removeAll { it is Polyline || it is Marker }
 
-fun totalDistanceKm(nodes: List<Node>): Double {
-    fun haversine(a: GeoPoint, b: GeoPoint): Double {
-        val r = 6371.0 // km
-        val dLat = Math.toRadians(b.latitude - a.latitude)
-        val dLon = Math.toRadians(b.longitude - a.longitude)
-
-        val lat1 = Math.toRadians(a.latitude)
-        val lat2 = Math.toRadians(b.latitude)
-
-        val h = sin(dLat / 2).pow(2) +
-                cos(lat1) * cos(lat2) *
-                sin(dLon / 2).pow(2)
-
-        return 2 * r * asin(sqrt(h))
-    }
-
-    return nodes
-        .mapNotNull { node ->
-            node.validPosition?.let { GeoPoint(node.latitude, node.longitude) } }
-        .zipWithNext()
-        .sumOf { (a, b) -> haversine(a, b) }
-}
-
-private fun validCoordinates(lat: Double, lon: Double): Boolean {
-    return !lat.isNaN() && !lon.isNaN()
-}
-
-
-private fun Node.toGeoPointOrNull(): GeoPoint? = when {
-    validPosition != null -> GeoPoint(latitude, longitude)
-    validLiteNode && liteLatitude != null && liteLongitude != null -> GeoPoint(liteLatitude, liteLongitude)
-    else -> null
-}
-
-@Suppress("SameParameterValue")
-private fun buildSegmentForNeighbor(
-    fromNode: Node,
-    toNode: Node,
-    color: Int,
-    offsetMeters: Double,
-    side: Int,
-): MapSegment? {
-    val rawFrom = fromNode.toGeoPointOrNull() ?: return null
-    val rawTo = toNode.toGeoPointOrNull() ?: return null
-
-    if (!validCoordinates(rawFrom.latitude, rawFrom.longitude) ||
-        !validCoordinates(rawTo.latitude, rawTo.longitude)
-    ) {
-        return null
-    }
-
-    if (offsetMeters == 0.0) {
-        return MapSegment(
-            from = rawFrom,
-            to = rawTo,
-            lineColor = color,
+    discovery.links.mapNotNull { link ->
+        buildSegmentForNeighbor(
+            fromNode = link.from,
+            toNode = link.to,
+            color = if (link.isDirect) {
+                DISCOVERY_DIRECT_COLOR
+            } else {
+                neighborDiscoverySnrColor(link.snr)
+            },
+            offsetMeters = 0.0,
+            side = 1,
         )
+    }.forEach {
+        overlays.add(it.toPolyline())
     }
 
-    val (from, to) =
-        if (rawFrom.latitude < rawTo.latitude) rawFrom to rawTo
-        else rawTo to rawFrom
-
-    val brg = bearing(from, to)
-    val perpendicular = brg + (90 * side)
-
-    return MapSegment(
-        from = rawFrom.offsetMeters(offsetMeters, perpendicular),
-        to = rawTo.offsetMeters(offsetMeters, perpendicular),
-        lineColor = color,
-    )
+    invalidate()
 }
-
-fun buildSegmentsForTraceroute(
-    nodes: List<Node>,
-    color: Int,
-    offsetMeters: Double,
-    side: Int
-): List<MapSegment> =
-    nodes.zipWithNext().mapNotNull { (a, b) ->
-
-        var latA = Double.NaN
-        var lonA = Double.NaN
-
-        var latB = Double.NaN
-        var lonB = Double.NaN
-
-        if (a.validPosition != null) {
-            latA = a.latitude
-            lonA = a.longitude
-        } else if (a.validLiteNode && a.liteLatitude != null && a.liteLongitude != null) {
-            latA = a.liteLatitude
-            lonA = a.liteLongitude
-        }
-
-        if (b.validPosition != null) {
-            latB = b.latitude
-            lonB = b.longitude
-        } else if (b.validLiteNode && b.liteLatitude != null && b.liteLongitude != null) {
-            latB = b.liteLatitude
-            lonB = b.liteLongitude
-        }
-
-        if(!validCoordinates(latA, lonA) || !validCoordinates(latB, lonB)){
-            return@mapNotNull null
-        }
-
-        val rawFrom = GeoPoint(latA, lonA)
-        val rawTo = GeoPoint(latB, lonB)
-
-        val (from, to) =
-            if (rawFrom.latitude < rawTo.latitude) rawFrom to rawTo
-            else rawTo to rawFrom
-
-        val brg = bearing(from, to)
-        val perpendicular = brg + (90 * side)
-
-        MapSegment(
-            from = rawFrom.offsetMeters(offsetMeters, perpendicular),
-            to = rawTo.offsetMeters(offsetMeters, perpendicular),
-            lineColor = color
-        )
-    }
 
 
 fun GeoPoint.offset(latOffset: Double, lonOffset: Double) =
@@ -501,6 +339,7 @@ fun MapView(
     }
 
     var showNeighborDiscoveryList by remember { mutableStateOf(false) }
+    var showDiscoveryList by remember { mutableStateOf(false) }
 
     // UI Elements
     var cacheEstimate by remember { mutableStateOf("") }
@@ -592,6 +431,7 @@ fun MapView(
             })
                 .distinctBy { it.num }
         }
+        is MapMode.Discovery -> mode.discovery.nodes.distinctBy { it.num }
     }
 
     val waypoints by model.waypoints.collectAsStateWithLifecycle(emptyMap())
@@ -607,14 +447,16 @@ fun MapView(
 
         val gpsFormat = AppUtil.safeGpsFormat(model.config.display.gpsFormat)
         val displayUnits = model.config.display.units.number
-        return nodesWithPosition.map { node ->
+        return nodesWithPosition.mapNotNull { node ->
 
             val (p, u) = node.position to node.user
 
-            val nodePosition = if(!node.isValidNodeLite()){
+            val nodePosition = if (!node.isValidNodeLite()) {
                 GeoPoint(node.latitude, node.longitude)
             } else {
-                GeoPoint(node.liteLatitude!!, node.liteLongitude!!)
+                val liteLatitude = node.liteLatitude ?: return@mapNotNull null
+                val liteLongitude = node.liteLongitude ?: return@mapNotNull null
+                GeoPoint(liteLatitude, liteLongitude)
             }
 
             MarkerWithLabel(
@@ -743,6 +585,7 @@ fun MapView(
 
     LaunchedEffect(mapMode) {
         showNeighborDiscoveryList = false
+        showDiscoveryList = false
 
         when (val mode = mapMode) {
             is MapMode.Traceroute -> {
@@ -779,6 +622,19 @@ fun MapView(
                         link.discovered.toGeoPointOrNull(),
                     )
                 }
+
+                if (points.isNotEmpty()) {
+                    map.zoomToBoundingBox(
+                        BoundingBox.fromGeoPoints(points),
+                        true,
+                    )
+                }
+            }
+
+            is MapMode.Discovery -> {
+                map.drawDiscovery(mode.discovery)
+
+                val points = mode.discovery.nodes.mapNotNull { it.toGeoPointOrNull() }
 
                 if (points.isNotEmpty()) {
                     map.zoomToBoundingBox(
@@ -835,7 +691,9 @@ fun MapView(
 
         var wpts = onWaypointChanged(waypoints.values)
 
-        if(mapMode is MapMode.Traceroute || mapMode is MapMode.NeighborDiscovery){
+        if(mapMode is MapMode.Traceroute ||
+            mapMode is MapMode.NeighborDiscovery ||
+            mapMode is MapMode.Discovery){
             wpts = emptyList()
         }
 
@@ -991,49 +849,63 @@ fun MapView(
             if (mapMode is MapMode.NeighborDiscovery && showNeighborDiscoveryList) {
                 NeighborDiscoveryDialog(
                     discovery = (mapMode as MapMode.NeighborDiscovery).discovery.source,
+                    distanceUnits = model.config.display.units.number,
                     onDismiss = {
                         showNeighborDiscoveryList = false
                     },
                 )
             }
 
-            if (downloadRegionBoundingBox != null) CacheLayout(
-                cacheEstimate = cacheEstimate,
-                onExecuteJob = { startDownload() },
-                onCancelDownload = {
-                    downloadRegionBoundingBox = null
-                    map.overlays.removeAll { it is Polygon }
-                    map.invalidate()
-                },
-                modifier = Modifier.align(Alignment.BottomCenter)
-            ) else Column(
-                modifier = Modifier
-                    .padding(top = 16.dp, end = 16.dp)
-                    .align(Alignment.TopEnd),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                MapButton(
-                    onClick = ::showMapStyleDialog,
-                    icon = Icons.Outlined.Layers,
-                    contentDescription = R.string.map_style_selection,
-                )
-                MapButton(
-                    enabled = hasGps,
-                    icon = if (myLocationOverlay == null) {
-                        Icons.Outlined.MyLocation
-                    } else {
-                        Icons.Default.LocationDisabled
+            if (mapMode is MapMode.Discovery && showDiscoveryList) {
+                DiscoveryNodeListDialog(
+                    nodeList = (mapMode as MapMode.Discovery).discovery.nodeList,
+                    distanceUnits = model.config.display.units.number,
+                    onDismiss = {
+                        showDiscoveryList = false
                     },
-                    contentDescription = null,
-                ) {
-                    if (context.hasLocationPermission()) {
-                        map.toggleMyLocation()
-                    } else {
-                        requestPermissionAndToggleLauncher.launch(context.getLocationPermissions())
-                    }
-                }
+                )
+            }
 
-                if(mapMode is MapMode.Traceroute){
+            if (downloadRegionBoundingBox != null) {
+                CacheLayout(
+                    cacheEstimate = cacheEstimate,
+                    onExecuteJob = { startDownload() },
+                    onCancelDownload = {
+                        downloadRegionBoundingBox = null
+                        map.overlays.removeAll { it is Polygon }
+                        map.invalidate()
+                    },
+                    modifier = Modifier.align(Alignment.BottomCenter)
+                )
+            } else {
+                Column(
+                    modifier = Modifier
+                        .padding(top = 16.dp, end = 16.dp)
+                        .align(Alignment.TopEnd),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    MapButton(
+                        onClick = ::showMapStyleDialog,
+                        icon = Icons.Outlined.Layers,
+                        contentDescription = R.string.map_style_selection,
+                    )
+                    MapButton(
+                        enabled = hasGps,
+                        icon = if (myLocationOverlay == null) {
+                            Icons.Outlined.MyLocation
+                        } else {
+                            Icons.Default.LocationDisabled
+                        },
+                        contentDescription = null,
+                    ) {
+                        if (context.hasLocationPermission()) {
+                            map.toggleMyLocation()
+                        } else {
+                            requestPermissionAndToggleLauncher.launch(context.getLocationPermissions())
+                        }
+                    }
+
+                if (mapMode is MapMode.Traceroute) {
 
                     val trace = (mapMode as MapMode.Traceroute).trace.sourceTrace
 
@@ -1084,6 +956,25 @@ fun MapView(
                         },
                         contentDescription = "Show Neighbor Discovery",
                     )
+                }
+
+                if (mapMode is MapMode.Discovery) {
+                    MapButton(
+                        icon = Icons.Default.Clear,
+                        onClick = {
+                            showDiscoveryList = false
+                            model.exitDiscoveryMode()
+                        },
+                        contentDescription = "Clear Discovery",
+                    )
+                    MapButton(
+                        icon = Icons.AutoMirrored.Default.List,
+                        onClick = {
+                            showDiscoveryList = !showDiscoveryList
+                        },
+                        contentDescription = "Show Discovery List",
+                    )
+                }
                 }
             }
         }

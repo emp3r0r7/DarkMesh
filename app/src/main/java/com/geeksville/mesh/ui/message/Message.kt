@@ -663,9 +663,10 @@ private fun TextInput(
     var lastChar : Char? by remember { mutableStateOf(null) }
     var taggedNodes : List<Node>? by remember { mutableStateOf(null) }
 
-    if (showNodes && !taggedNodes.isNullOrEmpty()) {
+    val visibleTaggedNodes = taggedNodes?.takeIf { it.isNotEmpty() }
+    if (showNodes && visibleTaggedNodes != null) {
         MentionNodeList(
-            nodes = taggedNodes!!,
+            nodes = visibleTaggedNodes,
             onNodeSelected = { node ->
 
                 val text = message.value.text

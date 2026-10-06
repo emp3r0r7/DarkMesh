@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
+@Suppress("InjectDispatcher")
 object DbImportState {
 
     val dbImportContactMap = ConcurrentHashMap<Int, String>()

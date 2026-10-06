@@ -19,6 +19,7 @@ package com.geeksville.mesh
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.emp3r0r7.darkmesh.BuildConfig
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -34,6 +35,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.geeksville.mesh", appContext.packageName)
+        assertEquals(BuildConfig.APPLICATION_ID, appContext.packageName)
     }
 }
