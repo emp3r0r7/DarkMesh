@@ -30,6 +30,8 @@
 
         <com.google.android.material.appbar.AppBarLayout
             android:id="@+id/appBarLayout"
+            android:background="@color/toolbarBackground"
+            app:elevation="0dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
@@ -39,6 +41,8 @@
 
                 <com.google.android.material.appbar.MaterialToolbar
                     android:id="@+id/toolbar"
+                    android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+                    app:popupTheme="@style/AppTheme"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:visibility="visible"
@@ -49,8 +53,8 @@
 
                     <ImageView
                         android:id="@+id/appIconImageVIew"
-                        android:layout_width="50sp"
-                        android:layout_height="50sp"
+                        android:layout_width="42dp"
+                        android:layout_height="42dp"
                         android:contentDescription="@string/application_icon"
                         android:scaleType="centerInside"
                         android:scaleX="0.7"
@@ -61,7 +65,8 @@
 
                     <TextView
                         android:textColor="@android:color/white"
-                        android:textStyle="italic"
+                        android:fontFamily="sans-serif-medium"
+                        android:letterSpacing="-0.025"
                         android:id="@+id/title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -80,7 +85,19 @@
             <com.google.android.material.tabs.TabLayout
                 android:id="@+id/tab_layout"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
+                android:background="@drawable/mesh_panel"
+                app:tabIndicatorFullWidth="false"
+                android:layout_marginHorizontal="12dp"
+                android:layout_marginBottom="4dp"
+                app:tabPaddingStart="0dp"
+                app:tabPaddingEnd="0dp"
+                app:tabMinWidth="0dp"
+                app:tabTextAppearance="@style/MeshTabLabel"
+                app:tabSelectedTextColor="@android:color/white"
+                app:tabTextColor="@color/tab_color_selector"
+                app:tabBackground="@drawable/mesh_tab_background"
+                app:tabIndicatorHeight="0dp"
                 app:tabGravity="fill"
                 app:tabIconTint="@color/tab_color_selector"
                 app:tabIndicatorColor="@color/selectedColor" />

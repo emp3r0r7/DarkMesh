@@ -52,6 +52,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
@@ -101,7 +103,7 @@ internal fun MessageItem(
 ) = Row(
     modifier = Modifier
         .fillMaxWidth()
-        .background(color = if (selected) Color.Gray else MaterialTheme.colors.background),
+        .background(color = if (selected) MaterialTheme.colors.primary.copy(alpha = 0.20f) else MaterialTheme.colors.background),
     verticalAlignment = Alignment.CenterVertically,
 ) {
 
@@ -110,16 +112,17 @@ internal fun MessageItem(
 
     val fromLocal = node.user.id == DataPacket.ID_LOCAL
     val messageColor = if (fromLocal) R.color.colorMyMsg else R.color.colorMsg
-    val (topStart, topEnd) = if (fromLocal) 12.dp to 4.dp else 4.dp to 12.dp
+    val (topStart, topEnd) = if (fromLocal) 16.dp to 5.dp else 5.dp to 16.dp
     val messageModifier = if (fromLocal) {
-        Modifier.padding(start = 48.dp, top = 8.dp, end = 8.dp, bottom = 6.dp)
+        Modifier.padding(start = 44.dp, top = 4.dp, end = 12.dp, bottom = 4.dp)
     } else {
-        Modifier.padding(start = 8.dp, top = 8.dp, end = 0.dp, bottom = 6.dp)
+        Modifier.padding(start = 8.dp, top = 4.dp, end = 24.dp, bottom = 4.dp)
     }
 
     val ctx = LocalContext.current
     val ourNode by uiModel.ourNodeInfo.collectAsStateWithLifecycle()
 
+    if (fromLocal) Spacer(Modifier.weight(1f))
     if (!fromLocal) {
         UserAvatar(
             node = node,
@@ -150,11 +153,9 @@ internal fun MessageItem(
     )
 
     Card(
-        modifier = Modifier
-            .weight(1f)
-            .then(messageModifier),
-        elevation = 4.dp,
-        shape = RoundedCornerShape(topStart, topEnd, 12.dp, 12.dp),
+        modifier = if (fromLocal) messageModifier else Modifier.weight(1f, fill = false).then(messageModifier),
+        elevation = 0.dp,
+        shape = RoundedCornerShape(topStart, topEnd, 16.dp, 16.dp),
     ) {
         Surface(
             modifier = modifier.combinedClickable(
@@ -165,12 +166,11 @@ internal fun MessageItem(
         ) {
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
+                    .padding(horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(
-                    modifier = Modifier.padding(top = 8.dp),
+                    modifier = Modifier.padding(vertical = 8.dp),
                 ) {
 
                     if (!fromLocal) {
@@ -215,7 +215,7 @@ internal fun MessageItem(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.align(Alignment.End),
                         horizontalArrangement = Arrangement.End,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -308,6 +308,7 @@ fun QuotedMessageBubble(message: Message, onClick: () -> Unit) {
         replyNode = "You"
     }
 
+    val quoteAccent = MaterialTheme.colors.primary
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -315,8 +316,12 @@ fun QuotedMessageBubble(message: Message, onClick: () -> Unit) {
                 color = MaterialTheme.colors.onSurface.copy(alpha = 0.08f),
                 shape = RoundedCornerShape(8.dp)
             )
+            .drawBehind {
+                val x = if (layoutDirection == androidx.compose.ui.unit.LayoutDirection.Ltr) 2.dp.toPx() else size.width - 2.dp.toPx()
+                drawLine(quoteAccent, Offset(x, 6.dp.toPx()), Offset(x, size.height - 6.dp.toPx()), 2.dp.toPx())
+            }
             .clickable(onClick = onClick)
-            .padding(8.dp)
+            .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
         Text(
             text = replyNode,

@@ -58,6 +58,10 @@ class PacketRepository @Inject constructor(private val packetDaoLazy: dagger.Laz
         packetDao.insert(packet)
     }
 
+    fun messageIndex(contact: String) = packetDao.messageIndex(contact)
+
+    fun messagesByIds(ids: List<Long>) = packetDao.messagesByIds(ids)
+
     fun getMessagesFrom(contact: String) = packetDao.getMessagesFrom(contact)
 
     suspend fun updateMessageStatus(d: DataPacket, m: MessageStatus) = withContext(Dispatchers.IO) {

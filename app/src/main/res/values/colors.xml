@@ -20,26 +20,30 @@
     <color name="colorOnPrimary">#FFFFFF</color>
 
     <color name="colorPrimary">#B22222</color>
-    <color name="colorPrimaryDark">#7A0A0A</color>
+    <color name="colorPrimaryDark">#1D2023</color>
 
-    <color name="colorMsg">#C3C3C3</color>
-    <color name="colorMyMsg">#C3C3C3</color>
+    <color name="colorMsg">#FFFFFF</color>
+    <color name="colorMyMsg">#EBEAE7</color>
 
-    <color name="colorAdvancedBackground">#121212</color>
+    <color name="colorAdvancedBackground">#F4F3F5</color>
 
-    <color name="colorMenuItem">#535353</color>
+    <color name="colorMenuItem">#363740</color>
 
-    <color name="selectedColor">#FF003C</color>
+    <color name="selectedColor">#B22222</color>
 
-    <color name="unselectedColor">#666666</color>
+    <color name="unselectedColor">#676774</color>
 
-    <color name="buttonColor">#313131</color>
+    <color name="buttonColor">#A42020</color>
 
     <color name="colourGrey">#424242</color>
 
-    <color name="colorAnnotation">#00BCD4</color>
+    <color name="colorAnnotation">#176A70</color>
 
-    <color name="toolbarBackground">#1A1A1A</color>
+    <color name="toolbarBackground">#1D2023</color>
     <color name="toolbarText">#FFFFFF</color>
 
+    <color name="meshSurface">#FFFFFF</color>
+    <color name="meshInk">#24232A</color>
+    <color name="meshOutline">#DFDDE2</color>
+    <color name="meshBrandRed">#B22222</color>
 </resources>

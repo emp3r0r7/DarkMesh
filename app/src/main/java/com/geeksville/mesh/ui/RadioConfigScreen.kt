@@ -22,6 +22,7 @@ import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -192,7 +193,7 @@ fun NavCard(
             .fillMaxWidth()
             .padding(vertical = 2.dp)
             .clickable(enabled = enabled) { onClick() },
-        elevation = 4.dp
+        elevation = 0.dp
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -202,10 +203,12 @@ fun NavCard(
                 Icon(
                     imageVector = icon,
                     contentDescription = title,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(40.dp)
+                        .background(MaterialTheme.colors.onSurface.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                        .padding(9.dp),
                     tint = color,
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(12.dp))
             }
             Text(
                 text = title,

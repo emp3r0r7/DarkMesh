@@ -27,6 +27,10 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material.Surface
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -43,6 +47,7 @@ import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -108,7 +113,7 @@ import com.geeksville.mesh.ui.components.dragDropItemsIndexed
 import com.geeksville.mesh.ui.components.rememberDragDropState
 import com.geeksville.mesh.ui.share.toSharedContact
 import com.geeksville.mesh.util.Capabilities
-import com.google.accompanist.themeadapter.appcompat.AppCompatTheme
+import com.geeksville.mesh.ui.theme.AppTheme
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
@@ -133,7 +138,7 @@ class ChannelFragment : ScreenFragment("Channel"), Logging {
         return ComposeView(requireContext()).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
-                AppCompatTheme {
+                AppTheme {
                     ChannelScreen(model)
                 }
             }
@@ -314,7 +319,7 @@ fun ChannelScreen(
     }
 
     val listState = rememberLazyListState()
-    val dragDropState = rememberDragDropState(listState) { fromIndex, toIndex ->
+    val dragDropState = rememberDragDropState(listState, headerCount = 1) { fromIndex, toIndex ->
         updateSettingsList { add(toIndex, removeAt(fromIndex)) }
     }
 
@@ -328,87 +333,99 @@ fun ChannelScreen(
     ) {
 
         item {
-            Text(
-                text = "Add Contact by URL",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 5.dp)
-            )
-        }
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colors.surface,
+                contentColor = MaterialTheme.colors.onSurface,
+                border = BorderStroke(1.dp, MaterialTheme.colors.onSurface.copy(alpha = 0.14f)),
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.mesh_add_contact_url),
+                        style = MaterialTheme.typography.h4,
+                        color = MaterialTheme.colors.onSurface,
+                    )
+                    OutlinedTextField(
+                        value = contactString,
+                        onValueChange = {
+                            contactString = it
+                            @Suppress("AssignedValueIsNeverRead")
+                            addContactError = it.isBlank()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = enabled,
+                        isError = addContactError,
+                        label = { Text(stringResource(R.string.mesh_contact_url)) },
+                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                            textColor = MaterialTheme.colors.onSurface,
+                            disabledTextColor = MaterialTheme.colors.onSurface.copy(alpha = 0.65f),
+                            disabledLabelColor = MaterialTheme.colors.onSurface.copy(alpha = 0.65f),
+                        ),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = { focusManager.clearFocus() }
+                        )
+                    )
+                    OutlinedButton(
+                        onClick = {
+                            focusManager.clearFocus()
 
-        item {
-            OutlinedTextField(
-                value = contactString,
-                onValueChange = {
-                    contactString = it
-                    @Suppress("AssignedValueIsNeverRead")
-                    addContactError = it.isBlank()
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = enabled,
-                isError = addContactError,
-                label = { Text("Contact URL") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions.Default.copy(
-                    imeAction = ImeAction.Done
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = { focusManager.clearFocus() }
-                )
-            )
-        }
-
-        item {
-            OutlinedButton(
-                onClick = {
-                    focusManager.clearFocus()
-
-                    if (contactString.isBlank()) {
-                        addContactError = true
-                        return@OutlinedButton
-                    }
-                    try {
-
-                        if(!capabilities.canSendVerifiedContacts){
-                            viewModel.showSnackbar(
-                                "Your firmware version does not support adding contacts, please upgrade!"
-                            )
-                            return@OutlinedButton
-                        }
-
-                        val contactProto = contactString.toUri().toSharedContact()
-
-                        if(viewModel.myNodeNum == contactProto.nodeNum){
-                            viewModel.showSnackbar("You can't add yourself!")
-                            return@OutlinedButton
-                        }
-
-                        viewModel.unfilteredNodeList.value.firstOrNull { it.num == contactProto.nodeNum }.let {
-                            if(it != null){
-                                viewModel.showSnackbar("You already have " + "${contactProto.user.longName}")
+                            if (contactString.isBlank()) {
+                                addContactError = true
                                 return@OutlinedButton
                             }
-                        }
+                            try {
 
-                        Toast.makeText(context, "Adding contact ${contactProto.user.longName}", Toast.LENGTH_SHORT).show()
-                        viewModel.addSharedContact(contactProto)
+                                if(!capabilities.canSendVerifiedContacts){
+                                    viewModel.showSnackbar(
+                                        "Your firmware version does not support adding contacts, please upgrade!"
+                                    )
+                                    return@OutlinedButton
+                                }
 
-                    } catch (e: Exception){
-                        viewModel.showSnackbar(e.message.toString())
-                    } finally {
-                        contactString = ""
+                                val contactProto = contactString.toUri().toSharedContact()
+
+                                if(viewModel.myNodeNum == contactProto.nodeNum){
+                                    viewModel.showSnackbar("You can't add yourself!")
+                                    return@OutlinedButton
+                                }
+
+                                viewModel.unfilteredNodeList.value.firstOrNull { it.num == contactProto.nodeNum }.let {
+                                    if(it != null){
+                                        viewModel.showSnackbar("You already have " + "${contactProto.user.longName}")
+                                        return@OutlinedButton
+                                    }
+                                }
+
+                                Toast.makeText(context, "Adding contact ${contactProto.user.longName}", Toast.LENGTH_SHORT).show()
+                                viewModel.addSharedContact(contactProto)
+
+                            } catch (e: Exception){
+                                viewModel.showSnackbar(e.message.toString())
+                            } finally {
+                                contactString = ""
+                            }
+
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 2.dp),
+                        enabled = enabled && contactString.isNotBlank(),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = MaterialTheme.colors.primary,
+                            contentColor = MaterialTheme.colors.onPrimary,
+                            disabledContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.65f)
+                        )
+                    ) {
+                        Text(text = stringResource(R.string.add))
                     }
-
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp, bottom = 16.dp),
-                enabled = enabled && contactString.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(
-                    disabledContentColor = MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.disabled)
-                )
-            ) {
-                Text(text = stringResource(R.string.add))
+                }
             }
         }
 
@@ -432,7 +449,7 @@ fun ChannelScreen(
                 items = channelSet.settingsList,
                 dragDropState = dragDropState,
             ) { index, channel, isDragging ->
-                val elevation by animateDpAsState(if (isDragging) 8.dp else 4.dp, label = "drag")
+                val elevation by animateDpAsState(if (isDragging) 6.dp else 1.dp, label = "drag")
                 ChannelCard(
                     elevation = elevation,
                     index = index,

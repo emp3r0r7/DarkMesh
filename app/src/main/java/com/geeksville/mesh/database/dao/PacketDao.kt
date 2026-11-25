@@ -26,6 +26,7 @@ import androidx.room.Upsert
 import com.geeksville.mesh.DataPacket
 import com.geeksville.mesh.MessageStatus
 import com.geeksville.mesh.database.entity.ContactSettings
+import com.geeksville.mesh.database.entity.MessageIndexEntry
 import com.geeksville.mesh.database.entity.Packet
 import com.geeksville.mesh.database.entity.PacketEntity
 import com.geeksville.mesh.database.entity.ReactionEntity
@@ -104,6 +105,18 @@ interface PacketDao {
     """
     )
     suspend fun findDataPacket(data: DataPacket): Packet?
+
+    @Query("""
+        SELECT uuid, packet_id AS packetId, received_time AS receivedTime, read FROM packet
+        WHERE (myNodeNum = 0 OR myNodeNum = (SELECT myNodeNum FROM my_node))
+            AND port_num IN (1,7) AND contact_key = :contact
+        ORDER BY received_time DESC, uuid ASC
+    """)
+    fun messageIndex(contact: String): Flow<List<MessageIndexEntry>>
+
+    @Transaction
+    @Query("SELECT * FROM packet WHERE uuid IN (:ids) ORDER BY received_time DESC, uuid ASC")
+    fun messagesByIds(ids: List<Long>): Flow<List<PacketEntity>>
 
     @Query("DELETE FROM packet WHERE uuid in (:uuidList)")
     suspend fun deletePackets(uuidList: List<Long>)

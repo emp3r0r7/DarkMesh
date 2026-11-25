@@ -41,7 +41,8 @@ fun PreferenceCategory(
     Text(
         text,
         modifier = modifier.padding(start = 16.dp, top = 24.dp, bottom = 8.dp, end = 16.dp),
-        style = MaterialTheme.typography.h6,
+        style = MaterialTheme.typography.subtitle2,
+        color = MaterialTheme.colors.primary,
     )
     if (content != null) {
         Surface(

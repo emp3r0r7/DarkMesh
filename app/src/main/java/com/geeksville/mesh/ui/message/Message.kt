@@ -27,6 +27,7 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -123,6 +124,7 @@ import com.geeksville.mesh.ui.navigateToNavGraph
 import com.geeksville.mesh.ui.theme.AppTheme
 import com.geeksville.mesh.util.ComposableUtil.rememberBooleanPreference
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -233,7 +235,18 @@ internal fun MessageScreen(
 
     val connState by viewModel.connectionState.collectAsStateWithLifecycle()
     val quickChat by viewModel.quickChatActions.collectAsStateWithLifecycle()
-    val messages by viewModel.getMessagesFrom(contactKey).collectAsStateWithLifecycle(listOf())
+    val messages by remember(viewModel, contactKey) { viewModel.messageIndex(contactKey) }
+        .collectAsStateWithLifecycle(emptyList())
+    val selection = selectedIds.value
+    val selectedFlow = remember(viewModel, messages, selection) {
+        val ids = if (selection.isEmpty()) emptyList() else messages.mapNotNull {
+            it.uuid.takeIf(selection::contains)
+        }
+        viewModel.messagesByIds(ids)
+    }
+    val selectedMessages = androidx.compose.runtime.key(selectedFlow) {
+        selectedFlow.collectAsStateWithLifecycle(emptyList()).value
+    }
 
     val useCompressedMessages by rememberBooleanPreference(
         context.advancedPrefs,
@@ -247,14 +260,7 @@ internal fun MessageScreen(
         false
     )
 
-    val canResend by remember {
-        derivedStateOf {
-            selectedIds.value.isNotEmpty() &&
-                    messages
-                        .filter { it.uuid in selectedIds.value }
-                        .all { it.node.user.id == DataPacket.ID_LOCAL }
-        }
-    }
+    val canResend = selectedMessages.isNotEmpty() && selectedMessages.all { it.node.user.id == DataPacket.ID_LOCAL }
 
     val messageInput = rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(message))
@@ -287,8 +293,7 @@ internal fun MessageScreen(
                     when (action) {
 
                         MessageMenuAction.Resend -> {
-                            val messagesToResend = messages
-                                .filter { it.uuid in selectedIds.value }
+                            val messagesToResend = selectedMessages
 
                             messagesToResend.forEach { msg ->
                                 viewModel.sendMessage(
@@ -302,8 +307,7 @@ internal fun MessageScreen(
                         }
 
                         MessageMenuAction.ClipboardCopy -> coroutineScope.launch {
-                            val copiedText = messages
-                                .filter { it.uuid in selectedIds.value }
+                            val copiedText = selectedMessages.ifEmpty { selectedFlow.first() }
                                 .joinToString("\n") { it.text }
 
                             clipboardManager.setText(AnnotatedString(copiedText))
@@ -746,6 +750,7 @@ private fun TextInput(
             maxLines = 3,
             shape = RoundedCornerShape(24.dp),
             colors = TextFieldDefaults.textFieldColors(
+                backgroundColor = MaterialTheme.colors.surface,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
             )
@@ -763,11 +768,12 @@ private fun TextInput(
             modifier = Modifier.size(48.dp),
             enabled = enabled,
             shape = CircleShape,
+            contentPadding = PaddingValues(0.dp),
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Default.Send,
                 contentDescription = stringResource(id = R.string.send_text),
-                modifier = Modifier.scale(scale = 1.5f),
+                modifier = Modifier.size(22.dp),
             )
         }
     }

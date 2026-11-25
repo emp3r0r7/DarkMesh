@@ -31,6 +31,8 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/nodeSettings"
+            android:background="@drawable/mesh_panel"
+            android:padding="12dp"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             app:layout_constraintEnd_toEndOf="parent"

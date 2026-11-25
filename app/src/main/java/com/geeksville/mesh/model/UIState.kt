@@ -76,6 +76,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -636,6 +640,19 @@ class UIViewModel @Inject constructor(
             false
         )
 
+    fun messageIndex(contact: String) = packetRepository.messageIndex(contact).distinctUntilChanged()
+
+    fun messagesByIds(ids: List<Long>): Flow<List<Message>> {
+        if (ids.isEmpty()) return flowOf(emptyList())
+        // Bulk selections can exceed SQLite's bind parameter limit.
+        val batches = ids.chunked(500).map { batch ->
+            packetRepository.messagesByIds(batch).map { packets ->
+                packets.map { it.toMessage(::getNode) }
+            }
+        }
+        return combine(batches) { it.flatMap { batch -> batch } }.flowOn(Dispatchers.Default)
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getMessagesFrom(contactKey: String) = packetRepository.getMessagesFrom(contactKey)
         .mapLatest { list -> list.map { it.toMessage(::getNode) } }
@@ -1104,7 +1121,7 @@ class UIViewModel @Inject constructor(
 
         var hwLimit = DEFAULT_IMPORTED_NODES_PERMITTED
 
-        ourNodeInfo.value?.user?.hwModel?.let {
+        ourNodeInfo.value?.user?.hwModelValue?.let {
             val hwModel = getDeviceHardwareFromHardwareModel(it)
             hwModel?.architecture?.let { arch ->
                 hwLimit = when (arch) {
@@ -1265,12 +1282,12 @@ class UIViewModel @Inject constructor(
         return null
     }
 
-    private fun getDeviceHardwareFromHardwareModel(hwModel: MeshProtos.HardwareModel): DeviceHardware? {
+    private fun getDeviceHardwareFromHardwareModel(hwModel: Int): DeviceHardware? {
         return if(deviceHardwareList.isEmpty()){
             AppUtil.loadDeviceHardwareList(app)
-                .firstOrNull { it.hwModel == hwModel.number }
+                .firstOrNull { it.hwModel == hwModel }
         } else {
-            deviceHardwareList.firstOrNull { it.hwModel == hwModel.number }
+            deviceHardwareList.firstOrNull { it.hwModel == hwModel }
         }
     }
 

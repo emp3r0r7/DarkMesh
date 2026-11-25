@@ -229,7 +229,7 @@ fun ContactListView(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize(),
-        contentPadding = PaddingValues(6.dp),
+        contentPadding = PaddingValues(vertical = 4.dp),
     ) {
         items(contacts, key = { it.contactKey }) { contact ->
             val selected by remember { derivedStateOf { selectedList.contains(contact.contactKey) } }

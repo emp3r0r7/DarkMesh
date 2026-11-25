@@ -31,6 +31,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -187,10 +188,6 @@ fun NodeItem(
     }
     val (textColor, nodeColor) = thatNode.colors
 
-    val hwInfoString = when (val hwModel = thatNode.user.hwModel) {
-        MeshProtos.HardwareModel.UNSET -> MeshProtos.HardwareModel.UNSET.name
-        else -> hwModel.name.replace('_', '-').replace('p', '.').lowercase()
-    }
     val roleName = if (thatNode.isUnknownUser) {
         DeviceConfig.Role.UNRECOGNIZED.name
     } else {
@@ -221,14 +218,16 @@ fun NodeItem(
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp)
             .defaultMinSize(minHeight = 80.dp),
-        elevation = 4.dp,
+        shape = RoundedCornerShape(18.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colors.onSurface.copy(alpha = 0.14f)),
+        elevation = 0.dp,
         onClick = { showDetails(!detailsShown) },
     ) {
         Surface {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp),
+                    .padding(12.dp),
             ) {
                 Row(
                     modifier = Modifier
@@ -320,12 +319,12 @@ fun NodeItem(
 
                         var icon = Icons.Default.SettingsInputAntenna
                         var description = "Infrastructure node, may not respond to private messages."
-                        var iconColor = R.color.colorAnnotation
+                        var iconColor = colorResource(R.color.colorAnnotation)
 
                         if(unmessagable && !infrastructure){
                             icon = Icons.Default.PhonelinkErase
                             description = "Unmessageable node, may not respond to private messages."
-                            iconColor = R.color.colorPrimaryDark
+                            iconColor = MaterialTheme.colors.onSurface
 
                             if(isThisNode){
                                 description = "Your node is set as unmessageable."
@@ -334,19 +333,22 @@ fun NodeItem(
 
                         TooltipBox(
                             positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
-                            tooltip = { PlainTooltip {
-                                androidx.compose.material3.Text(
-                                    description
-                                )
-                            } },
+                            tooltip = {
+                                PlainTooltip(
+                                    containerColor = MaterialTheme.colors.onSurface,
+                                    contentColor = MaterialTheme.colors.surface,
+                                ) {
+                                    androidx.compose.material3.Text(description)
+                                }
+                            },
                             state = rememberTooltipState(),
                         ) {
                             Icon(
                                 modifier = Modifier
                                     .padding(horizontal = 5.dp),
                                 imageVector = icon,
-                                contentDescription = "Infrastructure or Unmessagable",
-                                tint = colorResource(id = iconColor),
+                                contentDescription = description,
+                                tint = iconColor,
                             )
                         }
                     }
@@ -356,6 +358,9 @@ fun NodeItem(
                         currentTimeMillis = currentTimeMillis
                     )
                 }
+                Spacer(Modifier.height(8.dp))
+                Divider(color = MaterialTheme.colors.onSurface.copy(alpha = 0.12f))
+                Spacer(Modifier.height(6.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth(),
@@ -437,7 +442,16 @@ fun NodeItem(
                     ) {
                         Text(
                             modifier = Modifier.weight(1f),
-                            text = hwInfoString,
+                            text = remember(thatNode.user.hwModelValue) {
+                                val model = thatNode.user.hwModel
+                                AppUtil.loadDeviceHardwareList(context).firstOrNull {
+                                    it.hwModel == thatNode.user.hwModelValue
+                                }?.displayName ?: when (model) {
+                                    MeshProtos.HardwareModel.UNSET -> model.name
+                                    MeshProtos.HardwareModel.UNRECOGNIZED -> "#${thatNode.user.hwModelValue}"
+                                    else -> model.name.replace('_', '-').replace('p', '.').lowercase()
+                                }
+                            },
                             fontSize = MaterialTheme.typography.button.fontSize,
                             style = style,
                         )

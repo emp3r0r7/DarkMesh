@@ -19,27 +19,30 @@
 <resources>
     <color name="colorOnPrimary">#FFFFFF</color>
 
-    <color name="colorPrimary">#7A0A0A</color>
-    <color name="colorPrimaryDark">#7A0A0A</color>
+    <color name="colorPrimary">#B22222</color>
+    <color name="colorPrimaryDark">#17181D</color>
 
-    <color name="colorMsg">#1A1A1A</color>
-    <color name="colorMyMsg">#2A2A2A</color>
+    <color name="colorMsg">#25282F</color>
+    <color name="colorMyMsg">#35312F</color>
 
-    <color name="colorAdvancedBackground">#121212</color>
+    <color name="colorAdvancedBackground">#15161B</color>
 
-    <color name="colorMenuItem">#E0E0E0</color>
+    <color name="colorMenuItem">#E7E4E9</color>
 
-    <color name="selectedColor">#7A0A0A</color> <!-- colore splash screen -->
+    <color name="selectedColor">#E54232</color> <!-- colore splash screen -->
 
-    <color name="unselectedColor">#666666</color>
+    <color name="unselectedColor">#A5A4AF</color>
 
-    <color name="buttonColor">#313131</color>
+    <color name="buttonColor">#A42020</color>
 
     <color name="colourGrey">#424242</color>
 
-    <color name="colorAnnotation">#00BCD4</color>
+    <color name="colorAnnotation">#85D1CF</color>
 
-    <color name="toolbarBackground">#1A1A1A</color>
+    <color name="toolbarBackground">#191C1E</color>
     <color name="toolbarText">#FFFFFF</color>
 
+    <color name="meshSurface">#212329</color>
+    <color name="meshInk">#F2EFF3</color>
+    <color name="meshOutline">#393B43</color>
 </resources>

@@ -34,7 +34,11 @@ object AppUtil {
         ignoreUnknownKeys = true
     }
 
+    private var hardwareCatalog: List<DeviceHardware>? = null
+
+    @Synchronized
     fun loadDeviceHardwareList(context: Context): List<DeviceHardware> {
+        hardwareCatalog?.let { return it }
         return try {
             val jsonString = context.assets
                 .open("device_hardware.json")
@@ -44,6 +48,7 @@ object AppUtil {
             jsonParser
                 .decodeFromString<List<DeviceHardwareDto>>(jsonString)
                 .map { it.toDeviceHardware() }
+                .also { hardwareCatalog = it }
 
         } catch (ex: Exception) {
             errormsg("Error loading device hardware: ${ex.message}")

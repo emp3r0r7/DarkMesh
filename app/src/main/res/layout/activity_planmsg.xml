@@ -19,7 +19,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimaryDark"
-            android:elevation="4dp"
+            android:elevation="0dp"
             android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
             android:layout_marginBottom="15dp"/>
 
@@ -48,7 +48,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:backgroundTint="#470202"
+            android:backgroundTint="@color/buttonColor"
             android:text="Time: --:--"
             android:textColor="#FFFFFF"
             tools:ignore="HardcodedText" />
@@ -75,7 +75,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:backgroundTint="#470202"
+            android:backgroundTint="@color/buttonColor"
             android:text="Add"
             android:textColor="#FFFFFF"
             tools:ignore="HardcodedText" />
@@ -91,7 +91,7 @@
             android:id="@+id/btnSave"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:backgroundTint="#470202"
+            android:backgroundTint="@color/buttonColor"
             android:text="Save"
             android:textColor="#FFFFFF"
             tools:ignore="HardcodedText" />

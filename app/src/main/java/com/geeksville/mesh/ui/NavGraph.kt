@@ -113,7 +113,7 @@ import com.geeksville.mesh.ui.components.config.TrafficManagementConfigScreen
 import com.geeksville.mesh.ui.components.config.UserConfigScreen
 import com.geeksville.mesh.util.Capabilities
 import com.geeksville.mesh.util.UiText
-import com.google.accompanist.themeadapter.appcompat.AppCompatTheme
+import com.geeksville.mesh.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.serialization.Serializable
 import org.meshtastic.proto.MeshProtos.DeviceMetadata
@@ -152,7 +152,7 @@ class NavGraphFragment : ScreenFragment("NavGraph"), Logging {
             setContent {
                 val node by model.destNode.collectAsStateWithLifecycle()
 
-                AppCompatTheme {
+                AppTheme {
                     val navController: NavHostController = rememberNavController()
                     Scaffold(
                         topBar = {

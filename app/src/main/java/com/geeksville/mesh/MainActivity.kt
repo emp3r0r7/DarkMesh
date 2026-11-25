@@ -256,31 +256,31 @@ class MainActivity : AppCompatActivity(), Logging {
         bluetoothViewModel.permissionsUpdated()
     }
 
-    data class TabInfo(val text: String, val icon: Int, val content: Fragment)
+    data class TabInfo(val label: Int, val icon: Int, val content: Fragment)
 
     private val tabInfos = arrayOf(
         TabInfo(
-            "Messages",
+            R.string.mesh_tab_chat,
             R.drawable.ic_twotone_message_24,
             ContactsFragment()
         ),
         TabInfo(
-            "Users",
+            R.string.mesh_tab_nodes,
             R.drawable.ic_twotone_people_24,
             UsersFragment()
         ),
         TabInfo(
-            "Map",
+            R.string.mesh_tab_map,
             R.drawable.ic_twotone_map_24,
             MapFragment()
         ),
         TabInfo(
-            "Channel",
+            R.string.mesh_tab_channels,
             R.drawable.ic_twotone_contactless_24,
             ChannelFragment()
         ),
         TabInfo(
-            "Settings",
+            R.string.mesh_tab_settings,
             R.drawable.ic_twotone_settings_applications_24,
             SettingsFragment()
         )
@@ -331,7 +331,7 @@ class MainActivity : AppCompatActivity(), Logging {
             false // Gestures for screen switching doesn't work so good with the map view
         // pager.offscreenPageLimit = 0 // Don't keep any offscreen pages around, because we want to make sure our bluetooth scanning stops
         TabLayoutMediator(binding.tabLayout, binding.pager, false, false) { tab, position ->
-            // tab.text = tabInfos[position].text // I think it looks better with icons only
+            tab.contentDescription = getString(tabInfos[position].label)
             tab.icon = ContextCompat.getDrawable(this, tabInfos[position].icon)
         }.attach()
 

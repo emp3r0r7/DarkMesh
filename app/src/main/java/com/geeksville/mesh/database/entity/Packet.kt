@@ -30,6 +30,13 @@ import com.geeksville.mesh.util.getShortDateTime
 import org.meshtastic.proto.ConfigProtos
 import org.meshtastic.proto.MeshProtos.User
 
+data class MessageIndexEntry(
+    val uuid: Long,
+    val packetId: Int,
+    val receivedTime: Long,
+    val read: Boolean,
+)
+
 data class PacketEntity(
     @Embedded val packet: Packet,
     @Relation(entity = ReactionEntity::class, parentColumn = "packet_id", entityColumn = "reply_id")

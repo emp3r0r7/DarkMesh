@@ -28,6 +28,10 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
 
+        <item name="android:windowBackground">@color/colorAdvancedBackground</item>
+        <item name="colorSurface">@color/meshSurface</item>
+        <item name="colorOnSurface">@color/meshInk</item>
+        <item name="colorAccent">@color/selectedColor</item>
         <item name="windowNoTitle">true</item>
         <item name="android:itemTextAppearance">@style/menu_item_color</item>
         <item name="actionModeStyle">@style/MyActionMode</item>
@@ -60,6 +64,9 @@
 
     <style name="Widget.App.Button" parent="Widget.MaterialComponents.Button">
         <item name="backgroundTint">@color/buttonColor</item>
+        <item name="android:textColor">@color/colorOnPrimary</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="android:textAllCaps">false</item>
     </style>
 
     <style name="CustomMaterialDialog" parent="@style/ThemeOverlay.MaterialComponents.MaterialAlertDialog">
@@ -101,4 +108,9 @@
         <item name="postSplashScreenTheme">@style/AppTheme</item>  # Required.
     </style>
 
+    <style name="MeshTabLabel" parent="TextAppearance.Design.Tab">
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="textAllCaps">false</item>
+    </style>
 </resources>

@@ -21,32 +21,52 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
+import androidx.compose.material3.MaterialTheme as Material3Theme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.material.LocalContentColor
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 
 private val DarkColorPalette = darkColors(
-    primary = DarkRed,
-    primaryVariant = DarkRed700,
-    secondary = Teal200,
-    surface = AlmostBlack,
-    onSurface = AlmostWhite
+    primary = Color(0xFFEF4938),
+    primaryVariant = Color(0xFFA42020),
+    onPrimary = Color(0xFF180604),
+    secondary = Color(0xFF85D1CF),
+    background = Color(0xFF15161B),
+    surface = Color(0xFF212329),
+    onBackground = Color(0xFFF2EFF3),
+    onSurface = Color(0xFFF2EFF3),
 )
 
 private val LightColorPalette = lightColors(
     primary = DarkRed,
-    primaryVariant = GrayLight,
-    secondary = Teal200,
-    surface = AlmostWhite,
-    onSurface = AlmostBlack
-
-    /* Other default colors to override
-    background = Color.White,
-    surface = Color.White,
+    primaryVariant = Color(0xFF731717),
     onPrimary = Color.White,
-    onSecondary = Color.Black,
-    onBackground = Color.Black,
-    onSurface = Color.Black,
-    */
+    secondary = Color(0xFF176A70),
+    onSecondary = Color.White,
+    background = Color(0xFFF4F3F5),
+    surface = Color.White,
+    onBackground = Color(0xFF24232A),
+    onSurface = Color(0xFF24232A),
 )
+
+private val DarkScheme = with(DarkColorPalette) {
+    darkColorScheme(
+        primary = primary, onPrimary = onPrimary, secondary = secondary,
+        background = background, onBackground = onBackground, surface = surface, onSurface = onSurface,
+        primaryContainer = Color(0xFF55251F), onPrimaryContainer = Color(0xFFFFEFEB),
+    )
+}
+
+private val LightScheme = with(LightColorPalette) {
+    lightColorScheme(
+        primary = primary, onPrimary = onPrimary, secondary = secondary,
+        background = background, onBackground = onBackground, surface = surface, onSurface = onSurface,
+        primaryContainer = Color(0xFFE8E5DF), onPrimaryContainer = Color(0xFF341B16),
+    )
+}
 
 @Composable
 fun AppTheme(
@@ -59,10 +79,9 @@ fun AppTheme(
         LightColorPalette
     }
 
-    MaterialTheme(
-        colors = colors,
-        typography = Typography,
-        shapes = Shapes,
-        content = content
-    )
+    Material3Theme(colorScheme = if (darkTheme) DarkScheme else LightScheme) {
+        MaterialTheme(colors = colors, typography = Typography, shapes = Shapes) {
+            CompositionLocalProvider(LocalContentColor provides colors.onBackground, content = content)
+        }
+    }
 }

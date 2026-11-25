@@ -18,11 +18,13 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimaryDark"
-            android:elevation="4dp"
+            android:elevation="0dp"
             android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar" />
 
         <LinearLayout
             android:id="@+id/traceContainerMain"
+            android:background="@drawable/mesh_panel"
+            android:padding="12dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="15dp"
@@ -228,6 +230,8 @@
 
         <LinearLayout
             android:id="@+id/compressionContainerMain"
+            android:background="@drawable/mesh_panel"
+            android:padding="12dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="15dp"

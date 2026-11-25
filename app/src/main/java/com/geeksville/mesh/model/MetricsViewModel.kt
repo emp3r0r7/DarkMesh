@@ -51,9 +51,8 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
+import com.geeksville.mesh.util.AppUtil
 import org.meshtastic.proto.ConfigProtos.Config.DisplayConfig.DisplayUnits
-import org.meshtastic.proto.MeshProtos.HardwareModel
 import org.meshtastic.proto.MeshProtos.MeshPacket
 import org.meshtastic.proto.MeshProtos.Position
 import org.meshtastic.proto.Portnums.PortNum
@@ -61,7 +60,6 @@ import org.meshtastic.proto.TelemetryProtos
 import java.io.BufferedWriter
 import java.io.FileNotFoundException
 import java.io.FileWriter
-import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -223,7 +221,6 @@ class MetricsViewModel @Inject constructor(
     private val _timeFrame = MutableStateFlow(TimeFrame.TWENTY_FOUR_HOURS)
     val timeFrame: StateFlow<TimeFrame> = _timeFrame
 
-    private var deviceHardwareList: List<DeviceHardware> = listOf()
 
     init {
         @OptIn(ExperimentalCoroutinesApi::class)
@@ -232,9 +229,9 @@ class MetricsViewModel @Inject constructor(
             .distinctUntilChanged()
             .onEach { node ->
                 _state.update { state -> state.copy(node = node) }
-                node?.user?.hwModel?.let { hwModel ->
+                node?.user?.hwModelValue?.let { hwModel ->
                     _state.update { state ->
-                        state.copy(deviceHardware = getDeviceHardwareFromHardwareModel(hwModel))
+                        state.copy(deviceHardware = AppUtil.loadDeviceHardwareList(app).firstOrNull { it.hwModel == hwModel })
                     }
                 }
             }
@@ -354,34 +351,4 @@ class MetricsViewModel @Inject constructor(
         }
     }
 
-    private fun getDeviceHardwareFromHardwareModel(
-        hwModel: HardwareModel
-    ): DeviceHardware? {
-        if (deviceHardwareList.isEmpty()) {
-            try {
-                val jsonString =
-                    app.assets.open("device_hardware.json")
-                        .bufferedReader()
-                        .use { it.readText() }
-
-                val json = Json {
-                    ignoreUnknownKeys = true
-                }
-
-                deviceHardwareList = json
-                    .decodeFromString<List<DeviceHardwareDto>>(jsonString)
-                    .map { it.toDeviceHardware() }
-
-            } catch (ex: IOException) {
-                errormsg("Can't read device_hardware.json error: ${ex.message}")
-            }
-        }
-
-        try {
-            return deviceHardwareList.find { it.hwModel == hwModel.number }
-        } catch (e: Exception){
-            errormsg("Can't read device_hardware model: ${e.message}")
-            return null
-        }
-    }
 }

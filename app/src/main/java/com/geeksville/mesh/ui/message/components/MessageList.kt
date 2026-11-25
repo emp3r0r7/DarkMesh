@@ -25,6 +25,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -58,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.DataPacket
+import com.geeksville.mesh.database.entity.MessageIndexEntry
 import com.geeksville.mesh.database.entity.NodeRegistry
 import com.geeksville.mesh.database.entity.Reaction
 import com.geeksville.mesh.model.Message
@@ -66,16 +69,14 @@ import com.geeksville.mesh.service.MeshService
 import com.geeksville.mesh.ui.components.NodeMenu
 import com.geeksville.mesh.ui.components.NodeMenuAction
 import com.geeksville.mesh.ui.components.SimpleAlertDialog
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 @Suppress("LongMethod")
 @Composable
 internal fun MessageList(
-    messages: List<Message>,
+    messages: List<MessageIndexEntry>,
     viewModel: UIViewModel,
     selectedIds: MutableState<Set<Long>>,
     onUnreadChanged: (Long) -> Unit,
@@ -92,11 +93,29 @@ internal fun MessageList(
     val connected = viewModel.connectionState.collectAsState().value == MeshService.ConnectionState.CONNECTED
     val haptics = LocalHapticFeedback.current
     val inSelectionMode by remember { derivedStateOf { selectedIds.value.isNotEmpty() } }
+    val unreadIndex = remember(messages) { messages.indexOfLast { !it.read } }
     val listState = rememberLazyListState(
-        initialFirstVisibleItemIndex = messages.indexOfLast { !it.read }.coerceAtLeast(0)
+        initialFirstVisibleItemIndex = unreadIndex.coerceAtLeast(0)
     )
+    // Prefetch a page on either side so most scrolls already have their message bodies.
+    val pageSize = 32
+    val firstPage by remember { derivedStateOf { listState.firstVisibleItemIndex / pageSize } }
+    val lastPage by remember {
+        derivedStateOf {
+            (listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: listState.firstVisibleItemIndex) / pageSize
+        }
+    }
+    val ids = remember(messages, firstPage, lastPage) {
+        val start = ((firstPage - 1).coerceAtLeast(0) * pageSize).coerceAtMost(messages.size)
+        val end = ((maxOf(firstPage, lastPage) + 2) * pageSize).coerceAtMost(messages.size)
+        messages.subList(start, end).map { it.uuid }
+    }
+    val window by remember(ids, viewModel) {
+        viewModel.messagesByIds(ids).map { page -> page.associateBy { it.uuid } }
+    }.collectAsStateWithLifecycle(emptyMap())
+    val byPacketId = remember(messages) { messages.groupBy { it.packetId } }
     AutoScrollToBottom(listState, messages)
-    UpdateUnreadCount(listState, messages, onUnreadChanged)
+    UpdateUnreadCount(listState, messages, unreadIndex, window, onUnreadChanged)
 
     var showStatusDialog by remember { mutableStateOf<Message?>(null) }
     if (showStatusDialog != null) {
@@ -148,7 +167,12 @@ internal fun MessageList(
             reverseLayout = true,
             contentPadding = contentPadding
         ) {
-            items(messages, key = { it.uuid }) { msg ->
+            items(messages, key = { it.uuid }) { entry ->
+                val msg = window[entry.uuid]
+                if (msg == null) {
+                    Spacer(Modifier.height(64.dp))
+                    return@items
+                }
 
                 val fromLocal = msg.node.user.id == DataPacket.ID_LOCAL
                 val selected by remember { derivedStateOf { selectedIds.value.contains(msg.uuid) } }
@@ -160,12 +184,13 @@ internal fun MessageList(
                     var expandedNodeMenu by remember { mutableStateOf(false) }
                     var nodeRegistry by remember { mutableStateOf<NodeRegistry?>(null) }
 
-                    val repliedMessage = remember(msg.replyId, messages) {
-                        msg.replyId?.let { replyId ->
-                            messages.firstOrNull {
-                                it.packetId == replyId &&
-                                        it.uuid != msg.uuid
-                            }
+                    val quoteId = msg.replyId?.let { id ->
+                        byPacketId[id]?.firstOrNull { it.uuid != msg.uuid }?.uuid
+                    }
+                    val repliedMessage = quoteId?.let { id ->
+                        window[id] ?: androidx.compose.runtime.key(id) {
+                            remember(viewModel, id) { viewModel.messagesByIds(listOf(id)) }
+                                .collectAsStateWithLifecycle(emptyList()).value.firstOrNull()
                         }
                     }
 
@@ -346,24 +371,20 @@ private fun <T> AutoScrollToBottom(
     }
 }
 
-@OptIn(FlowPreview::class)
 @Composable
 private fun UpdateUnreadCount(
     listState: LazyListState,
-    messages: List<Message>,
+    messages: List<MessageIndexEntry>,
+    unreadIndex: Int,
+    loaded: Map<Long, Message>,
     onUnreadChanged: (Long) -> Unit,
 ) {
-    val unreadIndex by remember { derivedStateOf { messages.indexOfLast { !it.read } } }
-    val firstVisibleItemIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
-
-    if (unreadIndex != -1 && firstVisibleItemIndex != -1 && firstVisibleItemIndex <= unreadIndex) {
-        LaunchedEffect(firstVisibleItemIndex, unreadIndex) {
-            snapshotFlow { listState.firstVisibleItemIndex }
-                .debounce(timeoutMillis = 500L)
-                .collectLatest { index ->
-                    val lastVisibleItem = messages[index]
-                    onUnreadChanged(lastVisibleItem.receivedTime)
-                }
+    val firstVisible by remember { derivedStateOf { listState.firstVisibleItemIndex } }
+    val entry = messages.getOrNull(firstVisible)
+    if (entry != null && firstVisible <= unreadIndex && entry.uuid in loaded) {
+        LaunchedEffect(entry.uuid, entry.receivedTime) {
+            delay(500L)
+            onUnreadChanged(entry.receivedTime)
         }
     }
 }

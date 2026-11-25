@@ -32,7 +32,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
+import androidx.compose.material.Divider
 import androidx.compose.material.Chip
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
@@ -44,10 +44,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -94,25 +94,16 @@ fun ContactItem(
     // zero is default like medium fast, short turbo.. etc
     val isDefaultChannnel = isChannel && "0" == contact.shortName
 
-    Card(
-        modifier = Modifier
-            .background(color = if (selected) Color.Gray else MaterialTheme.colors.background)
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 6.dp),
-        elevation = 4.dp,
-        shape = RoundedCornerShape(12.dp),
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Surface(
-            modifier = modifier.combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick,
-            ),
-            color = MaterialTheme.colors.surface
+            modifier = modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick),
+            color = if (selected) colorResource(R.color.colorMyMsg) else MaterialTheme.colors.surface,
+            contentColor = MaterialTheme.colors.onSurface,
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp),
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if(isChannel){
@@ -121,13 +112,13 @@ fun ContactItem(
                         painter = painterResource(R.drawable.ic_twotone_people_24),
                         contentDescription = "Channel Chat",
                         modifier = Modifier
-                            .padding(end = 8.dp)
-                            .width(50.dp),
-                        colorFilter = if (isDefaultChannnel){
-                            ColorFilter.tint(Color.Green)
-                        } else {
-                            ColorFilter.tint(MaterialTheme.colors.primary)
-                        }
+                            .padding(end = 12.dp)
+                            .size(44.dp)
+                            .background(MaterialTheme.colors.onSurface.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                            .padding(10.dp),
+                        colorFilter = ColorFilter.tint(
+                            if (isDefaultChannnel) MaterialTheme.colors.secondary else MaterialTheme.colors.primary
+                        )
                     )
                 } else {
 
@@ -185,19 +176,22 @@ fun ContactItem(
 
                         Text(
                             text = name,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f),
+                            fontWeight = if (unreadCount > 0) FontWeight.Bold else FontWeight.Medium,
                             fontStyle = fontStyle
                         )
                         Text(
                             text = lastMessageTime.orEmpty(),
-                            color = MaterialTheme.colors.onSurface,
-                            fontSize = MaterialTheme.typography.button.fontSize,
+                            color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f),
+                            style = MaterialTheme.typography.caption,
                         )
                     }
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 8.dp),
+                            .padding(top = 4.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -229,6 +223,10 @@ fun ContactItem(
                 }
             }
         }
+        Divider(
+            modifier = Modifier.padding(start = 72.dp, end = 16.dp),
+            color = MaterialTheme.colors.onSurface.copy(alpha = 0.12f),
+        )
     }
 }
 

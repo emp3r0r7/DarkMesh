@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mesh_tab_chat">Chat</string>
+    <string name="mesh_tab_nodes">Nodi</string>
+    <string name="mesh_tab_map">Mappa</string>
+    <string name="mesh_tab_channels">Canali</string>
+    <string name="mesh_tab_settings">Opzioni</string>
+    <string name="mesh_add_contact_url">Aggiungi contatto da URL</string>
+    <string name="mesh_contact_url">URL del contatto</string>
+</resources>
