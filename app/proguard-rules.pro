@@ -22,6 +22,8 @@
 
 # Needed for protobufs
 -keep class com.google.protobuf.** { *; }
+# Protobuf looks up generated message accessors by name at runtime.
+-keep class org.meshtastic.proto.** { *; }
 -keep class com.geeksville.mesh.** { *; }
 -keep class com.emp3r0r7.darkmesh.** { *; }
 

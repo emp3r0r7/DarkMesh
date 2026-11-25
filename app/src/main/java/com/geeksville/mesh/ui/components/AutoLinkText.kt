@@ -22,6 +22,7 @@ import android.text.Spannable
 import android.text.Spannable.Factory
 import android.text.SpannableStringBuilder
 import android.text.Spanned
+import android.text.SpannedString
 import android.text.TextPaint
 import android.text.style.ClickableSpan
 import android.text.style.URLSpan
@@ -70,6 +71,37 @@ private val DefaultTextLinkStyles = TextLinkStyles(
     )
 )
 
+internal fun detectMessageLinks(text: String): SpannedString {
+    val linked = SpannableStringBuilder(text)
+    var mask = Linkify.WEB_URLS or Linkify.EMAIL_ADDRESSES
+    if (text.any(Char::isDigit)) mask = mask or Linkify.PHONE_NUMBERS
+    Linkify.addLinks(linked, mask)
+    with(linked) {
+        val match = DistressService.findValidPlusCode(this.toString())
+        if (!match.isNullOrBlank()) {
+            DistressService.plusCodeToCenter(match)?.let {
+
+                val start = this.toString().indexOf(match)
+                if (start < 0) return@let
+
+                val end = start + match.length
+                val existing = getSpans(start, end, URLSpan::class.java)
+
+                if (!existing.isEmpty()) return@let
+                setSpan(
+                    URLSpan("geo:0,0?q=${it[0]},${it[1]}&z=17&label=${
+                        URLEncoder.encode(match, "utf-8")
+                    }"),
+                    start,
+                    end,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+        }
+    }
+    return SpannedString(linked)
+}
+
 @Suppress("AssignedValueIsNeverRead")
 @Composable
 fun AutoLinkText(
@@ -78,44 +110,14 @@ fun AutoLinkText(
     style: TextStyle = TextStyle.Default,
     linkStyles: TextLinkStyles = DefaultTextLinkStyles,
     uiModel: UIViewModel = hiltViewModel(),
+    detectedLinks: SpannedString? = null,
 ) {
 
     var mentionedNode by remember { mutableStateOf<Node?>(null) }
     var unknownNode by remember { mutableStateOf<String?>(null) }
 
-    val spannable = remember(text) {
-        SpannableStringBuilder(text).apply {
-
-            /*PATCH issue #14 - 21/03/2026
-              for devices below Android 8 Linkify.ALL would cause a crash
-            */
-            Linkify.addLinks(this,
-               Linkify.WEB_URLS or
-                      Linkify.EMAIL_ADDRESSES or
-                      Linkify.PHONE_NUMBERS
-            )
-
-            val match = DistressService.findValidPlusCode(this.toString())
-            if (!match.isNullOrBlank()) {
-                DistressService.plusCodeToCenter(match)?.let {
-
-                    val start = this.toString().indexOf(match)
-                    if (start < 0) return@let
-
-                    val end = start + match.length
-                    val existing = getSpans(start, end, URLSpan::class.java)
-
-                    if (!existing.isEmpty()) return@let
-                    setSpan(
-                        URLSpan("geo:0,0?q=${it[0]},${it[1]}&z=17&label=${
-                            URLEncoder.encode(match, "utf-8")
-                        }"),
-                        start,
-                        end,
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-                    )
-                }
-            }
+    val spannable = remember(text, detectedLinks, uiModel) {
+        SpannableStringBuilder(detectedLinks ?: detectMessageLinks(text)).apply {
 
             try {
                 val matches = mentionRegex.findAll(this.toString()).toList().asReversed()
@@ -165,7 +167,7 @@ fun AutoLinkText(
     }
 
     Text(
-        text = spannable.toAnnotatedString(linkStyles),
+        text = remember(spannable, linkStyles) { spannable.toAnnotatedString(linkStyles) },
         modifier = modifier,
         style = style,
     )

@@ -108,6 +108,7 @@ import com.geeksville.mesh.android.Logging
 import com.geeksville.mesh.android.advancedPrefs
 import com.geeksville.mesh.android.compressionPrefs
 import com.geeksville.mesh.database.entity.QuickChatAction
+import com.geeksville.mesh.model.ChatMessageIndex
 import com.geeksville.mesh.model.Message
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.UIViewModel
@@ -235,8 +236,9 @@ internal fun MessageScreen(
 
     val connState by viewModel.connectionState.collectAsStateWithLifecycle()
     val quickChat by viewModel.quickChatActions.collectAsStateWithLifecycle()
-    val messages by remember(viewModel, contactKey) { viewModel.messageIndex(contactKey) }
-        .collectAsStateWithLifecycle(emptyList())
+    val history by remember(viewModel, contactKey) { viewModel.messageIndex(contactKey) }
+        .collectAsStateWithLifecycle(remember { ChatMessageIndex(emptyList()) })
+    val messages = history.entries
     val selection = selectedIds.value
     val selectedFlow = remember(viewModel, messages, selection) {
         val ids = if (selection.isEmpty()) emptyList() else messages.mapNotNull {
@@ -395,7 +397,7 @@ internal fun MessageScreen(
     ) { innerPadding ->
         if (messages.isNotEmpty()) {
             MessageList(
-                messages = messages,
+                history = history,
                 viewModel = viewModel,
                 selectedIds = selectedIds,
                 onUnreadChanged = { viewModel.clearUnreadCount(contactKey, it) },

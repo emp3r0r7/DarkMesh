@@ -18,7 +18,6 @@
 package com.geeksville.mesh.ui.message.components
 
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -33,7 +32,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
@@ -64,7 +62,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.text.SpannedString
 import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.DataPacket
 import com.geeksville.mesh.MessageStatus
@@ -72,6 +70,8 @@ import com.geeksville.mesh.model.Message
 import com.geeksville.mesh.model.Node
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.ui.components.AutoLinkText
+import com.geeksville.mesh.ui.components.AvatarStyle
+import com.geeksville.mesh.ui.components.rememberAvatarStyle
 import com.geeksville.mesh.ui.components.UserAvatar
 import com.geeksville.mesh.ui.components.mentionRegex
 import com.geeksville.mesh.ui.preview.NodePreviewParameterProvider
@@ -99,6 +99,10 @@ internal fun MessageItem(
     onStatusClick: () -> Unit = {},
     onSendReaction: (String) -> Unit = {},
     onQuotedClick: (Message) -> Unit = {},
+    avatarStyle: AvatarStyle = rememberAvatarStyle(),
+    detectedLinks: SpannedString? = null,
+    registryName: String? = null,
+    localNodeId: String? = null,
     uiModel: UIViewModel
 ) = Row(
     modifier = Modifier
@@ -107,8 +111,6 @@ internal fun MessageItem(
     verticalAlignment = Alignment.CenterVertically,
 ) {
 
-    val nodeRegistry by uiModel.nodeRegistryMap.collectAsStateWithLifecycle()
-    val nodes by uiModel.unfilteredNodeList.collectAsStateWithLifecycle()
 
     val fromLocal = node.user.id == DataPacket.ID_LOCAL
     val messageColor = if (fromLocal) R.color.colorMyMsg else R.color.colorMsg
@@ -120,20 +122,20 @@ internal fun MessageItem(
     }
 
     val ctx = LocalContext.current
-    val ourNode by uiModel.ourNodeInfo.collectAsStateWithLifecycle()
 
     if (fromLocal) Spacer(Modifier.weight(1f))
     if (!fromLocal) {
         UserAvatar(
             node = node,
+            style = avatarStyle,
             modifier = Modifier
                 .padding(start = 8.dp, top = 8.dp)
                 .align(Alignment.Top),
         ) { onChipClick() }
     }
 
-    val ourNodeIsMentioned = remember(messageText, ourNode?.user?.id) {
-        val id = ourNode?.user?.id
+    val ourNodeIsMentioned = remember(messageText, localNodeId) {
+        val id = localNodeId
         id != null &&
                 mentionRegex.findAll(messageText.orEmpty())
                     .any { it.groupValues[1] == id }
@@ -152,143 +154,124 @@ internal fun MessageItem(
         label = "messageHighlight"
     )
 
-    Card(
-        modifier = if (fromLocal) messageModifier else Modifier.weight(1f, fill = false).then(messageModifier),
-        elevation = 0.dp,
+    Surface(
+        modifier = (if (fromLocal) messageModifier else Modifier.weight(1f, fill = false).then(messageModifier))
+            .then(modifier),
         shape = RoundedCornerShape(topStart, topEnd, 16.dp, 16.dp),
+        color = highlightColor,
     ) {
-        Surface(
-            modifier = modifier.combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick,
-            ),
-            color = highlightColor
+        Column(
+            modifier = Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick)
+                .padding(horizontal = 12.dp, vertical = 8.dp),
         ) {
+            if (!fromLocal) {
+                val longName = "${registryName ?: node.user.longName} (${node.user.id})"
+
+                val textStyle = MaterialTheme.typography.button.copy(
+                    color = MaterialTheme.colors.onSurface,
+                    letterSpacing = 0.1.sp,
+                    fontStyle = if (node.isUnknownUser) FontStyle.Italic else FontStyle.Normal
+                )
+
+                Text(
+                    text = longName,
+                    modifier = Modifier.padding(bottom = 4.dp),
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1,
+                    style = textStyle
+                )
+            }
+            repliedMessage?.let {
+                QuotedMessageBubble(
+                    message = it,
+                    onClick = { onQuotedClick(it) }
+                )
+                Spacer(Modifier.height(4.dp))
+            }
+
+            val body = messageText.orEmpty()
+            val bodyStyle = LocalTextStyle.current.copy(color = MaterialTheme.colors.onBackground)
+            val plain = remember(detectedLinks, body) {
+                detectedLinks != null && detectedLinks.nextSpanTransition(0, detectedLinks.length + 1, Any::class.java) > detectedLinks.length &&
+                    !mentionRegex.containsMatchIn(body)
+            }
+            if (plain) {
+                Text(body, style = bodyStyle)
+            } else {
+                AutoLinkText(text = body, uiModel = uiModel, detectedLinks = detectedLinks, style = bodyStyle)
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Row(
-                modifier = Modifier
-                    .padding(horizontal = 12.dp),
+                modifier = Modifier.align(Alignment.End),
+                horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column(
-                    modifier = Modifier.padding(vertical = 8.dp),
+
+                val caption = when {
+                    fromLocal || hopsAway < 0 -> messageTime
+                    hopsAway == 0 -> "Direct  $messageTime"
+                    else -> "Hops: $hopsAway  $messageTime"
+                }
+                Text(
+                    text = caption,
+                    color = MaterialTheme.colors.onSurface,
+                    fontSize = MaterialTheme.typography.caption.fontSize,
+                )
+
+                if (compressed) {
+                    Icon(
+                        imageVector = Icons.TwoTone.FolderZip,
+                        contentDescription = "Message has been compressed",
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .clickable {
+                                Toast.makeText(ctx, "This message has been compressed!", Toast.LENGTH_SHORT).show()
+                            },
+                    )
+                }
+
+                if(
+                    fromLocal &&
+                    compressed &&
+                    savedBytes != null &&
+                    savedAirtime != null
                 ) {
-
-                    if (!fromLocal) {
-                        val currentNode = nodes.firstOrNull{it.user.id == node.user.id}
-                        var longName = with(node.user) { "$longName ($id)" }
-
-                        if(currentNode == null || node.isUnknownUser){
-                            nodeRegistry[node.user.id]?.let {
-                                longName = "${it.longName ?: longName} (${node.user.id})"
-                            }
-                        }
-
-                        val textStyle = MaterialTheme.typography.button.copy(
-                            color = MaterialTheme.colors.onSurface,
-                            letterSpacing = 0.1.sp,
-                            fontStyle = if (node.isUnknownUser) FontStyle.Italic else FontStyle.Normal
-                        )
-
-                        Text(
-                            text = longName,
-                            modifier = Modifier.padding(bottom = 4.dp),
-                            overflow = TextOverflow.Ellipsis,
-                            maxLines = 1,
-                            style = textStyle
-                        )
-                    }
-                    repliedMessage?.let {
-                        QuotedMessageBubble(
-                            message = it,
-                            onClick = { onQuotedClick(it) }
-                        )
-                        Spacer(Modifier.height(4.dp))
-                    }
-
-                    AutoLinkText(
-                        text = messageText.orEmpty(),
-                        style = LocalTextStyle.current.copy(
-                            color = MaterialTheme.colors.onBackground,
-                        ),
+                    Text(
+                        text = "${savedBytes}B",
+                        color = MaterialTheme.colors.onSurface,
+                        fontSize = MaterialTheme.typography.caption.fontSize,
+                        modifier = Modifier.padding(start = 8.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(
-                        modifier = Modifier.align(Alignment.End),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-
-                        if(!fromLocal && hopsAway >= 0){
-                            Text(
-                                text = if (hopsAway == 0) "Direct" else "Hops: $hopsAway",
-                                color = MaterialTheme.colors.onSurface,
-                                fontSize = MaterialTheme.typography.caption.fontSize,
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                        }
-
-                        Text(
-                            text = messageTime,
-                            color = MaterialTheme.colors.onSurface,
-                            fontSize = MaterialTheme.typography.caption.fontSize,
-                        )
-
-                        AnimatedVisibility(visible = compressed) {
-                            Icon(
-                                imageVector = Icons.TwoTone.FolderZip,
-                                contentDescription = "Message has been compressed",
-                                modifier = Modifier
-                                    .padding(start = 8.dp)
-                                    .clickable {
-                                        Toast.makeText(ctx, "This message has been compressed!", Toast.LENGTH_SHORT).show()
-                                    },
-                            )
-                        }
-
-                        if(
-                            fromLocal &&
-                            compressed &&
-                            savedBytes != null &&
-                            savedAirtime != null
-                        ) {
-                            Text(
-                                text = "${savedBytes}B",
-                                color = MaterialTheme.colors.onSurface,
-                                fontSize = MaterialTheme.typography.caption.fontSize,
-                                modifier = Modifier.padding(start = 8.dp)
-                            )
-
-                            val normalizedAirtime = "%.2f".format(savedAirtime).let{
-                                if(it == "0.00") "N/A" else it + "ms"
-                            }
-
-                            Text(
-                                text = normalizedAirtime,
-                                color = MaterialTheme.colors.onSurface,
-                                fontSize = MaterialTheme.typography.caption.fontSize,
-                                modifier = Modifier.padding(start = 8.dp)
-                            )
-                        }
-
-                        AnimatedVisibility(visible = fromLocal) {
-                            Icon(
-                                imageVector = when (messageStatus) {
-                                    MessageStatus.RECEIVED -> Icons.TwoTone.HowToReg
-                                    MessageStatus.QUEUED -> Icons.TwoTone.CloudUpload
-                                    MessageStatus.DELIVERED -> Icons.TwoTone.CloudDone
-                                    MessageStatus.ENROUTE -> Icons.TwoTone.Cloud
-                                    MessageStatus.ERROR -> Icons.TwoTone.CloudOff
-                                    else -> Icons.TwoTone.Warning
-                                },
-                                contentDescription = stringResource(R.string.message_delivery_status),
-                                modifier = Modifier
-                                    .padding(start = 8.dp)
-                                    .clickable { onStatusClick() },
-                            )
-                        }
+                    val normalizedAirtime = "%.2f".format(savedAirtime).let{
+                        if(it == "0.00") "N/A" else it + "ms"
                     }
+
+                    Text(
+                        text = normalizedAirtime,
+                        color = MaterialTheme.colors.onSurface,
+                        fontSize = MaterialTheme.typography.caption.fontSize,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
+
+                if (fromLocal) {
+                    Icon(
+                        imageVector = when (messageStatus) {
+                            MessageStatus.RECEIVED -> Icons.TwoTone.HowToReg
+                            MessageStatus.QUEUED -> Icons.TwoTone.CloudUpload
+                            MessageStatus.DELIVERED -> Icons.TwoTone.CloudDone
+                            MessageStatus.ENROUTE -> Icons.TwoTone.Cloud
+                            MessageStatus.ERROR -> Icons.TwoTone.CloudOff
+                            else -> Icons.TwoTone.Warning
+                        },
+                        contentDescription = stringResource(R.string.message_delivery_status),
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .clickable { onStatusClick() },
+                    )
                 }
             }
         }

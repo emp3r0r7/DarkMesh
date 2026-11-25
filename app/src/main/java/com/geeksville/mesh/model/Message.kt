@@ -20,6 +20,7 @@ package com.geeksville.mesh.model
 import androidx.annotation.StringRes
 import com.emp3r0r7.darkmesh.R
 import com.geeksville.mesh.MessageStatus
+import com.geeksville.mesh.database.entity.MessageIndexEntry
 import com.geeksville.mesh.database.entity.Reaction
 import org.meshtastic.proto.MeshProtos.Routing
 
@@ -44,6 +45,11 @@ fun getStringResFrom(routingError: Int): Int = when (routingError) {
     Routing.Error.ADMIN_PUBLIC_KEY_UNAUTHORIZED_VALUE -> R.string.routing_error_admin_public_key_unauthorized
     Routing.Error.PKI_SEND_FAIL_PUBLIC_KEY_VALUE -> R.string.error_hardware_does_not_have_pubkey
     else -> R.string.unrecognized
+}
+
+class ChatMessageIndex(val entries: List<MessageIndexEntry>) {
+    val unreadIndex = entries.indexOfLast { !it.read }
+    val byPacketId = entries.groupBy { it.packetId }
 }
 
 data class Message(

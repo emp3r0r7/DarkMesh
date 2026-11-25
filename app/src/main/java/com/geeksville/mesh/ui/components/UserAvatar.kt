@@ -43,6 +43,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.geeksville.mesh.android.advancedPrefs
 import com.geeksville.mesh.model.Node
@@ -52,30 +54,30 @@ import com.geeksville.mesh.ui.theme.AppTheme
 import com.geeksville.mesh.util.ComposableUtil.rememberBooleanPreference
 import com.geeksville.mesh.util.IdentIkonGen
 
+internal data class AvatarStyle(val useInitials: Boolean, val width: Dp, val text: TextStyle)
+
 @Composable
-fun UserAvatar(
+internal fun rememberAvatarStyle(): AvatarStyle {
+    val initials by rememberBooleanPreference(LocalContext.current.advancedPrefs, REMOVE_CUSTOM_ICON_CHAT, false)
+    val measurer = rememberTextMeasurer()
+    val text = MaterialTheme.typography.button.copy(fontWeight = FontWeight.Normal)
+    val density = LocalDensity.current
+    return remember(measurer, text, density, initials) {
+        val width = with(density) { measurer.measure("MMMM", style = text).size.width.toDp() }
+        AvatarStyle(initials, width, text)
+    }
+}
+
+@Composable
+internal fun UserAvatar(
     node: Node,
     modifier: Modifier = Modifier,
+    style: AvatarStyle = rememberAvatarStyle(),
     onClick: () -> Unit = {}
 ) {
-    val context = LocalContext.current
-
-    val removeCustomIconChatPrefs by rememberBooleanPreference(
-        context.advancedPrefs,
-        REMOVE_CUSTOM_ICON_CHAT,
-        false
-    )
-
     val nodeId = node.user.id
-    val textMeasurer = rememberTextMeasurer()
-    val textStyle = MaterialTheme.typography.button.copy(
-        fontWeight = FontWeight.Normal,
-    )
-    val textLayoutResult = remember {
-        textMeasurer.measure(text = "MMMM", style = textStyle)
-    }
-
-    if(!removeCustomIconChatPrefs && nodeId != null){
+    val textStyle = style.text
+    if (!style.useInitials && nodeId != null){
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -83,12 +85,10 @@ fun UserAvatar(
         ) {
             Spacer(modifier = Modifier.height(3.dp))
             Image(
-                bitmap = IdentIkonGen.generateOrGetFromHexId(nodeId),
+                bitmap = remember(nodeId) { IdentIkonGen.generateOrGetFromHexId(nodeId) },
                 contentDescription = null,
                 modifier = Modifier
-                    .size(with(LocalDensity.current) {
-                        textLayoutResult.size.width.toDp() / 1.3f
-                    })
+                    .size(style.width / 1.3f)
                     .clip(CircleShape)
             )
 
@@ -107,7 +107,7 @@ fun UserAvatar(
         Box(
             contentAlignment = Alignment.Center,
             modifier = modifier
-                .size(with(LocalDensity.current) { textLayoutResult.size.width.toDp() })
+                .size(style.width)
                 .background(
                     color = Color(node.colors.second),
                     shape = CircleShape

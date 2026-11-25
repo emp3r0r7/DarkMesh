@@ -640,14 +640,20 @@ class UIViewModel @Inject constructor(
             false
         )
 
-    fun messageIndex(contact: String) = packetRepository.messageIndex(contact).distinctUntilChanged()
+    fun messageIndex(contact: String) = packetRepository.messageIndex(contact)
+        .distinctUntilChanged()
+        .map { ChatMessageIndex(it) }
+        .flowOn(Dispatchers.Default)
 
     fun messagesByIds(ids: List<Long>): Flow<List<Message>> {
         if (ids.isEmpty()) return flowOf(emptyList())
         // Bulk selections can exceed SQLite's bind parameter limit.
         val batches = ids.chunked(500).map { batch ->
             packetRepository.messagesByIds(batch).map { packets ->
-                packets.map { it.toMessage(::getNode) }
+                val senders = mutableMapOf<String?, Node>()
+                packets.map { packet ->
+                    packet.toMessage { id -> senders.getOrPut(id) { getNode(id) } }
+                }
             }
         }
         return combine(batches) { it.flatMap { batch -> batch } }.flowOn(Dispatchers.Default)
