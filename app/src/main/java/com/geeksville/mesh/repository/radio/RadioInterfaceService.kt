@@ -208,6 +208,10 @@ class RadioInterfaceService @Inject constructor(
         }
     }
 
+    fun onConfigDownloaded() {
+        (radioIf as? BluetoothInterface)?.endConfigPriority()
+    }
+
     fun onConnect() {
         if (!isConnected) {
             isConnected = true

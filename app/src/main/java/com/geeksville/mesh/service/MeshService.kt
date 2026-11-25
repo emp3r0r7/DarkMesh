@@ -2318,6 +2318,7 @@ class MeshService : Service(), Logging {
 
     private fun handleConfigComplete(configCompleteId: Int) {
         if (configCompleteId == configNonce) {
+            radioInterfaceService.onConfigDownloaded()
 
             val packetToSave = MeshLog(
                 uuid = UUID.randomUUID().toString(),

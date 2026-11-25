@@ -18,6 +18,7 @@
 package com.geeksville.mesh.repository.radio
 
 import android.app.Application
+import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
 import com.geeksville.mesh.android.Logging
@@ -102,6 +103,8 @@ class BluetoothInterface @AssistedInject constructor(
 ) : IRadioInterface, Logging {
 
     companion object {
+        private const val CONFIG_PRIORITY_TIMEOUT_MS = 120_000L
+
         /// this service UUID is publicly visible for scanning
         val BTM_SERVICE_UUID: UUID = UUID.fromString("6ba1b218-15a8-461f-9fa8-5dcae273eafd")
 
@@ -290,6 +293,7 @@ class BluetoothInterface @AssistedInject constructor(
 
             // Make sure the old connection was killed
             ignoreException {
+                endConfigPriority()
                 s.closeConnection()
             }
 
@@ -318,6 +322,43 @@ class BluetoothInterface @AssistedInject constructor(
     @Volatile
     private var isFirstTime = true
 
+    private var configGatt: BluetoothGatt? = null
+    private var priorityTimeout: Job? = null
+
+    // Connection priority is a best-effort hint. A rejected hint must not abort enumeration.
+    private fun requestPriority(gatt: BluetoothGatt, priority: Int): Boolean = try {
+        gatt.requestConnectionPriority(priority).also { accepted ->
+            debug("BLE connection priority request $priority accepted=$accepted")
+        }
+    } catch (ex: SecurityException) {
+        warn("Cannot request BLE connection priority: ${ex.message}")
+        false
+    }
+
+    @Synchronized
+    private fun startConfigPriority(gatt: BluetoothGatt) {
+        if (safe?.gatt !== gatt) return
+        endConfigPriority()
+        if (requestPriority(gatt, BluetoothGatt.CONNECTION_PRIORITY_HIGH)) {
+            configGatt = gatt
+            priorityTimeout = service.serviceScope.handledLaunch {
+                delay(CONFIG_PRIORITY_TIMEOUT_MS)
+                synchronized(this@BluetoothInterface) {
+                    if (configGatt === gatt) endConfigPriority()
+                }
+            }
+        }
+    }
+
+    @Synchronized
+    internal fun endConfigPriority() {
+        priorityTimeout?.cancel()
+        priorityTimeout = null
+        val gatt = configGatt ?: return
+        configGatt = null
+        if (safe?.gatt === gatt) requestPriority(gatt, BluetoothGatt.CONNECTION_PRIORITY_BALANCED)
+    }
+
     private fun doDiscoverServicesAndInit() {
         val s = safe
         if (s == null)
@@ -329,6 +370,7 @@ class BluetoothInterface @AssistedInject constructor(
 
                     service.serviceScope.handledLaunch {
                         try {
+                            s.gatt?.let(::startConfigPriority)
                             debug("Discovered services!")
                             delay(1000) // android BLE is buggy and needs a 500ms sleep before calling getChracteristic, or you might get back null
 
@@ -405,6 +447,7 @@ class BluetoothInterface @AssistedInject constructor(
 
 
     override fun close() {
+        endConfigPriority()
         reconnectJob?.cancel() // Cancel any queued reconnect attempts
 
         if (safe != null) {
